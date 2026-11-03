@@ -52,6 +52,19 @@ class Product extends Model
                                    ELSE 'In Stock'
                                END");
             } catch (\Exception $e) {}
+
+            // Automatically sync reviews_count and rating_avg with approved product_reviews
+            try {
+                $db->exec("UPDATE products p
+                           LEFT JOIN (
+                               SELECT product_id, COUNT(*) AS approved_count, AVG(rating) AS avg_rating
+                               FROM product_reviews
+                               WHERE status = 'approved'
+                               GROUP BY product_id
+                           ) pr ON p.id = pr.product_id
+                           SET p.reviews_count = COALESCE(pr.approved_count, 0),
+                               p.rating_avg = COALESCE(ROUND(pr.avg_rating, 2), 0.00)");
+            } catch (\Exception $e) {}
         }
     }
 
@@ -243,6 +256,7 @@ class Product extends Model
      */
     public static function getCollectionProducts($slugOrId = null, array $filters = [])
     {
+        self::cleanUnwantedBadges();
         $db = self::getDB();
         if (!$db) return [];
 
@@ -335,6 +349,8 @@ class Product extends Model
             }
 
             $sql = "SELECT p.*, 
+                           COALESCE((SELECT COUNT(*) FROM product_reviews pr WHERE pr.product_id = p.id AND pr.status = 'approved'), 0) AS reviews_count,
+                           COALESCE((SELECT ROUND(AVG(rating), 2) FROM product_reviews pr WHERE pr.product_id = p.id AND pr.status = 'approved'), 0.00) AS rating_avg,
                            b.name AS brand,
                            b.slug AS brand_slug,
                            COALESCE(c.name, 'Disposable') AS category,

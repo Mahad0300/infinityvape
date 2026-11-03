@@ -4005,3 +4005,75 @@ img {
 .inline-tag-input:focus {
   width: 175px !important;
 }
+
+
+/* ==========================================================================
+   Admin Search Engine Listing (SEO) Card Header & Button Styling
+   ========================================================================== */
+.btn-link-seo,
+#toggleSeoBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  height: 32px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  line-height: 1 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  white-space: nowrap !important;
+}
+
+.btn-link-seo:hover,
+#toggleSeoBtn:hover {
+  background-color: #f8fafc !important;
+  border-color: #082142 !important;
+  color: #082142 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-link-seo svg,
+#toggleSeoBtn svg {
+  color: #64748b;
+  transition: color 0.15s ease;
+}
+
+.btn-link-seo:hover svg,
+#toggleSeoBtn:hover svg {
+  color: #082142;
+}
+
+/* Ensure SEO container toggles open smoothly */
+.seo-fields-container {
+  display: none;
+  margin-bottom: 20px;
+}
+
+.seo-fields-container.active {
+  display: block !important;
+  animation: fadeInAdmin 0.22s ease;
+}
+
+@keyframes fadeInAdmin {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Product Status Badges (Active, Draft, Archived) */
+.badge-draft {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.badge-archived {
+  background-color: #f3e8ff !important;
+  color: #7e22ce !important;
+}

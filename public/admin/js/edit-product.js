@@ -20,9 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainDescInput = document.querySelector('textarea[name="description"]') || document.getElementById('productDescription');
 
   if (toggleSeoBtn && seoFieldsContainer) {
+    if (seoFieldsContainer.classList.contains('active')) {
+      const span = toggleSeoBtn.querySelector('span');
+      if (span) span.textContent = 'Hide website SEO';
+    }
+
     toggleSeoBtn.addEventListener('click', (e) => {
       e.preventDefault();
       seoFieldsContainer.classList.toggle('active');
+      const isNowActive = seoFieldsContainer.classList.contains('active');
+      const span = toggleSeoBtn.querySelector('span');
+      if (span) {
+        span.textContent = isNowActive ? 'Hide website SEO' : 'Edit website SEO';
+      }
     });
   }
 

@@ -165,15 +165,6 @@ include dirname(__DIR__) . '/includes/header.php';
                 });
               ?>
               <ul class="filter-options-list filter-scrollable-list">
-                <!-- Shop All Vapes (Primary view) -->
-                <li>
-                  <label class="filter-option-label" onclick="window.location.href='<?= url('collections') ?>';">
-                    <input type="radio" name="filterCollection" class="filter-radio" <?= ($currentSlug === 'all') ? 'checked' : '' ?>>
-                    <span class="filter-radio-custom"></span>
-                    <span class="option-name" style="<?= ($currentSlug === 'all') ? 'font-weight: 700; color: #0b2545;' : '' ?>">Shop All Vapes</span>
-                  </label>
-                </li>
-
                 <?php 
                 foreach ($activeCollections as $cat): 
                   $isActive = ($currentSlug === ($cat['slug'] ?? ''));
@@ -463,9 +454,16 @@ include dirname(__DIR__) . '/includes/header.php';
                 </h3>
 
                 <!-- Rating & Reviews -->
+                <?php 
+                  $cardRevCount = isset($p['reviews_count']) ? (int)$p['reviews_count'] : 0;
+                  $cardRating   = !empty($p['rating_avg']) ? (int)round($p['rating_avg']) : ($cardRevCount > 0 ? 5 : 0);
+                  $cardStars    = ($cardRevCount > 0)
+                      ? (str_repeat('★', $cardRating) . str_repeat('☆', max(0, 5 - $cardRating)))
+                      : '☆☆☆☆☆';
+                ?>
                 <div class="card-rating-row">
-                  <span class="card-stars">★★★★★</span>
-                  <span class="card-reviews-count">(<?= !empty($p['reviews_count']) ? (int)$p['reviews_count'] : 24 ?>)</span>
+                  <span class="card-stars" style="<?= ($cardRevCount === 0) ? 'color: #cbd5e1;' : '' ?>"><?= $cardStars ?></span>
+                  <span class="card-reviews-count">(<?= $cardRevCount ?>)</span>
                 </div>
 
                 <!-- Price Row -->

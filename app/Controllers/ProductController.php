@@ -36,11 +36,24 @@ class ProductController extends Controller
             return;
         }
 
+        // Product Status Access Control:
+        // 1. Draft: Forbidden on storefront even via direct URL (returns 404).
+        //    Only authenticated admins with explicit ?preview=admin can preview.
+        $prodStatus = strtolower(trim($product['status'] ?? 'published'));
+        $isAdminPreview = (!empty($_GET['preview']) && class_exists('\\App\\Core\\AdminAuth') && \App\Core\AdminAuth::check());
+
+        if ($prodStatus === 'draft' && !$isAdminPreview) {
+            http_response_code(404);
+            $this->render('errors.404', ['uri' => 'Product Not Found: ' . htmlspecialchars($identifier ?? '')]);
+            return;
+        }
+
         // Clean URL Enforcement: Redirect any ?slug= or ?id= query param to clean /product/{slug}
         $rawUri = $_SERVER['REQUEST_URI'] ?? '';
         if (strpos($rawUri, '?slug=') !== false || strpos($rawUri, '?id=') !== false || strpos($rawUri, '?p=') !== false) {
             $cleanSlug = !empty($product['slug']) ? $product['slug'] : $product['id'];
-            $targetUrl = url('product/' . urlencode($cleanSlug));
+            $previewSuffix = $isAdminPreview ? '?preview=admin' : '';
+            $targetUrl = url('product/' . urlencode($cleanSlug)) . $previewSuffix;
             header("HTTP/1.1 301 Moved Permanently");
             header("Location: " . $targetUrl);
             exit;
@@ -79,7 +92,9 @@ class ProductController extends Controller
             'productVariants'   => $productVariants,
             'productFaqs'       => $productFaqs,
             'productReviews'    => $productReviews,
-            'relatedPosts'      => $relatedPosts
+            'relatedPosts'      => $relatedPosts,
+            'isArchived'        => ($prodStatus === 'archived'),
+            'isDraftPreview'    => $isAdminPreview
         ]);
     }
 

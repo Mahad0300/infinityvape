@@ -61,6 +61,9 @@ include dirname(__DIR__) . '/includes/header.php';
       <div class="table-status-select-wrap">
         <select id="adminStatusFilter" class="admin-form-select">
           <option value="all">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="archived">Archived</option>
           <option value="in stock">In Stock</option>
           <option value="low stock">Low Stock</option>
           <option value="out of stock">Out of Stock</option>
@@ -88,10 +91,10 @@ include dirname(__DIR__) . '/includes/header.php';
         <thead>
           <tr>
             <th>Product</th>
+            <th>Status</th>
+            <th>Inventory</th>
             <th>Collection</th>
             <th>Price</th>
-            <th>Stock</th>
-            <th>Status</th>
             <th class="text-right">Actions</th>
           </tr>
         </thead>
@@ -103,7 +106,21 @@ include dirname(__DIR__) . '/includes/header.php';
                 $priceVal = (float)str_replace(['$', ','], '', $p['base_price'] ?? $p['price'] ?? 0);
                 $variantsCount = (int)($p['variants_count'] ?? 0);
                 $stockVal = (int)($p['calculated_stock'] ?? $p['stock_quantity'] ?? $p['stock'] ?? 0);
-                $statusVal = ($stockVal <= 0) ? 'Out of Stock' : (($stockVal < 15) ? 'Low Stock' : 'In Stock');
+                $stockStatus = ($stockVal <= 0) ? 'Out of Stock' : (($stockVal < 15) ? 'Low Stock' : 'In Stock');
+                $prodStatus = strtolower(trim($p['status'] ?? 'published'));
+                if ($prodStatus === 'active' || $prodStatus === 'published') {
+                    $badgeClass = 'badge-active';
+                    $badgeLabel = 'Active';
+                } elseif ($prodStatus === 'draft') {
+                    $badgeClass = 'badge-draft';
+                    $badgeLabel = 'Draft';
+                } elseif ($prodStatus === 'archived') {
+                    $badgeClass = 'badge-archived';
+                    $badgeLabel = 'Archived';
+                } else {
+                    $badgeClass = 'badge-active';
+                    $badgeLabel = 'Active';
+                }
               ?>
               <tr>
                 <td>
@@ -115,29 +132,29 @@ include dirname(__DIR__) . '/includes/header.php';
                     </div>
                   </div>
                 </td>
-                <td><?= e($p['category'] ?? 'General') ?></td>
-                <td><strong>$<?= number_format($priceVal, 2) ?></strong></td>
                 <td>
-                  <strong><?= number_format($stockVal) ?></strong> in stock
+                  <span class="badge-status <?= $badgeClass ?>"><?= $badgeLabel ?></span>
+                </td>
+                <td>
+                  <?php if ($stockVal <= 0): ?>
+                    <span class="badge-status badge-outofstock">0 in stock</span>
+                  <?php elseif ($stockVal < 15): ?>
+                    <span class="badge-status badge-lowstock"><?= number_format($stockVal) ?> in stock</span>
+                  <?php else: ?>
+                    <span class="badge-status badge-instock"><?= number_format($stockVal) ?> in stock</span>
+                  <?php endif; ?>
                   <?php if ($variantsCount > 0): ?>
                     <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
                       for <?= $variantsCount ?> <?= $variantsCount === 1 ? 'variant' : 'variants' ?>
                     </div>
                   <?php endif; ?>
                 </td>
-                <td>
-                  <?php if (strtolower($statusVal) === 'in stock'): ?>
-                    <span class="badge-status badge-instock">In Stock</span>
-                  <?php elseif (strtolower($statusVal) === 'low stock'): ?>
-                    <span class="badge-status badge-lowstock">Low Stock</span>
-                  <?php else: ?>
-                    <span class="badge-status badge-outofstock">Out of Stock</span>
-                  <?php endif; ?>
-                </td>
+                <td><?= e($p['category'] ?? 'General') ?></td>
+                <td><strong>$<?= number_format($priceVal, 2) ?></strong></td>
                 <td>
                   <div class="table-actions-cell-right">
                     <!-- Preview on Storefront -->
-                    <a href="<?= url('product/' . urlencode($p['slug'] ?? $p['id'])) ?>" target="_blank" class="btn-icon-only" title="Preview on Store">
+                    <a href="<?= url('product/' . urlencode($p['slug'] ?? $p['id'])) . ($prodStatus === 'draft' ? '?preview=admin' : '') ?>" target="_blank" class="btn-icon-only" title="<?= $prodStatus === 'draft' ? 'Preview Draft on Store' : 'View on Store' ?>">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>

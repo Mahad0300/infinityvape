@@ -722,12 +722,18 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
 
       <!-- 8. Search Engine Listing (SEO) Card -->
       <div class="admin-card">
-        <div class="admin-card-header">
+        <div class="admin-card-header d-flex justify-between align-center">
           <div>
             <h2 class="admin-card-title">Search Engine Listing (SEO)</h2>
             <p class="form-help-text">Optimize search engine snippet for Google search rankings.</p>
           </div>
-          <a href="#" id="toggleSeoBtn" class="btn-link-seo">Edit website SEO</a>
+          <button type="button" id="toggleSeoBtn" class="btn-admin btn-admin-secondary btn-admin-sm">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <span>Edit website SEO</span>
+          </button>
         </div>
         <div class="admin-card-body">
           
@@ -783,7 +789,7 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
         <div class="admin-card-body">
           <div class="admin-form-group">
             <select name="status" class="admin-form-select">
-              <option value="active" <?php echo ($product_data['status'] === 'active') ? 'selected' : ''; ?>>Active (Live on Storefront)</option>
+              <option value="active" <?php echo ($product_data['status'] === 'active' || $product_data['status'] === 'published') ? 'selected' : ''; ?>>Active (Live on Storefront)</option>
               <option value="draft" <?php echo ($product_data['status'] === 'draft') ? 'selected' : ''; ?>>Draft (Hidden)</option>
               <option value="archived" <?php echo ($product_data['status'] === 'archived') ? 'selected' : ''; ?>>Archived</option>
             </select>

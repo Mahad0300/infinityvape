@@ -246,6 +246,97 @@ include dirname(__DIR__) . '/includes/header.php';
     opacity: 0.9 !important;
   }
 }
+
+/* Modern eCommerce Variant Options & Badges */
+.product-variants-wrapper {
+  margin-top: 6px;
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.variant-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variant-option-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.variant-option-label {
+  font-weight: 700;
+  color: #082142;
+  letter-spacing: -0.01em;
+}
+
+.variant-selected-value {
+  font-weight: 600;
+  color: #475569;
+}
+
+.variant-badges-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.variant-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  min-height: 38px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.variant-badge-btn:hover {
+  border-color: #082142;
+  color: #082142;
+}
+
+/* Active Selected Badge State (Rock Solid, Zero Layout Shift) */
+.variant-badge-btn.active {
+  background-color: #082142 !important;
+  border-color: #082142 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(8, 33, 66, 0.2) !important;
+}
+
+/* Out of Stock Pill Style */
+.variant-badge-btn.is-out-of-stock {
+  opacity: 0.45;
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.variant-badge-btn.active.is-out-of-stock {
+  opacity: 1 !important;
+  background-color: #475569 !important;
+  border-color: #475569 !important;
+  color: #ffffff !important;
+}
 </style>
 
 <!-- ==========================================
@@ -276,6 +367,12 @@ include dirname(__DIR__) . '/includes/header.php';
     </ol>
   </div>
 </nav>
+
+<?php if (!empty($isDraftPreview)): ?>
+<div style="background: #fffbeb; border-bottom: 1px solid #fef3c7; color: #92400e; padding: 10px 16px; text-align: center; font-size: 13.5px; font-weight: 600;">
+  ⚠️ <strong>Draft Preview Mode:</strong> This product is currently in Draft status and is completely hidden from customers on the public storefront.
+</div>
+<?php endif; ?>
 
 <!-- ==========================================
      2. PRODUCT MAIN SECTION (GALLERY & BUY BOX)
@@ -459,41 +556,127 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         <?php endif; ?>
 
-        <!-- Dynamic Flavor / Variant Selector Dropdown -->
+        <!-- Dynamic Multi-Option Variant Badges / Selectors -->
         <?php if (!empty($productVariants)): ?>
-        <div class="product-variant-group">
-          <label for="flavorSelect" class="variant-label">
-            Flavor / Option
-          </label>
-          <div class="flavor-select-wrapper">
-            <select id="flavorSelect" class="product-flavor-select">
-              <?php
-              foreach ($productVariants as $idx => $variant):
-                $vPrice = !empty($variant['price']) ? (float) $variant['price'] : $basePrice;
-                $vCompare = !empty($variant['compare_price']) ? (float) $variant['compare_price'] : $comparePrice;
-                $vSku = !empty($variant['sku']) ? $variant['sku'] : $sku;
-                $vStock = isset($variant['stock_quantity']) ? (int) $variant['stock_quantity'] : 0;
-                $vImage = !empty($variant['image_url']) ? asset($variant['image_url']) : '';
-                ?>
-              <option 
-                value="<?= htmlspecialchars($variant['variant_name']) ?>" 
-                data-price="<?= number_format($vPrice, 2, '.', '') ?>"
-                data-compare-price="<?= $vCompare ? number_format($vCompare, 2, '.', '') : '' ?>"
-                data-sku="<?= htmlspecialchars($vSku) ?>"
-                data-stock="<?= $vStock ?>"
-                data-image="<?= htmlspecialchars($vImage) ?>"
-                <?= $idx === 0 ? 'selected' : '' ?>
+        <?php
+        // 1. Resolve configured option names from database (e.g. ["Flavor", "Nicotine Strength"])
+        $configuredOptionNames = [];
+        if (!empty($product['option_names'])) {
+            if (is_array($product['option_names'])) {
+                $configuredOptionNames = $product['option_names'];
+            } else {
+                $decoded = json_decode($product['option_names'], true);
+                if (is_array($decoded)) {
+                    $configuredOptionNames = $decoded;
+                }
+            }
+        }
+
+        // 2. Detect number of dimensions/parts in variant names (e.g. "Banana Ice / 20mg")
+        $maxParts = 1;
+        foreach ($productVariants as $pv) {
+            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+            if (count($parts) > $maxParts) {
+                $maxParts = count($parts);
+            }
+        }
+
+        // 3. Assign human-friendly labels for each option dimension
+        $optionLabels = [];
+        for ($i = 0; $i < $maxParts; $i++) {
+            if (!empty($configuredOptionNames[$i])) {
+                $optionLabels[$i] = $configuredOptionNames[$i];
+            } else {
+                if ($i === 0) {
+                    $optionLabels[$i] = 'Flavor';
+                } elseif ($i === 1) {
+                    $optionLabels[$i] = 'Strength';
+                } elseif ($i === 2) {
+                    $optionLabels[$i] = 'Size';
+                } else {
+                    $optionLabels[$i] = 'Option ' . ($i + 1);
+                }
+            }
+        }
+
+        // 4. Collect unique values for each option level while preserving order
+        $optionValuesMap = array_fill(0, $maxParts, []);
+        foreach ($productVariants as $pv) {
+            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+            for ($i = 0; $i < $maxParts; $i++) {
+                $val = $parts[$i] ?? ($i === 0 ? $pv['variant_name'] : '');
+                if ($val !== '' && !in_array($val, $optionValuesMap[$i])) {
+                    $optionValuesMap[$i][] = $val;
+                }
+            }
+        }
+
+        $parsedOptions = [];
+        for ($i = 0; $i < $maxParts; $i++) {
+            if (!empty($optionValuesMap[$i])) {
+                $parsedOptions[] = [
+                    'index'  => $i,
+                    'name'   => $optionLabels[$i],
+                    'values' => $optionValuesMap[$i]
+                ];
+            }
+        }
+        ?>
+
+        <div class="product-variants-wrapper" id="productVariantsWrapper">
+          <!-- Hidden fallback select ensuring 100% backward compatibility with cart-drawer.js and checkout -->
+          <select id="flavorSelect" class="product-flavor-select" style="display: none;" aria-hidden="true" tabindex="-1">
+            <?php
+            foreach ($productVariants as $idx => $variant):
+              $vPrice = !empty($variant['price']) ? (float) $variant['price'] : $basePrice;
+              $vCompare = !empty($variant['compare_price']) ? (float) $variant['compare_price'] : $comparePrice;
+              $vSku = !empty($variant['sku']) ? $variant['sku'] : $sku;
+              $vStock = isset($variant['stock_quantity']) ? (int) $variant['stock_quantity'] : 0;
+              $vImage = !empty($variant['image_url']) ? asset($variant['image_url']) : '';
+              ?>
+            <option 
+              value="<?= htmlspecialchars($variant['variant_name']) ?>" 
+              data-price="<?= number_format($vPrice, 2, '.', '') ?>"
+              data-compare-price="<?= $vCompare ? number_format($vCompare, 2, '.', '') : '' ?>"
+              data-sku="<?= htmlspecialchars($vSku) ?>"
+              data-stock="<?= $vStock ?>"
+              data-image="<?= htmlspecialchars($vImage) ?>"
+              <?= $idx === 0 ? 'selected' : '' ?>
+            >
+              <?= htmlspecialchars($variant['variant_name']) ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+
+          <!-- Store JSON data for instant client-side switching -->
+          <script id="productVariantsJson" type="application/json">
+            <?= json_encode($productVariants, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>
+          </script>
+
+          <!-- Dynamic Option Groups (Option 1: Flavor badges, Option 2: Strength badges, etc.) -->
+          <?php foreach ($parsedOptions as $opt): ?>
+          <div class="variant-option-group" data-option-index="<?= $opt['index'] ?>">
+            <div class="variant-option-header">
+              <span class="variant-option-label"><?= htmlspecialchars($opt['name']) ?>:</span>
+              <span class="variant-selected-value" id="selectedVal-<?= $opt['index'] ?>">
+                <?= htmlspecialchars($opt['values'][0] ?? '') ?>
+              </span>
+            </div>
+            <div class="variant-badges-list" role="radiogroup" aria-label="<?= htmlspecialchars($opt['name']) ?>">
+              <?php foreach ($opt['values'] as $vIdx => $val): ?>
+              <button 
+                type="button" 
+                class="variant-badge-btn <?= $vIdx === 0 ? 'active' : '' ?>" 
+                data-option-index="<?= $opt['index'] ?>" 
+                data-value="<?= htmlspecialchars($val) ?>"
+                aria-pressed="<?= $vIdx === 0 ? 'true' : 'false' ?>"
               >
-                <?= htmlspecialchars($variant['variant_name']) ?>
-              </option>
+                <?= htmlspecialchars($val) ?>
+              </button>
               <?php endforeach; ?>
-            </select>
-            <div class="select-chevron-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
             </div>
           </div>
+          <?php endforeach; ?>
         </div>
         <?php endif; ?>
 

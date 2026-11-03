@@ -190,7 +190,7 @@
                     </svg>
                   </button>
                 </div>
-                ${item.flavor ? `<div class="cart-item-variant">Flavor: <span>${escapeHtml(item.flavor)}</span></div>` : ''}
+                ${item.flavor ? `<div class="cart-item-variant">${item.flavor.includes('/') ? '' : 'Flavor: '}<span>${escapeHtml(item.flavor)}</span></div>` : ''}
                 <div class="cart-item-bottom">
                   <div class="cart-item-qty-control">
                     <button type="button" class="cart-qty-btn" data-action="decrease" data-id="${item.id}" aria-label="Decrease quantity">−</button>
