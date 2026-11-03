@@ -298,6 +298,9 @@
       const singleAddBtn = e.target.closest('#btnProductAddToCart');
       if (singleAddBtn) {
         e.preventDefault();
+        if (singleAddBtn.disabled || singleAddBtn.classList.contains('is-disabled')) {
+          return;
+        }
         const titleEl = document.querySelector('.product-details-title');
         const priceEl = document.querySelector('.product-price-current');
         const qtyEl = document.getElementById('productQuantity');
@@ -327,6 +330,9 @@
       if (cardAddBtn) {
         e.preventDefault();
         e.stopPropagation();
+        if (cardAddBtn.disabled || cardAddBtn.classList.contains('is-disabled') || cardAddBtn.classList.contains('out-of-stock')) {
+          return;
+        }
 
         const card = cardAddBtn.closest('.product-card, .category-product-card');
         if (!card) return;

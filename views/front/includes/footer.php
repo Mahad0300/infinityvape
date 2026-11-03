@@ -272,14 +272,14 @@ $formatFooterUrl = function($link) {
   <?php include __DIR__ . '/cart-drawer.php'; ?>
 
   <!-- Global Cart Drawer JavaScript -->
-  <script src="assets/js/cart-drawer.js?v=1.0.1"></script>
+  <script src="assets/js/cart-drawer.js?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/cart-drawer.js') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/cart-drawer.js') : time() ?>"></script>
 
   <!-- Global JavaScript -->
   <script src="assets/js/main.js?v=1.0.0"></script>
 
   <!-- Page Specific JavaScript (if defined) -->
   <?php if (!empty($page_js)): ?>
-    <script src="assets/js/<?php echo htmlspecialchars($page_js); ?>.js?v=1.0.2"></script>
+    <script src="assets/js/<?php echo htmlspecialchars($page_js); ?>.js?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/' . $page_js . '.js') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/' . $page_js . '.js') : time() ?>"></script>
   <?php endif; ?>
 
 </body>

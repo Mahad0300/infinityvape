@@ -322,20 +322,51 @@ include dirname(__DIR__) . '/includes/header.php';
   box-shadow: 0 2px 6px rgba(8, 33, 66, 0.2) !important;
 }
 
-/* Out of Stock Pill Style */
+/* Out of Stock & Disabled Pill Style */
+.variant-badge-btn:disabled,
+.variant-badge-btn.is-disabled,
 .variant-badge-btn.is-out-of-stock {
-  opacity: 0.45;
-  background-color: #f8fafc;
-  border-color: #e2e8f0;
-  color: #94a3b8;
-  text-decoration: line-through;
+  opacity: 0.38 !important;
+  background-color: #f8fafc !important;
+  border-color: #bec4cb !important;
+  color: #25292e !important;
+  text-decoration: line-through !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  user-select: none !important;
 }
 
-.variant-badge-btn.active.is-out-of-stock {
-  opacity: 1 !important;
-  background-color: #475569 !important;
-  border-color: #475569 !important;
-  color: #ffffff !important;
+.variant-badge-btn:disabled:hover,
+.variant-badge-btn.is-disabled:hover,
+.variant-badge-btn.is-out-of-stock:hover {
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+
+/* Out of Stock Add to Cart & Buy Now Buttons */
+.btn-product-add-cart:disabled,
+.btn-product-add-cart.is-disabled,
+.btn-product-buy-now:disabled,
+.btn-product-buy-now.is-disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+
+.btn-product-add-cart:disabled,
+.btn-product-add-cart.is-disabled {
+  background-color: #cbd5e1 !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
+}
+
+.btn-product-buy-now:disabled,
+.btn-product-buy-now.is-disabled {
+  background-color: #94a3b8 !important;
+  color: #f1f5f9 !important;
 }
 </style>
 
@@ -500,7 +531,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div class="product-stock-status <?= $isOutOfStock ? 'out-of-stock' : 'in-stock' ?>">
           <span class="stock-dot"></span>
           <span class="stock-text">
-            <strong><?= $isOutOfStock ? 'Out of Stock' : htmlspecialchars($stockStatus) ?>.</strong> <?= $isOutOfStock ? 'Currently unavailable.' : 'Ships today if ordered by 3:00 PM EST' ?>
+            <strong><?= $isOutOfStock ? 'Out of Stock' : 'In Stock' ?></strong>
           </span>
         </div>
 
@@ -621,6 +652,24 @@ include dirname(__DIR__) . '/includes/header.php';
                 ];
             }
         }
+
+        // Resolve default in-stock variant combination
+        $defaultVariant = null;
+        foreach ($productVariants as $pv) {
+            $st = isset($pv['stock_quantity']) ? (int)$pv['stock_quantity'] : 0;
+            if ($st > 0) {
+                $defaultVariant = $pv;
+                break;
+            }
+        }
+        if (!$defaultVariant && !empty($productVariants)) {
+            $defaultVariant = $productVariants[0];
+        }
+
+        $defaultParts = [];
+        if ($defaultVariant) {
+            $defaultParts = array_map('trim', explode(' / ', $defaultVariant['variant_name']));
+        }
         ?>
 
         <div class="product-variants-wrapper" id="productVariantsWrapper">
@@ -654,22 +703,52 @@ include dirname(__DIR__) . '/includes/header.php';
           </script>
 
           <!-- Dynamic Option Groups (Option 1: Flavor badges, Option 2: Strength badges, etc.) -->
-          <?php foreach ($parsedOptions as $opt): ?>
-          <div class="variant-option-group" data-option-index="<?= $opt['index'] ?>">
+          <?php foreach ($parsedOptions as $opt): 
+            $currOptIdx = $opt['index'];
+            $selectedOptVal = $defaultParts[$currOptIdx] ?? ($opt['values'][0] ?? '');
+          ?>
+          <div class="variant-option-group" data-option-index="<?= $currOptIdx ?>">
             <div class="variant-option-header">
               <span class="variant-option-label"><?= htmlspecialchars($opt['name']) ?>:</span>
-              <span class="variant-selected-value" id="selectedVal-<?= $opt['index'] ?>">
-                <?= htmlspecialchars($opt['values'][0] ?? '') ?>
+              <span class="variant-selected-value" id="selectedVal-<?= $currOptIdx ?>">
+                <?= htmlspecialchars($selectedOptVal) ?>
               </span>
             </div>
             <div class="variant-badges-list" role="radiogroup" aria-label="<?= htmlspecialchars($opt['name']) ?>">
-              <?php foreach ($opt['values'] as $vIdx => $val): ?>
+              <?php foreach ($opt['values'] as $vIdx => $val): 
+                $isOutStock = false;
+                if ($currOptIdx === 0) {
+                    // Check if this Option 0 value has ANY stock in any variant
+                    $hasAny = false;
+                    foreach ($productVariants as $pv) {
+                        $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                        if (($pParts[0] ?? $pv['variant_name']) === $val && (int)($pv['stock_quantity'] ?? 0) > 0) {
+                            $hasAny = true;
+                            break;
+                        }
+                    }
+                    $isOutStock = !$hasAny;
+                } elseif ($currOptIdx === 1 && !empty($defaultParts[0])) {
+                    // Check if combination of default Option 0 + this Option 1 is in stock
+                    $hasStock = false;
+                    foreach ($productVariants as $pv) {
+                        $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                        if (($pParts[0] ?? '') === $defaultParts[0] && ($pParts[1] ?? '') === $val && (int)($pv['stock_quantity'] ?? 0) > 0) {
+                            $hasStock = true;
+                            break;
+                        }
+                    }
+                    $isOutStock = !$hasStock;
+                }
+                $isActive = ($val === $selectedOptVal) && !$isOutStock;
+              ?>
               <button 
                 type="button" 
-                class="variant-badge-btn <?= $vIdx === 0 ? 'active' : '' ?>" 
-                data-option-index="<?= $opt['index'] ?>" 
+                class="variant-badge-btn <?= $isActive ? 'active' : '' ?> <?= $isOutStock ? 'is-out-of-stock is-disabled' : '' ?>" 
+                data-option-index="<?= $currOptIdx ?>" 
                 data-value="<?= htmlspecialchars($val) ?>"
-                aria-pressed="<?= $vIdx === 0 ? 'true' : 'false' ?>"
+                aria-pressed="<?= $isActive ? 'true' : 'false' ?>"
+                <?= $isOutStock ? 'disabled aria-disabled="true" title="Out of stock"' : '' ?>
               >
                 <?= htmlspecialchars($val) ?>
               </button>
@@ -681,23 +760,33 @@ include dirname(__DIR__) . '/includes/header.php';
         <?php endif; ?>
 
         <!-- Actions Row: Quantity Selector + Add to Cart -->
-        <div class="product-purchase-row">
+        <div class="product-purchase-row" data-in-stock="<?= $isOutOfStock ? '0' : '1' ?>">
           
           <!-- Quantity Counter -->
-          <div class="product-qty-selector">
-            <button type="button" class="qty-btn" id="qtyMinus" aria-label="Decrease quantity">&minus;</button>
-            <input type="number" id="productQuantity" class="qty-input" value="1" min="1" max="99" readonly>
-            <button type="button" class="qty-btn" id="qtyPlus" aria-label="Increase quantity">&plus;</button>
+          <div class="product-qty-selector" style="<?= $isOutOfStock ? 'opacity: 0.5; pointer-events: none;' : '' ?>">
+            <button type="button" class="qty-btn" id="qtyMinus" aria-label="Decrease quantity" <?= $isOutOfStock ? 'disabled' : '' ?>>&minus;</button>
+            <input type="number" id="productQuantity" class="qty-input" value="1" min="1" max="99" readonly <?= $isOutOfStock ? 'disabled' : '' ?>>
+            <button type="button" class="qty-btn" id="qtyPlus" aria-label="Increase quantity" <?= $isOutOfStock ? 'disabled' : '' ?>>&plus;</button>
           </div>
 
           <!-- Add to Cart (Gold/Yellow Button) -->
-          <button type="button" class="btn-product-add-cart" id="btnProductAddToCart">
-            Add to cart
+          <button 
+            type="button" 
+            class="btn-product-add-cart <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
+            id="btnProductAddToCart"
+            <?= $isOutOfStock ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' ?>
+          >
+            <?= $isOutOfStock ? 'Out of Stock' : 'Add to cart' ?>
           </button>
         </div>
 
         <!-- Buy It Now Button (Black Solid Button) -->
-        <button type="button" class="btn-product-buy-now" id="btnProductBuyNow">
+        <button 
+          type="button" 
+          class="btn-product-buy-now <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
+          id="btnProductBuyNow"
+          <?= $isOutOfStock ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' ?>
+        >
           Buy it now
         </button>
 

@@ -122,7 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnAddToCart = document.getElementById('btnProductAddToCart');
 
   if (btnAddToCart) {
-    btnAddToCart.addEventListener('click', () => {
+    btnAddToCart.addEventListener('click', (e) => {
+      if (btnAddToCart.disabled || btnAddToCart.classList.contains('is-disabled')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       const originalText = btnAddToCart.innerHTML;
       const addedQty = parseInt(qtyInput ? qtyInput.value : '1', 10) || 1;
 
@@ -157,24 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function resolveSelectedVariant() {
-    if (!variantsWrapper || productVariantsList.length === 0) return null;
+  function getVariantForValues(selectedValues) {
+    if (!productVariantsList || productVariantsList.length === 0) return null;
+    const targetCombo = selectedValues.join(' / ').toLowerCase();
 
-    const groups = variantsWrapper.querySelectorAll('.variant-option-group');
-    const selectedValues = [];
-
-    groups.forEach((group) => {
-      const activeBtn = group.querySelector('.variant-badge-btn.active');
-      if (activeBtn) {
-        selectedValues.push(activeBtn.getAttribute('data-value').trim());
-      }
-    });
-
-    if (selectedValues.length === 0) return null;
-
-    const targetCombo = selectedValues.join(' / ');
     let matched = productVariantsList.find(
-      (v) => (v.variant_name || '').trim().toLowerCase() === targetCombo.toLowerCase()
+      (v) => (v.variant_name || '').trim().toLowerCase() === targetCombo
     );
 
     if (!matched) {
@@ -185,6 +178,164 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    return matched || null;
+  }
+
+  function updateBadgesAvailability() {
+    if (!variantsWrapper || productVariantsList.length === 0) return;
+
+    const groups = Array.from(variantsWrapper.querySelectorAll('.variant-option-group'));
+    const maxDims = groups.length;
+    if (maxDims === 0) return;
+
+    if (maxDims === 1) {
+      // Single Option Dimension (e.g. Only Flavor)
+      const group = groups[0];
+      const btns = group.querySelectorAll('.variant-badge-btn');
+      btns.forEach((btn) => {
+        const val = btn.getAttribute('data-value').trim().toLowerCase();
+        const v = productVariantsList.find(
+          (item) => (item.variant_name || '').trim().toLowerCase() === val
+        );
+        const stock = v ? parseInt(v.stock_quantity, 10) : 0;
+        if (stock <= 0) {
+          btn.disabled = true;
+          btn.classList.add('is-out-of-stock', 'is-disabled');
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('title', `${btn.getAttribute('data-value')} (Out of stock)`);
+        } else {
+          btn.disabled = false;
+          btn.classList.remove('is-out-of-stock', 'is-disabled');
+          btn.removeAttribute('aria-disabled');
+          btn.removeAttribute('title');
+        }
+      });
+
+      // Ensure active button is in-stock
+      let activeBtn = group.querySelector('.variant-badge-btn.active:not(:disabled)');
+      if (!activeBtn) {
+        const firstAvail = group.querySelector('.variant-badge-btn:not(:disabled)');
+        if (firstAvail) {
+          group.querySelectorAll('.variant-badge-btn').forEach((b) => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          firstAvail.classList.add('active');
+          firstAvail.setAttribute('aria-pressed', 'true');
+          const lbl = document.getElementById('selectedVal-0');
+          if (lbl) lbl.textContent = firstAvail.getAttribute('data-value');
+        }
+      }
+    } else {
+      // Multi-Option Dimensions (e.g. Option 0 = Flavor, Option 1 = Strength, etc.)
+      
+      // Step A: Evaluate Level 0 (Option 0: Flavor)
+      // A flavor is out-of-stock ONLY if ALL its variants have stock <= 0
+      const group0 = groups[0];
+      group0.querySelectorAll('.variant-badge-btn').forEach((btn) => {
+        const val0 = btn.getAttribute('data-value').trim().toLowerCase();
+        const hasAnyInStock = productVariantsList.some((v) => {
+          const parts = (v.variant_name || '').split(' / ').map((s) => s.trim().toLowerCase());
+          const vStock = parseInt(v.stock_quantity, 10) || 0;
+          return (parts[0] === val0) && (vStock > 0);
+        });
+
+        if (!hasAnyInStock) {
+          btn.disabled = true;
+          btn.classList.add('is-out-of-stock', 'is-disabled');
+          btn.setAttribute('aria-disabled', 'true');
+          btn.setAttribute('title', `${btn.getAttribute('data-value')} (Out of stock)`);
+        } else {
+          btn.disabled = false;
+          btn.classList.remove('is-out-of-stock', 'is-disabled');
+          btn.removeAttribute('aria-disabled');
+          btn.removeAttribute('title');
+        }
+      });
+
+      // Ensure Option 0 has an in-stock active selection
+      let activeBtn0 = group0.querySelector('.variant-badge-btn.active:not(:disabled)');
+      if (!activeBtn0) {
+        const firstAvail0 = group0.querySelector('.variant-badge-btn:not(:disabled)');
+        if (firstAvail0) {
+          group0.querySelectorAll('.variant-badge-btn').forEach((b) => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          firstAvail0.classList.add('active');
+          firstAvail0.setAttribute('aria-pressed', 'true');
+          activeBtn0 = firstAvail0;
+          const lbl0 = document.getElementById('selectedVal-0');
+          if (lbl0) lbl0.textContent = firstAvail0.getAttribute('data-value');
+        }
+      }
+
+      const activeValues = [activeBtn0 ? activeBtn0.getAttribute('data-value').trim() : ''];
+
+      // Step B: For Level 1..N, evaluate availability against current preceding choices
+      for (let g = 1; g < maxDims; g++) {
+        const grp = groups[g];
+        const btns = grp.querySelectorAll('.variant-badge-btn');
+
+        btns.forEach((btn) => {
+          const testVal = btn.getAttribute('data-value').trim();
+          const testCombo = activeValues.slice(0, g);
+          testCombo[g] = testVal;
+
+          const matchedVar = getVariantForValues(testCombo);
+          const vStock = matchedVar ? parseInt(matchedVar.stock_quantity, 10) : 0;
+
+          if (!matchedVar || vStock <= 0) {
+            btn.disabled = true;
+            btn.classList.add('is-out-of-stock', 'is-disabled');
+            btn.setAttribute('aria-disabled', 'true');
+            btn.setAttribute('title', `${testVal} (Out of stock)`);
+          } else {
+            btn.disabled = false;
+            btn.classList.remove('is-out-of-stock', 'is-disabled');
+            btn.removeAttribute('aria-disabled');
+            btn.removeAttribute('title');
+          }
+        });
+
+        // If the currently active badge in this group is now disabled, auto-switch to first available in-stock option
+        let activeBtn = grp.querySelector('.variant-badge-btn.active:not(:disabled)');
+        if (!activeBtn) {
+          const firstAvail = grp.querySelector('.variant-badge-btn:not(:disabled)');
+          if (firstAvail) {
+            grp.querySelectorAll('.variant-badge-btn').forEach((b) => {
+              b.classList.remove('active');
+              b.setAttribute('aria-pressed', 'false');
+            });
+            firstAvail.classList.add('active');
+            firstAvail.setAttribute('aria-pressed', 'true');
+            activeBtn = firstAvail;
+            const lbl = document.getElementById(`selectedVal-${g}`);
+            if (lbl) lbl.textContent = firstAvail.getAttribute('data-value');
+          }
+        }
+
+        activeValues[g] = activeBtn ? activeBtn.getAttribute('data-value').trim() : '';
+      }
+    }
+  }
+
+  function resolveSelectedVariant() {
+    if (!variantsWrapper || productVariantsList.length === 0) return null;
+
+    const groups = variantsWrapper.querySelectorAll('.variant-option-group');
+    const selectedValues = [];
+
+    groups.forEach((group) => {
+      const activeBtn = group.querySelector('.variant-badge-btn.active:not(:disabled)') || group.querySelector('.variant-badge-btn.active');
+      if (activeBtn) {
+        selectedValues.push(activeBtn.getAttribute('data-value').trim());
+      }
+    });
+
+    if (selectedValues.length === 0) return null;
+
+    const matched = getVariantForValues(selectedValues);
     return matched || productVariantsList[0];
   }
 
@@ -254,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (stockStatusWrap && stockTextEl && !isNaN(vStock)) {
       if (vStock <= 0) {
         stockStatusWrap.className = 'product-stock-status out-of-stock';
-        stockTextEl.innerHTML = '<strong>Out of Stock.</strong> Currently unavailable.';
+        stockTextEl.innerHTML = '<strong>Out of Stock</strong>';
         if (btnAddToCart) {
           btnAddToCart.disabled = true;
           btnAddToCart.style.opacity = '0.6';
@@ -266,23 +417,9 @@ document.addEventListener('DOMContentLoaded', () => {
           btnBuyNow.style.opacity = '0.6';
           btnBuyNow.style.cursor = 'not-allowed';
         }
-      } else if (vStock < 15) {
-        stockStatusWrap.className = 'product-stock-status low-stock';
-        stockTextEl.innerHTML = `<strong>Low Stock (${vStock} left).</strong> Order soon.`;
-        if (btnAddToCart) {
-          btnAddToCart.disabled = false;
-          btnAddToCart.style.opacity = '';
-          btnAddToCart.style.cursor = '';
-          btnAddToCart.textContent = 'Add to cart';
-        }
-        if (btnBuyNow) {
-          btnBuyNow.disabled = false;
-          btnBuyNow.style.opacity = '';
-          btnBuyNow.style.cursor = '';
-        }
       } else {
         stockStatusWrap.className = 'product-stock-status in-stock';
-        stockTextEl.innerHTML = '<strong>In Stock.</strong> Ships today if ordered by 3:00 PM EST';
+        stockTextEl.innerHTML = '<strong>In Stock</strong>';
         if (btnAddToCart) {
           btnAddToCart.disabled = false;
           btnAddToCart.style.opacity = '';
@@ -322,6 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
     badgeBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+
+        // If option is disabled or out-of-stock, strictly prevent selection!
+        if (btn.disabled || btn.classList.contains('is-out-of-stock') || btn.classList.contains('is-disabled')) {
+          return;
+        }
+
         const group = btn.closest('.variant-option-group');
         if (!group) return;
 
@@ -340,6 +483,9 @@ document.addEventListener('DOMContentLoaded', () => {
           labelEl.textContent = val;
         }
 
+        // Dynamically recalculate availability for dependent options
+        updateBadgesAvailability();
+
         const matched = resolveSelectedVariant();
         if (matched) {
           applyVariant(matched);
@@ -347,7 +493,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Initial setup on page load
+    // Initial setup on page load: compute availability and apply initial variant
+    updateBadgesAvailability();
     const initialMatched = resolveSelectedVariant();
     if (initialMatched) {
       applyVariant(initialMatched);
@@ -363,6 +510,33 @@ document.addEventListener('DOMContentLoaded', () => {
         applyVariant(matched);
       }
     });
+  } else {
+    // For Simple Products (No Variants): check out-of-stock state
+    const isOutOfStock = document.querySelector('.product-stock-status.out-of-stock') || document.querySelector('.product-purchase-row[data-in-stock="0"]');
+    if (isOutOfStock) {
+      if (btnAddToCart) {
+        btnAddToCart.disabled = true;
+        btnAddToCart.classList.add('is-disabled');
+        btnAddToCart.textContent = 'Out of Stock';
+        btnAddToCart.style.opacity = '0.6';
+        btnAddToCart.style.cursor = 'not-allowed';
+      }
+      if (btnBuyNow) {
+        btnBuyNow.disabled = true;
+        btnBuyNow.classList.add('is-disabled');
+        btnBuyNow.style.opacity = '0.6';
+        btnBuyNow.style.cursor = 'not-allowed';
+      }
+      if (qtyInput) qtyInput.disabled = true;
+      if (qtyMinus) {
+        qtyMinus.disabled = true;
+        qtyMinus.style.pointerEvents = 'none';
+      }
+      if (qtyPlus) {
+        qtyPlus.disabled = true;
+        qtyPlus.style.pointerEvents = 'none';
+      }
+    }
   }
 
   // 4. Buy It Now Action Feedback & Instant Checkout
@@ -370,6 +544,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnBuyNow) {
     btnBuyNow.addEventListener('click', (e) => {
       e.preventDefault();
+      if (btnBuyNow.disabled || btnBuyNow.classList.contains('is-disabled')) {
+        e.stopPropagation();
+        return;
+      }
       const originalText = btnBuyNow.textContent;
       btnBuyNow.textContent = 'PROCEEDING TO CHECKOUT...';
       btnBuyNow.style.opacity = '0.85';
