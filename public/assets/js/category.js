@@ -41,6 +41,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // Auto-scroll Collections list to ensure active selection is in view
+  const activeColRadio = document.querySelector('.filter-accordion-group .filter-scrollable-list input[type="radio"]:checked');
+  if (activeColRadio) {
+    const activeColLi = activeColRadio.closest('li');
+    if (activeColLi) {
+      setTimeout(() => {
+        activeColLi.scrollIntoView({ block: 'nearest' });
+      }, 50);
+    }
+  }
+
   /* ==========================================================================
      2. DUAL PRICE RANGE SLIDER
      ========================================================================== */

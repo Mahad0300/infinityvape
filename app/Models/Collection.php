@@ -221,13 +221,21 @@ class Collection extends Model
                 : $data['related_collection_ids'];
         }
 
+        $headerVal = null;
+        if (isset($data['header_collection_ids'])) {
+            $headerVal = is_array($data['header_collection_ids']) 
+                ? json_encode(array_values(array_filter(array_map('intval', $data['header_collection_ids'])))) 
+                : $data['header_collection_ids'];
+        }
+
         try {
             self::ensureLongDescriptionColumn($db);
             self::ensureRelatedCollectionsColumn($db);
+            self::ensureHeaderCollectionsColumn($db);
 
             $sql = "INSERT INTO collections 
-                    (parent_id, name, slug, custom_url_path, header_image_url, short_description, long_description, related_collection_ids, meta_title, meta_desc, sort_order, is_active)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    (parent_id, name, slug, custom_url_path, header_image_url, short_description, long_description, related_collection_ids, header_collection_ids, meta_title, meta_desc, sort_order, is_active)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -239,6 +247,7 @@ class Collection extends Model
                 $shortDescription,
                 $longDescription,
                 $relatedVal,
+                $headerVal,
                 $metaTitle,
                 $metaDesc,
                 $sortOrder,
@@ -299,6 +308,7 @@ class Collection extends Model
         try {
             self::ensureLongDescriptionColumn($db);
             self::ensureRelatedCollectionsColumn($db);
+            self::ensureHeaderCollectionsColumn($db);
 
             $fields = [
                 'parent_id = ?' => $parentId,
@@ -324,6 +334,13 @@ class Collection extends Model
                     $relVal = json_encode(array_values(array_filter(array_map('intval', $relVal))));
                 }
                 $fields['related_collection_ids = ?'] = $relVal;
+            }
+            if (array_key_exists('header_collection_ids', $data)) {
+                $headVal = $data['header_collection_ids'];
+                if (is_array($headVal)) {
+                    $headVal = json_encode(array_values(array_filter(array_map('intval', $headVal))));
+                }
+                $fields['header_collection_ids = ?'] = $headVal;
             }
 
             $setClause = implode(', ', array_keys($fields));
@@ -440,6 +457,78 @@ class Collection extends Model
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
             error_log("Collection::getRelatedCollections error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Ensure header_collection_ids column exists in collections table
+     */
+    public static function ensureHeaderCollectionsColumn($db = null)
+    {
+        $db = $db ?: self::getDB();
+        if (!$db) return;
+        static $checked = false;
+        if ($checked) return;
+
+        try {
+            $cols = $db->query("SHOW COLUMNS FROM collections LIKE 'header_collection_ids'")->fetchAll();
+            if (empty($cols)) {
+                $db->exec("ALTER TABLE collections ADD COLUMN header_collection_ids TEXT DEFAULT NULL AFTER related_collection_ids");
+            }
+            $checked = true;
+        } catch (\Exception $e) {
+            error_log("ensureHeaderCollectionsColumn error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get header banner navigation collections (checkmarked by admin)
+     */
+    public static function getHeaderCollections($collection, $limit = 20)
+    {
+        $db = self::getDB();
+        if (!$db) return [];
+
+        self::ensureHeaderCollectionsColumn($db);
+
+        $headerIds = [];
+        if (is_array($collection) && !empty($collection['header_collection_ids'])) {
+            $raw = $collection['header_collection_ids'];
+            if (is_array($raw)) {
+                $headerIds = $raw;
+            } else {
+                $decoded = json_decode($raw, true);
+                if (is_array($decoded)) {
+                    $headerIds = $decoded;
+                } else {
+                    $headerIds = explode(',', $raw);
+                }
+            }
+            $headerIds = array_values(array_filter(array_map('intval', $headerIds)));
+        }
+
+        // If no header collections were marked by admin, return empty
+        if (empty($headerIds)) {
+            return [];
+        }
+
+        try {
+            $placeholders = implode(',', array_fill(0, count($headerIds), '?'));
+            $sql = "SELECT c.*, 
+                           COUNT(pc.product_id) AS products_count
+                    FROM collections c
+                    LEFT JOIN product_collections pc ON c.id = pc.collection_id
+                    WHERE c.id IN ($placeholders) AND c.is_active = 1
+                    GROUP BY c.id
+                    ORDER BY FIELD(c.id, $placeholders)";
+            
+            $params = array_merge($headerIds, $headerIds);
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Collection::getHeaderCollections error: " . $e->getMessage());
             return [];
         }
     }

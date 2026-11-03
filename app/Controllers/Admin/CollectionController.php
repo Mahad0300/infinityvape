@@ -70,6 +70,10 @@ class CollectionController extends AdminController
                 ? array_values(array_filter(array_map('intval', $_POST['related_collections'])))
                 : [];
 
+            $headerCollections = isset($_POST['header_collections']) && is_array($_POST['header_collections'])
+                ? array_values(array_filter(array_map('intval', $_POST['header_collections'])))
+                : [];
+
             $newId = Collection::create([
                 'name' => $name,
                 'slug' => $slug,
@@ -78,6 +82,7 @@ class CollectionController extends AdminController
                 'header_image_url' => $headerImageUrl,
                 'parent_id' => $parentId,
                 'related_collection_ids' => !empty($relatedCollections) ? json_encode($relatedCollections) : null,
+                'header_collection_ids' => !empty($headerCollections) ? json_encode($headerCollections) : null,
                 'seo_title' => $seoTitle,
                 'seo_description' => $seoDescription,
                 'is_active' => $isActive
@@ -167,6 +172,10 @@ class CollectionController extends AdminController
                 ? array_values(array_filter(array_map('intval', $_POST['related_collections'])))
                 : [];
 
+            $headerCollections = isset($_POST['header_collections']) && is_array($_POST['header_collections'])
+                ? array_values(array_filter(array_map('intval', $_POST['header_collections'])))
+                : [];
+
             $updated = Collection::update($id, [
                 'name' => $name,
                 'slug' => $slug,
@@ -175,6 +184,7 @@ class CollectionController extends AdminController
                 'header_image_url' => $headerImageUrl,
                 'parent_id' => $parentId,
                 'related_collection_ids' => !empty($relatedCollections) ? json_encode($relatedCollections) : null,
+                'header_collection_ids' => !empty($headerCollections) ? json_encode($headerCollections) : null,
                 'seo_title' => $seoTitle,
                 'seo_description' => $seoDescription,
                 'is_active' => $isActive

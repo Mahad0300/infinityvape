@@ -633,4 +633,87 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize state on load
     updateRelCount();
   }
+
+  // 7. Header Banner Quick Links Search & Counter
+  const searchHeaderInput = document.getElementById('searchHeaderCollectionsInput');
+  const headerGrid = document.getElementById('headerCollectionsGrid');
+  const btnSelectAllHeader = document.getElementById('btnSelectAllHeader');
+  const btnClearAllHeader = document.getElementById('btnClearAllHeader');
+  const selectedHeaderCountBadge = document.getElementById('selectedHeaderCountBadge');
+
+  function updateHeaderCount() {
+    if (!headerGrid) return;
+    const checkedBoxes = headerGrid.querySelectorAll('.header-col-checkbox:checked');
+    const count = checkedBoxes.length;
+    if (selectedHeaderCountBadge) {
+      selectedHeaderCountBadge.textContent = count + ' selected';
+    }
+
+    // Toggle active card styling
+    headerGrid.querySelectorAll('.header-col-checkbox-card').forEach(card => {
+      const cb = card.querySelector('.header-col-checkbox');
+      if (cb && cb.checked) {
+        card.classList.add('is-selected');
+        card.style.borderColor = 'var(--admin-primary, #082142)';
+        card.style.background = '#f8fafc';
+      } else {
+        card.classList.remove('is-selected');
+        card.style.borderColor = 'var(--border-color, #e2e8f0)';
+        card.style.background = '#ffffff';
+      }
+    });
+  }
+
+  if (headerGrid) {
+    // Listen for checkbox changes
+    headerGrid.addEventListener('change', (e) => {
+      if (e.target && e.target.classList.contains('header-col-checkbox')) {
+        updateHeaderCount();
+      }
+    });
+
+    // Live search filter
+    if (searchHeaderInput) {
+      searchHeaderInput.addEventListener('input', () => {
+        const query = searchHeaderInput.value.trim().toLowerCase();
+        const cards = headerGrid.querySelectorAll('.header-col-checkbox-card');
+        cards.forEach(card => {
+          const title = (card.querySelector('.header-col-title')?.textContent || '').toLowerCase();
+          if (!query || title.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // Select All visible
+    if (btnSelectAllHeader) {
+      btnSelectAllHeader.addEventListener('click', (e) => {
+        e.preventDefault();
+        headerGrid.querySelectorAll('.header-col-checkbox-card').forEach(card => {
+          if (card.style.display !== 'none') {
+            const cb = card.querySelector('.header-col-checkbox');
+            if (cb) cb.checked = true;
+          }
+        });
+        updateHeaderCount();
+      });
+    }
+
+    // Clear All
+    if (btnClearAllHeader) {
+      btnClearAllHeader.addEventListener('click', (e) => {
+        e.preventDefault();
+        headerGrid.querySelectorAll('.header-col-checkbox').forEach(cb => {
+          cb.checked = false;
+        });
+        updateHeaderCount();
+      });
+    }
+
+    // Initialize state on load
+    updateHeaderCount();
+  }
 });

@@ -4,11 +4,6 @@
  * 100% Dynamic Collection & Shop Catalog with Live Filters, Sorting, and Responsive Product Grid.
  */
 
-$page_title = $page_title ?? 'Shop All Vapes, E-Liquids & Disposables | Infinity Vape Shop';
-$page_js    = 'category';
-
-include dirname(__DIR__) . '/includes/header.php';
-
 // Safe variables
 $collection       = $collection ?? [];
 $allCollections   = $allCollections ?? [];
@@ -25,6 +20,13 @@ $collName = !empty($collection['name']) ? $collection['name'] : 'Shop All Vapes'
 $collDesc = !empty($collection['short_description']) 
     ? $collection['short_description'] 
     : 'Browse our full lineup of authentic disposable vapes, premium e-liquids, nicotine pouches, and kits.';
+
+$page_title       = $page_title ?? (!empty($collection['meta_title']) ? $collection['meta_title'] : ($collName . ' - Shop All Top Brands & Puffs | Infinity Vape Shop'));
+$meta_description = $meta_description ?? (!empty($collection['meta_desc']) ? $collection['meta_desc'] : $collDesc);
+$canonical_url    = $canonical_url ?? (!empty($collection['id']) ? \App\Models\Collection::getUrl($collection) : url('collections'));
+$page_js          = 'category';
+
+include dirname(__DIR__) . '/includes/header.php';
 ?>
 
 <!-- ==========================================
@@ -69,67 +71,30 @@ $collDesc = !empty($collection['short_description'])
         <?= htmlspecialchars($collDesc) ?>
       </p>
 
-      <!-- Quick Filter Pills Row (Sub-collections & Puff Presets) -->
+      <!-- Quick Navigation / Filter Pills Row (Dynamic Admin Selected Collections) -->
+      <?php if (!empty($headerCollections)): ?>
       <div class="category-quick-pills-wrap">
         <div class="category-quick-pills">
           <?php
             $baseCollUrl = \App\Models\Collection::getUrl($collection);
-            $sep = (strpos($baseCollUrl, '?') !== false) ? '&' : '?';
           ?>
-          <a href="<?= $baseCollUrl ?>" class="quick-pill-btn <?= ($activePuff === 'all' || empty($activePuff)) ? 'active' : '' ?>" data-filter="all" data-url="<?= $baseCollUrl ?>">
+          <a href="<?= $baseCollUrl ?>" class="quick-pill-btn active">
             All <?= htmlspecialchars($collName) ?>
           </a>
 
-          <a href="<?= $baseCollUrl . $sep ?>puffs=bestseller" class="quick-pill-btn <?= ($activePuff === 'bestseller') ? 'active' : '' ?>" data-filter="bestseller" data-url="<?= $baseCollUrl . $sep ?>puffs=bestseller">
-            🔥 Best Sellers
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=5000" class="quick-pill-btn <?= ($activePuff === '5000' || $activePuff === '5k') ? 'active' : '' ?>" data-filter="5000" data-url="<?= $baseCollUrl . $sep ?>puffs=5000">
-            5,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=10000" class="quick-pill-btn <?= ($activePuff === '10000' || $activePuff === '10k') ? 'active' : '' ?>" data-filter="10000" data-url="<?= $baseCollUrl . $sep ?>puffs=10000">
-            10,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=15000" class="quick-pill-btn <?= ($activePuff === '15000' || $activePuff === '15k') ? 'active' : '' ?>" data-filter="15000" data-url="<?= $baseCollUrl . $sep ?>puffs=15000">
-            15,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=20000" class="quick-pill-btn <?= ($activePuff === '20000' || $activePuff === '20k') ? 'active' : '' ?>" data-filter="20000" data-url="<?= $baseCollUrl . $sep ?>puffs=20000">
-            20,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=30000" class="quick-pill-btn <?= ($activePuff === '30000' || $activePuff === '30k') ? 'active' : '' ?>" data-filter="30000" data-url="<?= $baseCollUrl . $sep ?>puffs=30000">
-            30,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=50000" class="quick-pill-btn <?= ($activePuff === '50000' || $activePuff === '50k') ? 'active' : '' ?>" data-filter="50000" data-url="<?= $baseCollUrl . $sep ?>puffs=50000">
-            50,000+ Puffs
-          </a>
-
-          <a href="<?= $baseCollUrl . $sep ?>puffs=zero-nic" class="quick-pill-btn <?= ($activePuff === 'zero-nic') ? 'active' : '' ?>" data-filter="zero-nic" data-url="<?= $baseCollUrl . $sep ?>puffs=zero-nic">
-            🍃 Zero Nicotine
-          </a>
-
-          <?php if (!empty($childCollections)): ?>
-            <?php foreach ($childCollections as $child): 
-              $childName = $child['name'] ?? '';
-              // Avoid duplicate puff tier pill
-              if (preg_match('/(\d+)[,\d]*\s*puff/i', $childName)) continue;
-              $childUrl = \App\Models\Collection::getUrl($child);
-              $isChildActive = ($currentSlug === $child['slug']);
-            ?>
-              <a href="<?= $childUrl ?>" class="quick-pill-btn sub-cat-pill <?= $isChildActive ? 'active' : '' ?>">
-                <?= htmlspecialchars($childName) ?>
-                <?php if (!empty($child['products_count'])): ?>
-                  <span class="pill-count">(<?= $child['products_count'] ?>)</span>
-                <?php endif; ?>
-              </a>
-            <?php endforeach; ?>
-          <?php endif; ?>
+          <?php foreach ($headerCollections as $hCol): 
+            $hUrl = \App\Models\Collection::getUrl($hCol);
+            $isCurrent = ((int)$hCol['id'] === (int)($collection['id'] ?? 0) || ($hCol['slug'] ?? '') === $currentSlug);
+          ?>
+            <a href="<?= $hUrl ?>" class="quick-pill-btn <?= $isCurrent ? 'active' : '' ?>">
+              <?= htmlspecialchars($hCol['name']) ?>
+            </a>
+          <?php endforeach; ?>
         </div>
       </div>
+      <?php endif; ?>
+
+
     </div>
   </div>
 </section>
@@ -152,6 +117,31 @@ $collDesc = !empty($collection['short_description'])
           </button>
         </div>
 
+        <style>
+          .filter-scrollable-list {
+            max-height: 275px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+          }
+          .filter-scrollable-list::-webkit-scrollbar {
+            width: 5px;
+          }
+          .filter-scrollable-list::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+          }
+          .filter-scrollable-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+          }
+          .filter-scrollable-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+        </style>
+
         <div class="filter-card">
 
           <!-- 1. All Collections Accordion -->
@@ -165,24 +155,35 @@ $collDesc = !empty($collection['short_description'])
               </span>
             </button>
             <div class="filter-group-body">
-              <ul class="filter-options-list">
+              <?php
+                // Filter only active collections
+                $activeCollections = array_filter($allCollections ?? [], function($c) {
+                    if (isset($c['is_active'])) {
+                        return (int)$c['is_active'] === 1;
+                    }
+                    return true;
+                });
+              ?>
+              <ul class="filter-options-list filter-scrollable-list">
+                <!-- Shop All Vapes (Primary view) -->
                 <li>
                   <label class="filter-option-label" onclick="window.location.href='<?= url('collections') ?>';">
                     <input type="radio" name="filterCollection" class="filter-radio" <?= ($currentSlug === 'all') ? 'checked' : '' ?>>
                     <span class="filter-radio-custom"></span>
-                    <span class="option-name">Shop All Vapes</span>
+                    <span class="option-name" style="<?= ($currentSlug === 'all') ? 'font-weight: 700; color: #0b2545;' : '' ?>">Shop All Vapes</span>
                   </label>
                 </li>
-                <?php foreach ($allCollections as $cat): 
-                  if (!empty($cat['parent_id'])) continue; // Show top level in primary list
-                  $isActive = ($currentSlug === $cat['slug']);
-                  $catUrl = \App\Models\Collection::getUrl($cat);
+
+                <?php 
+                foreach ($activeCollections as $cat): 
+                  $isActive = ($currentSlug === ($cat['slug'] ?? ''));
+                  $catUrl   = \App\Models\Collection::getUrl($cat);
                 ?>
                 <li>
                   <label class="filter-option-label" onclick="window.location.href='<?= htmlspecialchars($catUrl) ?>';">
                     <input type="radio" name="filterCollection" class="filter-radio" <?= $isActive ? 'checked' : '' ?>>
                     <span class="filter-radio-custom"></span>
-                    <span class="option-name"><?= htmlspecialchars($cat['name']) ?></span>
+                    <span class="option-name" style="<?= $isActive ? 'font-weight: 700; color: #0b2545;' : '' ?>"><?= htmlspecialchars($cat['name']) ?></span>
                     <?php if (isset($cat['products_count'])): ?>
                     <span class="option-count"><?= (int)$cat['products_count'] ?></span>
                     <?php endif; ?>
@@ -228,8 +229,8 @@ $collDesc = !empty($collection['short_description'])
 
           <!-- 3. Brands Filter -->
           <?php if (!empty($brands)): ?>
-          <div class="filter-accordion-group open">
-            <button type="button" class="filter-group-header" aria-expanded="true">
+          <div class="filter-accordion-group">
+            <button type="button" class="filter-group-header" aria-expanded="false">
               <span class="filter-group-title">Brand</span>
               <span class="filter-chevron" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -238,7 +239,7 @@ $collDesc = !empty($collection['short_description'])
               </span>
             </button>
             <div class="filter-group-body">
-              <ul class="filter-options-list">
+              <ul class="filter-options-list filter-scrollable-list">
                 <?php foreach ($brands as $b): 
                   $bSlug = $b['slug'] ?? '';
                   $bCount = $b['products_count'] ?? 0;
@@ -258,48 +259,7 @@ $collDesc = !empty($collection['short_description'])
           </div>
           <?php endif; ?>
 
-          <!-- 4. Puff Count Brackets -->
-          <div class="filter-accordion-group open">
-            <button type="button" class="filter-group-header" aria-expanded="true">
-              <span class="filter-group-title">Puff Count</span>
-              <span class="filter-chevron" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </span>
-            </button>
-            <div class="filter-group-body">
-              <ul class="filter-options-list">
-                <li><label class="filter-option-label"><input type="checkbox" class="puff-filter-checkbox" data-min-puffs="5000" data-max-puffs="9999"><span class="filter-check-custom"></span><span class="option-name">5,000 – 9,999 Puffs</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="puff-filter-checkbox" data-min-puffs="10000" data-max-puffs="14999"><span class="filter-check-custom"></span><span class="option-name">10,000 – 14,999 Puffs</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="puff-filter-checkbox" data-min-puffs="15000" data-max-puffs="19999"><span class="filter-check-custom"></span><span class="option-name">15,000 – 19,999 Puffs</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="puff-filter-checkbox" data-min-puffs="20000" data-max-puffs="29999"><span class="filter-check-custom"></span><span class="option-name">20,000 – 29,999 Puffs</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="puff-filter-checkbox" data-min-puffs="30000" data-max-puffs="999999"><span class="filter-check-custom"></span><span class="option-name">30,000+ Puffs</span></label></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- 5. Nicotine Strength -->
-          <div class="filter-accordion-group">
-            <button type="button" class="filter-group-header" aria-expanded="false">
-              <span class="filter-group-title">Nicotine Strength</span>
-              <span class="filter-chevron" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </span>
-            </button>
-            <div class="filter-group-body">
-              <ul class="filter-options-list">
-                <li><label class="filter-option-label"><input type="checkbox" class="nic-filter-checkbox" data-nic="0"><span class="filter-check-custom"></span><span class="option-name">0% (Zero Nicotine)</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="nic-filter-checkbox" data-nic="20"><span class="filter-check-custom"></span><span class="option-name">2% (20mg/mL)</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="nic-filter-checkbox" data-nic="30"><span class="filter-check-custom"></span><span class="option-name">3% (30mg/mL)</span></label></li>
-                <li><label class="filter-option-label"><input type="checkbox" class="nic-filter-checkbox" data-nic="50"><span class="filter-check-custom"></span><span class="option-name">5% (50mg/mL Nic Salt)</span></label></li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- 6. Stock Availability -->
+          <!-- 4. Stock Availability -->
           <div class="filter-accordion-group">
             <button type="button" class="filter-group-header" aria-expanded="false">
               <span class="filter-group-title">Availability</span>
@@ -507,14 +467,6 @@ $collDesc = !empty($collection['short_description'])
                   <span class="card-stars">★★★★★</span>
                   <span class="card-reviews-count">(<?= !empty($p['reviews_count']) ? (int)$p['reviews_count'] : 24 ?>)</span>
                 </div>
-
-                <!-- Puff Count Pill -->
-                <?php if ($puffsNum > 0): ?>
-                  <div class="card-puff-badge">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <?= number_format($puffsNum) ?> Puffs
-                  </div>
-                <?php endif; ?>
 
                 <!-- Price Row -->
                 <div class="card-price-row">

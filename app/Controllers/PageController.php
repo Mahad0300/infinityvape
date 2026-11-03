@@ -101,6 +101,7 @@ class PageController extends Controller
 
         $this->render('front.page.contact', [
             'page_title' => 'Contact Us | Infinity Vape Shop',
+            'meta_description' => 'Contact Infinity Vape Shop customer support. Reach out with questions about orders, products, shipping, returns, or wholesale inquiries.',
             'active_page' => 'contact',
             'success' => $success,
             'error' => $error

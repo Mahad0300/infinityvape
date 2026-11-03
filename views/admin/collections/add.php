@@ -122,6 +122,14 @@ include dirname(__DIR__) . '/includes/header.php';
 .rte-editor-content li { margin-bottom: 4px; }
 .rte-editor-content a { color: #f25c27 !important; text-decoration: underline; font-weight: 600; }
 .rte-editor-content mark, .rte-editor-content .rte-highlight { background-color: #fef08a !important; padding: 1px 3px; border-radius: 2px; color: #082142 !important; }
+.related-col-checkbox-card:hover, .header-col-checkbox-card:hover {
+  border-color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+.related-col-checkbox-card.is-selected, .header-col-checkbox-card.is-selected {
+  border-color: var(--admin-primary, #082142) !important;
+  background-color: #f0f4f9 !important;
+}
 </style>
 
 <!-- Title & Action Bar -->
@@ -193,11 +201,64 @@ include dirname(__DIR__) . '/includes/header.php';
 
       </div>
 
-      <!-- 2. Collection Long Description (Storefront SEO Body & Read More) -->
+      <!-- 2. Header Banner Quick Links Card -->
+      <div class="admin-card">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2 class="admin-card-title">Header Banner Quick Links</h2>
+            <p class="form-help-text" style="margin-top: 4px;">Select which collections to display as quick navigation pills in the header banner.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-secondary" id="selectedHeaderCountBadge" style="font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #edf2f9; color: #082142; font-weight: 600;">0 selected</span>
+            <button type="button" class="btn-admin btn-admin-secondary" id="btnClearAllHeader" style="padding: 5px 10px; font-size: 12px;">Clear All</button>
+          </div>
+        </div>
+        <div class="admin-card-body">
+          <!-- Search / Quick Filter Input -->
+          <div style="margin-bottom: 14px; position: relative;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchHeaderCollectionsInput" class="admin-form-input" placeholder="Search collections for header banner..." style="padding-left: 36px; height: 38px;">
+          </div>
+
+          <!-- Scrollable Collections Grid -->
+          <div id="headerCollectionsGrid" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: #fafbfc; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px;">
+            <?php if (!empty($all_collections)): ?>
+              <?php foreach ($all_collections as $availCol): 
+                $availId = (int)$availCol['id'];
+                $availImg = !empty($availCol['header_image_url']) ? asset($availCol['header_image_url']) : '';
+                $pCount = (int)($availCol['products_count'] ?? 0);
+              ?>
+                <label class="header-col-checkbox-card" style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 6px; cursor: pointer; transition: all 0.15s ease; user-select: none;">
+                  <input type="checkbox" name="header_collections[]" value="<?= $availId ?>" class="header-col-checkbox" style="width: 16px; height: 16px; accent-color: #082142; cursor: pointer;">
+                  <div style="width: 32px; height: 32px; border-radius: 4px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; border: 1px solid #e2e8f0;">
+                    <?php if ($availImg): ?>
+                      <img src="<?= $availImg ?>" alt="<?= htmlspecialchars($availCol['name']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                    <?php else: ?>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <?php endif; ?>
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                    <div class="header-col-title" style="font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($availCol['name']) ?></div>
+                    <div style="font-size: 11.5px; color: #64748b;"><?= $pCount ?> product<?= $pCount === 1 ? '' : 's' ?></div>
+                  </div>
+                </label>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <p style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #94a3b8; font-size: 13px;">No other collections found.</p>
+            <?php endif; ?>
+          </div>
+          <p class="form-help-text mt-xs">Checkmarked collections will be shown as top pill navigation links on this collection page.</p>
+        </div>
+      </div>
+
+      <!-- 3. Collection Long Description Card -->
       <div class="admin-card">
         <div class="admin-card-header">
           <div>
-            <h2 class="admin-card-title">Collection Long Description (Storefront Content &amp; Read More)</h2>
+            <h2 class="admin-card-title">Collection Long Description</h2>
             <p class="form-help-text" style="margin-top: 4px;">Comprehensive SEO content placed right above the FAQs. On the storefront, the first 3 lines will be displayed with a smooth "Read More" button to expand.</p>
           </div>
         </div>
@@ -242,11 +303,11 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
       </div>
 
-      <!-- 3. Collection FAQs Card -->
+      <!-- 4. Frequently Asked Questions Card -->
       <div class="admin-card">
         <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <h2 class="admin-card-title">Collection FAQs (Frequently Asked Questions)</h2>
+            <h2 class="admin-card-title">Frequently Asked Questions</h2>
             <p class="form-help-text" style="margin-top: 4px;">Add helpful FAQs to address customer questions and boost search engine SEO rankings on this collection page.</p>
           </div>
           <button type="button" class="btn-admin btn-admin-secondary" id="btnAddFaqRow" style="padding: 7px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
@@ -254,7 +315,7 @@ include dirname(__DIR__) . '/includes/header.php';
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>+ Add FAQ</span>
+            <span>Add FAQ</span>
           </button>
         </div>
         <div class="admin-card-body">
@@ -268,21 +329,20 @@ include dirname(__DIR__) . '/includes/header.php';
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
             <p style="font-weight: 600; color: #475569; margin: 0 0 4px 0; font-size: 14px;">No FAQs added yet</p>
-            <p style="font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;">Click "+ Add FAQ" above to add the first question and answer for this collection.</p>
+            <p style="font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;">Click "Add FAQ" above to add the first question and answer for this collection.</p>
           </div>
         </div>
       </div>
 
-      <!-- 4. Explore Related Collections (Storefront Cross-Sell) Card -->
+      <!-- 5. Explore Related Collections Card -->
       <div class="admin-card">
         <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h2 class="admin-card-title">Explore Related Collections (Storefront Cross-Sell)</h2>
-            <p class="form-help-text" style="margin-top: 4px;">Select which collections should be recommended to customers under the "Explore Related Collections" section on this collection page.</p>
+            <h2 class="admin-card-title">Explore Related Collections</h2>
+            <p class="form-help-text" style="margin-top: 4px;">Select which collections should be recommended under the Explore Related Collections section.</p>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="badge badge-secondary" id="selectedRelCountBadge" style="font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #edf2f9; color: #082142; font-weight: 600;">0 selected</span>
-            <button type="button" class="btn-admin btn-admin-secondary" id="btnSelectAllRel" style="padding: 5px 10px; font-size: 12px;">Select All</button>
             <button type="button" class="btn-admin btn-admin-secondary" id="btnClearAllRel" style="padding: 5px 10px; font-size: 12px;">Clear All</button>
           </div>
         </div>

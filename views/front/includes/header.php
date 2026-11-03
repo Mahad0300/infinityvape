@@ -7,6 +7,26 @@ if (!isset($page_title)) {
     $page_title = 'Infinity Vape Shop | Online Vape Store | Premium Vapes, E-Liquids & Disposables';
 }
 
+// Fallback logic for $meta_description so it is NEVER missing anywhere across the website
+if (empty($meta_description)) {
+    if (!empty($meta_desc)) {
+        $meta_description = $meta_desc;
+    } elseif (!empty($collection['meta_desc'])) {
+        $meta_description = $collection['meta_desc'];
+    } elseif (!empty($collection['short_description'])) {
+        $meta_description = $collection['short_description'];
+    } elseif (!empty($product['meta_desc'])) {
+        $meta_description = $product['meta_desc'];
+    } elseif (!empty($product['short_description'])) {
+        $meta_description = $product['short_description'];
+    } elseif (!empty($page_description)) {
+        $meta_description = $page_description;
+    } else {
+        $meta_description = 'Shop authentic disposable vapes, premium e-liquids, nicotine pouches, and vaping accessories at Infinity Vape Shop. Fast shipping & best online prices.';
+    }
+}
+$meta_description = trim(preg_replace('/\s+/', ' ', strip_tags($meta_description)));
+
 // Fetch dynamic Main Menu tree with Mega Menus and Promotional Banners
 $mainMenuTree = [];
 if (class_exists('\\App\\Models\\Menu')) {
@@ -81,6 +101,20 @@ $formatNavUrl = function($link) {
   <?php if (!empty($meta_description)): ?>
   <meta name="description" content="<?php echo htmlspecialchars($meta_description); ?>">
   <?php endif; ?>
+  <?php if (!empty($canonical_url)): ?>
+  <link rel="canonical" href="<?php echo htmlspecialchars($canonical_url); ?>">
+  <?php endif; ?>
+
+  <!-- Open Graph Meta Tags for Social & SEO Extensions -->
+  <meta property="og:title" content="<?php echo htmlspecialchars($page_title); ?>">
+  <?php if (!empty($meta_description)): ?>
+  <meta property="og:description" content="<?php echo htmlspecialchars($meta_description); ?>">
+  <?php endif; ?>
+  <meta property="og:type" content="website">
+  <?php if (!empty($canonical_url)): ?>
+  <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url); ?>">
+  <?php endif; ?>
+  <meta property="og:site_name" content="Infinity Vape Shop">
   <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
   
   <?php if (!empty($page_schema)): ?>

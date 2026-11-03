@@ -132,18 +132,32 @@ class CollectionController extends Controller
         // Fetch Related Collections (Admin cross-sell configured or fallback)
         $relatedCollections = Collection::getRelatedCollections($collection, 8);
 
-        // SEO Page Title & Description
+        // Fetch Header Quick Navigation Collections (Checkmarked by admin)
+        $headerCollections = Collection::getHeaderCollections($collection);
+
+        // SEO Page Title, Meta Description & Canonical URL
         $pageTitle = !empty($collection['meta_title']) 
             ? $collection['meta_title'] 
             : ($collection['name'] . ' - Shop All Top Brands & Puffs | Infinity Vape Shop');
 
+        $metaDesc = !empty($collection['meta_desc']) 
+            ? $collection['meta_desc'] 
+            : (!empty($collection['short_description']) 
+                ? $collection['short_description'] 
+                : 'Shop ' . ($collection['name'] ?? 'all vapes') . ' at Infinity Vape Shop. Discover authentic disposable vapes, premium e-liquids, and nicotine pouches.');
+
+        $canonicalUrl = !empty($collection['id']) ? Collection::getUrl($collection) : url('collections');
+
         $this->render('front.collection.detail', [
             'page_title'         => $pageTitle,
+            'meta_description'   => $metaDesc,
+            'canonical_url'      => $canonicalUrl,
             'page_js'            => 'category',
             'collection'         => $collection,
             'collectionFaqs'     => $collectionFaqs,
             'allCollections'     => $allCollections,
             'relatedCollections' => $relatedCollections,
+            'headerCollections'  => $headerCollections,
             'childCollections'   => $childCollections,
             'brands'             => $brands,
             'products'           => $products,

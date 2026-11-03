@@ -30,8 +30,10 @@ $comparePrice = !empty($product['compare_price']) ? (float) $product['compare_pr
 $hasDiscount = ($comparePrice > $basePrice);
 $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
 
-$page_title = $productTitle . ' | Infinity Vape Shop';
-$page_js = 'product';
+$page_title       = $page_title ?? ($productTitle . ' | Infinity Vape Shop');
+$meta_description = $meta_description ?? (!empty($product['meta_desc']) ? $product['meta_desc'] : (!empty($product['short_description']) ? $product['short_description'] : ''));
+$canonical_url    = $canonical_url ?? url('product/' . urlencode(!empty($product['slug']) ? $product['slug'] : $product['id']));
+$page_js          = 'product';
 
 include dirname(__DIR__) . '/includes/header.php';
 ?>

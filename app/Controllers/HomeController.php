@@ -27,6 +27,8 @@ class HomeController extends Controller
 
         $this->render('front.home.index', [
             'page_title' => 'Online Vape Store | Every Flavor. In Stock.',
+            'meta_description' => 'Shop top disposable vapes, premium e-liquids, nicotine pouches, and hardware devices at Infinity Vape Shop. Guaranteed authentic with same-day fast shipping.',
+            'canonical_url' => url(),
             'page_js' => 'home',
             'brands' => $brands,
             'categories' => $categories,
