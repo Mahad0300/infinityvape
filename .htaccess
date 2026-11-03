@@ -1,6 +1,23 @@
+# Disable directory browsing
+Options -Indexes
+
+# Block direct web access to sensitive files
+<FilesMatch "(^\.env|\.sql$|\.git|\.log$|composer\.(json|lock)|package\.(json|lock))">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /vapefinalwebsite/
+
+    # Block direct access to internal application directories
+    RewriteRule ^(app|config|storage|views)/ - [F,L]
 
     # Direct static asset requests to the public directory
     RewriteRule ^assets/(.*)$ public/assets/$1 [L,QSA]
@@ -8,7 +25,7 @@
     RewriteRule ^admin/js/(.*)$ public/admin/js/$1 [L,QSA]
     RewriteRule ^admin/assets/(.*)$ public/assets/$1 [L,QSA]
 
-    # Allow direct access to existing physical files & folders
+    # Allow direct access to existing physical files & folders (images, css, js)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]

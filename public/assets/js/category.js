@@ -85,6 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (rangeMin && rangeMax) {
     rangeMin.addEventListener('input', updateSliderFill);
     rangeMax.addEventListener('input', updateSliderFill);
+    rangeMin.addEventListener('change', applyAllFilters);
+    rangeMax.addEventListener('change', applyAllFilters);
 
     if (inputMin) {
       inputMin.addEventListener('change', function () {
@@ -149,12 +151,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Quick pill filter
       if (activeQuickFilter && activeQuickFilter !== 'all') {
-        const cardCat = card.dataset.category || '';
-        if (activeQuickFilter === 'zero-nic') {
-          if (cardCat !== 'zero-nic' && parseInt(card.dataset.nicotine, 10) !== 0) isVisible = false;
-        } else if (activeQuickFilter === 'bestseller') {
-          if (cardCat !== 'bestseller') isVisible = false;
+        const cardPuffs = parseInt(card.dataset.puffs, 10) || 0;
+        const cardNic = parseInt(card.dataset.nicotine, 10) || 0;
+        const cardIsBestseller = card.dataset.bestseller === '1';
+
+        if (activeQuickFilter === 'bestseller') {
+          if (!cardIsBestseller) isVisible = false;
+        } else if (activeQuickFilter === 'zero-nic') {
+          if (cardNic !== 0) isVisible = false;
+        } else if (activeQuickFilter === '5000' || activeQuickFilter === '5k') {
+          if (cardPuffs < 5000 || cardPuffs >= 10000) isVisible = false;
+        } else if (activeQuickFilter === '10000' || activeQuickFilter === '10k') {
+          if (cardPuffs < 10000 || cardPuffs >= 15000) isVisible = false;
+        } else if (activeQuickFilter === '15000' || activeQuickFilter === '15k') {
+          if (cardPuffs < 15000 || cardPuffs >= 20000) isVisible = false;
+        } else if (activeQuickFilter === '20000' || activeQuickFilter === '20k') {
+          if (cardPuffs < 20000 || cardPuffs >= 30000) isVisible = false;
+        } else if (activeQuickFilter === '30000' || activeQuickFilter === '30k') {
+          if (cardPuffs < 30000 || cardPuffs >= 50000) isVisible = false;
+        } else if (activeQuickFilter === '50000' || activeQuickFilter === '50k') {
+          if (cardPuffs < 50000) isVisible = false;
         } else {
+          const cardCat = card.dataset.category || '';
           if (cardCat !== activeQuickFilter) isVisible = false;
         }
       }
@@ -232,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
     inStockCheckbox.addEventListener('change', applyAllFilters);
   }
 
-  // Quick Filter Pills
+  // Quick Filter Pills with URL sync
   const quickPillBtns = document.querySelectorAll('.quick-pill-btn[data-filter]');
   quickPillBtns.forEach(btn => {
     btn.addEventListener('click', function (e) {
@@ -240,8 +258,44 @@ document.addEventListener('DOMContentLoaded', function () {
       quickPillBtns.forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       activeQuickFilter = this.dataset.filter || 'all';
+
+      // Update URL query parameters cleanly
+      try {
+        const url = new URL(window.location.href);
+        if (activeQuickFilter === 'all') {
+          url.searchParams.delete('puffs');
+          url.searchParams.delete('puff');
+          url.searchParams.delete('pill');
+        } else {
+          url.searchParams.set('puffs', activeQuickFilter);
+        }
+        if (window.history && window.history.pushState) {
+          window.history.pushState({ puffs: activeQuickFilter }, '', url.toString());
+        }
+      } catch (err) {
+        console.warn('URL pushState notice:', err);
+      }
+
       applyAllFilters();
     });
+  });
+
+  // Handle browser back & forward navigation
+  window.addEventListener('popstate', function () {
+    const params = new URLSearchParams(window.location.search);
+    const p = (params.get('puffs') || params.get('puff') || 'all').toLowerCase().trim();
+    activeQuickFilter = (p === '5k' ? '5000' : (p === '10k' ? '10000' : (p === '15k' ? '15000' : (p === '20k' ? '20000' : (p === '30k' ? '30000' : (p === '50k' ? '50000' : p))))));
+
+    quickPillBtns.forEach(b => {
+      const f = b.dataset.filter;
+      if (f === activeQuickFilter || (f === 'all' && (activeQuickFilter === 'all' || !activeQuickFilter))) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    applyAllFilters();
   });
 
   // Reset All Filters
@@ -263,6 +317,16 @@ document.addEventListener('DOMContentLoaded', function () {
       const allPill = document.querySelector('.quick-pill-btn[data-filter="all"]');
       if (allPill) allPill.classList.add('active');
       activeQuickFilter = 'all';
+
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('puffs');
+        url.searchParams.delete('puff');
+        url.searchParams.delete('pill');
+        if (window.history && window.history.pushState) {
+          window.history.pushState({ puffs: 'all' }, '', url.toString());
+        }
+      } catch (err) { }
 
       applyAllFilters();
     });
@@ -427,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (paginationInfoText) {
-      paginationInfoText.textContent = totalEligible > 0 ? `Showing ${startIdx + 1}–${endIdx} of ${totalEligible}` : 'Showing 0 products';
+      paginationInfoText.innerHTML = totalEligible > 0 ? `Showing <strong>${startIdx + 1}–${endIdx}</strong> of <strong>${totalEligible}</strong> products` : 'Showing <strong>0</strong> products';
     }
 
     if (paginationPagesWrap) {
@@ -497,8 +561,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Initial render
-  renderPagination();
+  // Initialize filter state from current URL
+  const initialParams = new URLSearchParams(window.location.search);
+  const initialPuffParam = (initialParams.get('puffs') || initialParams.get('puff') || initialParams.get('pill') || '').toLowerCase().trim();
+  if (initialPuffParam) {
+    if (initialPuffParam === '5k' || initialPuffParam === '5000') activeQuickFilter = '5000';
+    else if (initialPuffParam === '10k' || initialPuffParam === '10000') activeQuickFilter = '10000';
+    else if (initialPuffParam === '15k' || initialPuffParam === '15000') activeQuickFilter = '15000';
+    else if (initialPuffParam === '20k' || initialPuffParam === '20000') activeQuickFilter = '20000';
+    else if (initialPuffParam === '30k' || initialPuffParam === '30000') activeQuickFilter = '30000';
+    else if (initialPuffParam === '50k' || initialPuffParam === '50000') activeQuickFilter = '50000';
+    else activeQuickFilter = initialPuffParam;
+
+    quickPillBtns.forEach(b => {
+      const f = b.dataset.filter;
+      if (f === activeQuickFilter || (f === 'all' && (activeQuickFilter === 'all' || !activeQuickFilter))) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+  }
+
+  // Initial render with all filters applied
+  applyAllFilters();
 
   /* ==========================================================================
      8. ADD TO CART INTERACTION
@@ -517,8 +603,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const img = card ? card.querySelector('.card-product-img')?.getAttribute('src') : 'assets/images/no-image.svg';
       const id = btn.dataset.id || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-      if (window.NewVapeCart) {
-        window.NewVapeCart.add({
+      const cartInstance = window.InfinityCart || window.NewVapeCart;
+      if (cartInstance) {
+        cartInstance.add({
           id: id,
           title: title,
           price: price,
@@ -539,4 +626,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  /* ==========================================================================
+     9. COLLECTION FAQS ACCORDION
+     ========================================================================== */
+  const faqsSection = document.getElementById('collectionFaqsSection');
+  if (faqsSection) {
+    faqsSection.addEventListener('click', function (e) {
+      const btn = e.target.closest('.category-faq-question-btn');
+      if (!btn) return;
+
+      const item = btn.closest('.category-faq-item');
+      if (!item) return;
+
+      const isOpen = item.classList.contains('open');
+      item.classList.toggle('open');
+      btn.setAttribute('aria-expanded', !isOpen);
+    });
+  }
+
+  /* ==========================================================================
+     10. CATEGORY BOTTOM DESCRIPTION READ MORE / READ LESS TOGGLE
+     ========================================================================== */
+  const btnReadMore = document.getElementById('btnReadMoreToggle');
+  const textWrap = document.getElementById('categoryBottomTextWrap');
+  if (btnReadMore && textWrap) {
+    btnReadMore.addEventListener('click', function () {
+      const isExpanded = textWrap.classList.contains('expanded');
+      textWrap.classList.toggle('expanded');
+      btnReadMore.classList.toggle('expanded');
+      const textSpan = btnReadMore.querySelector('.read-more-text');
+      if (textSpan) {
+        textSpan.textContent = isExpanded ? 'Read More' : 'Read Less';
+      }
+      btnReadMore.setAttribute('aria-expanded', !isExpanded);
+    });
+  }
+
 });
+

@@ -118,12 +118,12 @@ include dirname(__DIR__) . '/includes/header.php';
           </a>
           <p class="admin-blog-excerpt"><?= e(mb_strimwidth($b['excerpt'] ?? '', 0, 115, '...')) ?></p>
           <div class="admin-blog-card-footer">
-            <span class="admin-blog-readtime">
+            <span class="admin-blog-readtime" title="Published: <?= e(!empty($b['published_at']) ? date('M d, Y h:i A', strtotime($b['published_at'])) : '') ?>">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <?= e($b['read_time'] ?? '5 min read') ?>
+              <?= e(blog_time_display($b['published_at'] ?? '')) ?>
             </span>
             <div class="admin-blog-actions">
               <a href="<?= url('admin/blogs/edit?id=' . $b['id']) ?>" class="btn-action-icon edit-btn" title="Edit Post">
@@ -133,6 +133,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 </svg>
               </a>
               <form action="<?= url('admin/blogs/delete') ?>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this blog post?');">
+                <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= $b['id'] ?>">
                 <button type="submit" class="btn-action-icon delete-btn" title="Delete Post">
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -328,35 +329,5 @@ include dirname(__DIR__) . '/includes/header.php';
   border-color: #fecaca;
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('blogSearchInput');
-  const statusFilter = document.getElementById('blogStatusFilter');
-
-  function applyFilter() {
-    const q = encodeURIComponent(searchInput.value.trim());
-    const s = encodeURIComponent(statusFilter.value);
-    let target = '<?= url("admin/blogs") ?>?';
-    if (q) target += 'q=' + q + '&';
-    if (s && s !== 'all') target += 'status=' + s + '&';
-    window.location.href = target.replace(/&$/, '');
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        applyFilter();
-      }
-    });
-  }
-
-  if (statusFilter) {
-    statusFilter.addEventListener('change', () => {
-      applyFilter();
-    });
-  }
-});
-</script>
 
 <?php include dirname(__DIR__) . '/includes/footer.php'; ?>

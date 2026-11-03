@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
 
       const card = btn.closest('.product-card');
-      if (card && window.NewVapeCart) {
+      const cartInstance = window.InfinityCart || window.NewVapeCart;
+      if (card && cartInstance) {
         const titleEl = card.querySelector('.product-title a, .product-title');
         const priceEl = card.querySelector('.current-price');
         const imgEl = card.querySelector('.product-img');
@@ -21,9 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const priceStr = priceEl ? priceEl.textContent.replace(/[^0-9.]/g, '') : '19.99';
         const price = parseFloat(priceStr) || 19.99;
         const image = imgEl ? imgEl.getAttribute('src') : 'assets/images/no-image.svg';
-        const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const id = btn.getAttribute('data-id') || title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-        window.NewVapeCart.add({
+        cartInstance.add({
           id: id,
           title: title,
           price: price,

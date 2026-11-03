@@ -21,7 +21,7 @@ class CollectionController extends Controller
      */
     public function show($slug = null)
     {
-        $slug = $slug ?? ($_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? 'disposables'))));
+        $slug = $slug ?? ($_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? 'disposable'))));
         $slug = trim(strtolower($slug));
 
         // Handle 'all' or 'shop'
@@ -36,8 +36,35 @@ class CollectionController extends Controller
         }
 
         if (!$collection && !$isAll) {
-            // Default fallback to first active or disposables
-            $collection = Collection::findBySlug('disposables');
+            http_response_code(404);
+            $this->render('errors.404', ['uri' => 'Collection Not Found: ' . htmlspecialchars($slug)]);
+            return;
+        }
+
+        // 301 Permanent Redirect: Redirect legacy URLs or non-canonical single-segment URLs to clean hierarchical SEO URL
+        $rawUri = $_SERVER['REQUEST_URI'] ?? '';
+        if (!$isAll && $collection) {
+            $canonicalUrl = Collection::getUrl($collection);
+            $canonicalPath = parse_url($canonicalUrl, PHP_URL_PATH);
+            $currentPath   = parse_url($rawUri, PHP_URL_PATH);
+
+            $cleanCanonical = rtrim($canonicalPath, '/');
+            $cleanCurrent   = rtrim($currentPath, '/');
+
+            if ($cleanCurrent !== $cleanCanonical || strpos($rawUri, '?cat=') !== false || strpos($rawUri, '?collection=') !== false || strpos($rawUri, '?c=') !== false) {
+                $queryPart = '';
+                if (($qPos = strpos($rawUri, '?')) !== false) {
+                    $qStr = substr($rawUri, $qPos + 1);
+                    parse_str($qStr, $params);
+                    unset($params['slug'], $params['cat'], $params['collection'], $params['c']);
+                    if (!empty($params)) {
+                        $queryPart = '?' . http_build_query($params);
+                    }
+                }
+                header("HTTP/1.1 301 Moved Permanently");
+                header("Location: " . $canonicalUrl . $queryPart);
+                exit;
+            }
         }
 
         if (!$collection) {
@@ -46,7 +73,7 @@ class CollectionController extends Controller
                 'name' => 'Shop All Vapes',
                 'slug' => 'all',
                 'short_description' => 'Explore our full selection of disposable vapes, premium e-liquids, nicotine pouches, and hardware devices from verified authentic brands.',
-                'meta_title' => 'Shop All Vapes, E-Liquids & Disposables | New Vape',
+                'meta_title' => 'Shop All Vapes, E-Liquids & Disposables | Infinity Vape Shop',
                 'meta_desc' => 'Browse our complete catalog of authentic disposable vapes, e-juices, nicotine pouches, and starter kits with fast same-day shipping.'
             ];
         }
@@ -64,7 +91,14 @@ class CollectionController extends Controller
         $inStock = !empty($_GET['in_stock']) ? 1 : 0;
         $sort = $_GET['sort'] ?? 'position';
         $search = $_GET['q'] ?? null;
-        $quickPill = $_GET['pill'] ?? ($_GET['filter'] ?? 'all');
+        $activePuff = $_GET['puffs'] ?? ($_GET['puff'] ?? ($_GET['pill'] ?? ($_GET['filter'] ?? 'all')));
+        $activePuff = strtolower(trim((string)$activePuff));
+        if ($activePuff === '5k') $activePuff = '5000';
+        if ($activePuff === '10k') $activePuff = '10000';
+        if ($activePuff === '15k') $activePuff = '15000';
+        if ($activePuff === '20k') $activePuff = '20000';
+        if ($activePuff === '30k') $activePuff = '30000';
+        if ($activePuff === '50k') $activePuff = '50000';
 
         $filters = [
             'brand'     => $activeBrand,
@@ -92,25 +126,34 @@ class CollectionController extends Controller
             });
         }
 
+        // Fetch Collection FAQs
+        $collectionFaqs = !empty($collection['id']) ? Collection::getFaqs($collection['id']) : [];
+
+        // Fetch Related Collections (Admin cross-sell configured or fallback)
+        $relatedCollections = Collection::getRelatedCollections($collection, 8);
+
         // SEO Page Title & Description
         $pageTitle = !empty($collection['meta_title']) 
             ? $collection['meta_title'] 
-            : ($collection['name'] . ' - Shop All Top Brands & Puffs | New Vape');
+            : ($collection['name'] . ' - Shop All Top Brands & Puffs | Infinity Vape Shop');
 
         $this->render('front.collection.detail', [
-            'page_title'       => $pageTitle,
-            'page_js'          => 'category',
-            'collection'       => $collection,
-            'allCollections'   => $allCollections,
-            'childCollections' => $childCollections,
-            'brands'           => $brands,
-            'products'         => $products,
-            'totalCount'       => count($products),
-            'priceBounds'      => $priceBounds,
-            'activeFilters'    => $filters,
-            'currentSlug'      => $collection['slug'] ?? 'disposables',
-            'currentSort'      => $sort,
-            'quickPill'        => $quickPill
+            'page_title'         => $pageTitle,
+            'page_js'            => 'category',
+            'collection'         => $collection,
+            'collectionFaqs'     => $collectionFaqs,
+            'allCollections'     => $allCollections,
+            'relatedCollections' => $relatedCollections,
+            'childCollections'   => $childCollections,
+            'brands'             => $brands,
+            'products'           => $products,
+            'totalCount'         => count($products),
+            'priceBounds'        => $priceBounds,
+            'activeFilters'      => $filters,
+            'currentSlug'        => $collection['slug'] ?? 'disposables',
+            'currentSort'        => $sort,
+            'activePuff'         => $activePuff,
+            'quickPill'          => $activePuff
         ]);
     }
 }

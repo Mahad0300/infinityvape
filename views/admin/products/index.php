@@ -101,8 +101,9 @@ include dirname(__DIR__) . '/includes/header.php';
               <?php
                 $imgSrc = !empty($p['featured_image']) ? asset($p['featured_image']) : (!empty($p['img']) ? asset($p['img']) : asset('assets/images/no-image.svg'));
                 $priceVal = (float)str_replace(['$', ','], '', $p['base_price'] ?? $p['price'] ?? 0);
-                $stockVal = (int)($p['stock_quantity'] ?? $p['stock'] ?? 0);
-                $statusVal = $p['stock_status'] ?? ($stockVal <= 0 ? 'Out of Stock' : ($stockVal < 15 ? 'Low Stock' : 'In Stock'));
+                $variantsCount = (int)($p['variants_count'] ?? 0);
+                $stockVal = (int)($p['calculated_stock'] ?? $p['stock_quantity'] ?? $p['stock'] ?? 0);
+                $statusVal = ($stockVal <= 0) ? 'Out of Stock' : (($stockVal < 15) ? 'Low Stock' : 'In Stock');
               ?>
               <tr>
                 <td>
@@ -110,13 +111,20 @@ include dirname(__DIR__) . '/includes/header.php';
                     <img src="<?= e($imgSrc) ?>" alt="<?= e($p['title']) ?>" class="table-product-thumb" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
                     <div class="table-product-info">
                       <span class="table-product-title"><?= e($p['title']) ?></span>
-                      <span class="table-product-meta"><?= e($p['brand'] ?? 'New Vape') ?> &bull; SKU: <?= e($p['sku'] ?? 'NV-PROD') ?></span>
+                      <span class="table-product-meta"><?= e($p['brand'] ?? 'Infinity Vape') ?> &bull; SKU: <?= e($p['sku'] ?? 'IVS-PROD') ?></span>
                     </div>
                   </div>
                 </td>
                 <td><?= e($p['category'] ?? 'General') ?></td>
                 <td><strong>$<?= number_format($priceVal, 2) ?></strong></td>
-                <td><?= $stockVal ?> units</td>
+                <td>
+                  <strong><?= number_format($stockVal) ?></strong> in stock
+                  <?php if ($variantsCount > 0): ?>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                      for <?= $variantsCount ?> <?= $variantsCount === 1 ? 'variant' : 'variants' ?>
+                    </div>
+                  <?php endif; ?>
+                </td>
                 <td>
                   <?php if (strtolower($statusVal) === 'in stock'): ?>
                     <span class="badge-status badge-instock">In Stock</span>
@@ -129,7 +137,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <td>
                   <div class="table-actions-cell-right">
                     <!-- Preview on Storefront -->
-                    <a href="<?= url('product?id=' . $p['id']) ?>" target="_blank" class="btn-icon-only" title="Preview on Store">
+                    <a href="<?= url('product/' . urlencode($p['slug'] ?? $p['id'])) ?>" target="_blank" class="btn-icon-only" title="Preview on Store">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
@@ -142,16 +150,17 @@ include dirname(__DIR__) . '/includes/header.php';
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                       </svg>
                     </a>
-                    <!-- Delete Action -->
-                    <a href="<?= url('admin/delete-product?id=' . $p['id']) ?>" 
-                       class="btn-icon-only danger btn-delete-row" 
-                       title="Delete Product"
-                       onclick="return confirm('Are you sure you want to delete product \'<?= e(addslashes($p['title'])) ?>\'?');">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </a>
+                    <!-- Delete Action (POST + CSRF) -->
+                    <form action="<?= url('admin/delete-product') ?>" method="POST" style="display:inline;">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                      <button type="submit" class="btn-icon-only danger btn-delete-row" title="Delete Product" data-item-name="<?= e($p['title']) ?>" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>

@@ -210,6 +210,9 @@ include dirname(__DIR__) . '/includes/header.php';
             <option value="">None (Top Level Item)</option>
             <!-- Dynamically populated with existing items for nesting -->
           </select>
+          <p class="form-help-text" style="font-size: 12px; color: #64748b; margin-top: 5px; line-height: 1.4;">
+            <strong>Note:</strong> To display items inside columns in a Mega Menu (such as Disposables), select a column heading (e.g. <code>↳↳ By Puff Count</code>).
+          </p>
         </div>
 
       </div>

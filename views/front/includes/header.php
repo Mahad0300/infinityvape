@@ -1,10 +1,10 @@
 <?php
 /**
- * NEW VAPE - GLOBAL HEADER
+ * INFINITY VAPE SHOP - GLOBAL HEADER
  * Included on all pages. Supports dynamic $page_title, $page_css, and $active_page.
  */
 if (!isset($page_title)) {
-    $page_title = 'Online Vape Store | Premium Vapes, E-Liquids & Disposables';
+    $page_title = 'Infinity Vape Shop | Online Vape Store | Premium Vapes, E-Liquids & Disposables';
 }
 
 // Fetch dynamic Main Menu tree with Mega Menus and Promotional Banners
@@ -22,6 +22,53 @@ $formatNavUrl = function($link) {
     if (preg_match('~^(https?://|//|#|mailto:|tel:)~i', $link)) {
         return $link;
     }
+    // Normalize any legacy category?cat= or category?c= URLs to clean /collection/
+    if (preg_match('#^/?category\?(?:cat|c)=([^&]+)(.*)$#i', $link, $m)) {
+        $slug = $m[1];
+        $rest = $m[2];
+        if (!empty($rest) && strpos($rest, '&') === 0) {
+            $rest = '?' . substr($rest, 1);
+        }
+        $link = 'collection/' . $slug . $rest;
+    }
+    $clean = trim($link, '/');
+    if ($clean === 'terms-and-condition' || $clean === 'page/terms-and-condition' || $clean === 'terms-of-service' || $clean === 'page/terms-of-service') {
+        $clean = 'terms-and-conditions';
+    }
+    if ($clean === 'faq' || $clean === 'page/faq') {
+        $clean = 'faqs';
+    }
+
+    // Convert any collection links (e.g. collection/{slug} or clean slug) to canonical hierarchical SEO URLs
+    $cSlug = $clean;
+    if (preg_match('#^collections?/(.+)$#i', $clean, $colMatch)) {
+        $cSlug = $colMatch[1];
+    }
+    if ($cSlug === 'all' || $cSlug === 'shop') {
+        return function_exists('url') ? url('collections') : 'collections';
+    }
+    if (class_exists('\\App\\Models\\Collection') && !in_array($clean, [
+        'shipping-policy', 'refund-policy', 'fda-disclaimer', 
+        'terms-and-conditions', 'privacy-policy', 'terms-of-service', 
+        'age-verification', 'terms', 'privacy', 'shipping', 'returns',
+        'faqs', 'faq', 'about-us', 'contact-us', 'track-order', 'blog', 'brands'
+    ]) && !preg_match('#^(page|pages|admin|account|blog|tag|product|cart|checkout)/#i', $clean)) {
+        $colObj = \App\Models\Collection::findBySlug($cSlug);
+        if ($colObj) {
+            return \App\Models\Collection::getUrl($colObj);
+        }
+    }
+    $pageSlugs = [
+        'shipping-policy', 'refund-policy', 'fda-disclaimer', 
+        'terms-and-conditions', 'privacy-policy', 'terms-of-service', 
+        'age-verification', 'terms', 'privacy', 'shipping', 'returns',
+        'faqs', 'faq', 'about-us', 'contact-us', 'track-order'
+    ];
+    if (in_array($clean, $pageSlugs) || preg_match('#^pages?/#', $clean)) {
+        $link = 'page/' . preg_replace('#^pages?/#', '', $clean);
+    } else {
+        $link = ltrim($link, '/');
+    }
     return function_exists('url') ? url($link) : $link;
 };
 ?>
@@ -31,7 +78,14 @@ $formatNavUrl = function($link) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo htmlspecialchars($page_title); ?></title>
+  <?php if (!empty($meta_description)): ?>
+  <meta name="description" content="<?php echo htmlspecialchars($meta_description); ?>">
+  <?php endif; ?>
   <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
+  
+  <?php if (!empty($page_schema)): ?>
+  <?php echo $page_schema; ?>
+  <?php endif; ?>
   
   <!-- Google Fonts (Outfit & Inter) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +93,10 @@ $formatNavUrl = function($link) {
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Global Single CSS (All styles organized in style.css) -->
-  <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="assets/css/style.css?v=1.0.1">
+  <style>
+    .megamenu-grid-2 { grid-template-columns: 240px 240px auto !important; gap: 40px !important; }
+  </style>
 </head>
 <body>
 
@@ -91,12 +148,12 @@ $formatNavUrl = function($link) {
 
         <!-- Brand Logo -->
         <a href="<?= url() ?>" class="site-logo-link" aria-label="Homepage">
-          <img src="assets/images/logo.svg" alt="Logo" class="site-logo-img">
+          <img src="assets/images/logo.svg" alt="Infinity Vape Shop" class="site-logo-img">
         </a>
 
         <!-- Search Bar -->
         <div class="header-search-wrapper">
-          <form class="header-search-form" id="headerSearchForm" action="<?= url('category') ?>" method="GET">
+          <form class="header-search-form" id="headerSearchForm" action="<?= url('collection/all') ?>" method="GET">
             <input 
               type="text" 
               name="q" 
@@ -117,11 +174,18 @@ $formatNavUrl = function($link) {
         <!-- Right Side Icons (Account, Cart) -->
         <div class="header-user-actions">
           <!-- Account Icon -->
-          <a href="<?= url('my-account') ?>" class="header-action-btn" aria-label="My Account" title="My Account">
+          <?php 
+            $isCustLoggedIn = class_exists('\\App\\Core\\CustomerAuth') && \App\Core\CustomerAuth::check();
+            $custUser = $isCustLoggedIn ? \App\Core\CustomerAuth::user() : null;
+          ?>
+          <a href="<?= url('my-account') ?>" class="header-action-btn <?= $isCustLoggedIn ? 'logged-in' : '' ?>" aria-label="My Account" title="<?= $isCustLoggedIn ? ('Account: ' . htmlspecialchars($custUser['name'] ?? 'Dashboard')) : 'My Account (Login / Register)' ?>" style="position: relative;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
+            <?php if ($isCustLoggedIn): ?>
+              <span class="user-active-dot" style="position: absolute; bottom: 2px; right: 2px; width: 9px; height: 9px; background-color: #10b981; border: 2px solid #ffffff; border-radius: 50%;" title="Logged in"></span>
+            <?php endif; ?>
           </a>
 
           <!-- Cart Icon with Badge -->
@@ -131,7 +195,7 @@ $formatNavUrl = function($link) {
               <circle cx="20" cy="21" r="1"></circle>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
             </svg>
-            <span class="header-cart-badge">0</span>
+            <span class="header-cart-badge" style="display: none;" data-count="0"></span>
           </a>
         </div>
 
@@ -156,7 +220,9 @@ $formatNavUrl = function($link) {
           <?php if ($isMegaMenu): 
             $colCount = count($columns);
             $gridClass = 'megamenu-grid';
-            if ($colCount >= 4) {
+            if ($colCount === 2 && empty($promos)) {
+              $gridClass = 'megamenu-grid megamenu-grid-2';
+            } elseif ($colCount >= 4) {
               $gridClass = strtolower(trim($item['title'])) === 'brands' ? 'megamenu-grid megamenu-grid-brands' : 'megamenu-grid megamenu-grid-4';
             } elseif (strtolower(trim($item['title'])) === 'e-liquids') {
               $gridClass = 'megamenu-grid megamenu-grid-eliquid';

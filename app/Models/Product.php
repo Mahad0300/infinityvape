@@ -7,10 +7,60 @@ use PDO;
 class Product extends Model
 {
     /**
+     * Safely clear and drop legacy dummy badge columns from database and ensure schema
+     */
+    public static function cleanUnwantedBadges()
+    {
+        $db = self::getDB();
+        if ($db) {
+            try {
+                $check = $db->query("SHOW COLUMNS FROM products LIKE 'badge_text'");
+                if ($check && $check->fetch()) {
+                    $db->exec("ALTER TABLE products DROP COLUMN badge_text, DROP COLUMN badge_type");
+                }
+            } catch (\Exception $e) {
+                try {
+                    $db->exec("UPDATE products SET badge_text = NULL, badge_type = NULL WHERE badge_text IS NOT NULL OR badge_type IS NOT NULL");
+                } catch (\Exception $e2) {}
+            }
+
+            // Ensure related_posts_content column exists in products table
+            try {
+                $checkCol = $db->query("SHOW COLUMNS FROM products LIKE 'related_posts_content'");
+                if ($checkCol && !$checkCol->fetch()) {
+                    $db->exec("ALTER TABLE products ADD COLUMN related_posts_content LONGTEXT NULL AFTER long_desc");
+                }
+            } catch (\Exception $e) {}
+
+            // Clean up any old dummy test FAQs
+            try {
+                $db->exec("DELETE FROM product_faqs WHERE question LIKE '%deliver up to%' OR answer LIKE '%delivered by%' OR answer LIKE '%scratch-off%'");
+            } catch (\Exception $e) {}
+
+            // Automatically sync stock_quantity and stock_status for products with variants
+            try {
+                $db->exec("UPDATE products p
+                           JOIN (
+                               SELECT product_id, SUM(stock_quantity) AS total_variant_stock
+                               FROM product_variants
+                               GROUP BY product_id
+                           ) pv ON p.id = pv.product_id
+                           SET p.stock_quantity = pv.total_variant_stock,
+                               p.stock_status = CASE 
+                                   WHEN pv.total_variant_stock <= 0 THEN 'Out of Stock'
+                                   WHEN pv.total_variant_stock < 15 THEN 'Low Stock'
+                                   ELSE 'In Stock'
+                               END");
+            } catch (\Exception $e) {}
+        }
+    }
+
+    /**
      * Get all products with dynamic Brand & Collection taxonomy
      */
     public static function all()
     {
+        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
@@ -18,7 +68,9 @@ class Product extends Model
                                b.name AS brand,
                                COALESCE(c.name, 'Disposable') AS category,
                                c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img
+                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img,
+                               (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variants_count,
+                               COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), p.stock_quantity, 0) AS calculated_stock
                         FROM products p 
                         LEFT JOIN brands b ON p.brand_id = b.id
                         LEFT JOIN product_collections pc ON p.id = pc.product_id
@@ -27,7 +79,16 @@ class Product extends Model
                         ORDER BY p.id DESC";
                 $stmt = $db->query($sql);
                 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($results)) return $results;
+                if (!empty($results)) {
+                    foreach ($results as &$r) {
+                        if ((int)($r['variants_count'] ?? 0) > 0) {
+                            $r['stock_quantity'] = (int)$r['calculated_stock'];
+                            $r['stock_status'] = ($r['stock_quantity'] <= 0) ? 'Out of Stock' : (($r['stock_quantity'] < 15) ? 'Low Stock' : 'In Stock');
+                        }
+                    }
+                    unset($r);
+                    return $results;
+                }
             } catch (\Exception $e) {
                 error_log("Product::all() error: " . $e->getMessage());
             }
@@ -40,15 +101,20 @@ class Product extends Model
      */
     public static function find($id)
     {
+        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
                 $isNumeric = is_numeric($id);
                 $sql = "SELECT p.*, 
                                b.name AS brand,
-                               c.name AS category,
+                               b.slug AS brand_slug,
+                               COALESCE(c.name, 'Disposables') AS category,
+                               c.slug AS category_slug,
                                c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img
+                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp') AS img,
+                               (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variants_count,
+                               COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), p.stock_quantity, 0) AS calculated_stock
                         FROM products p 
                         LEFT JOIN brands b ON p.brand_id = b.id 
                         LEFT JOIN product_collections pc ON p.id = pc.product_id
@@ -62,7 +128,13 @@ class Product extends Model
                     $stmt->execute([(string)$id, (string)$id]);
                 }
                 $item = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($item) return $item;
+                if ($item) {
+                    if ((int)($item['variants_count'] ?? 0) > 0) {
+                        $item['stock_quantity'] = (int)$item['calculated_stock'];
+                        $item['stock_status'] = ($item['stock_quantity'] <= 0) ? 'Out of Stock' : (($item['stock_quantity'] < 15) ? 'Low Stock' : 'In Stock');
+                    }
+                    return $item;
+                }
             } catch (\Exception $e) {
                 error_log("Product::find() error: " . $e->getMessage());
             }
@@ -75,6 +147,7 @@ class Product extends Model
      */
     public static function newArrivals($limit = 10)
     {
+        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
@@ -87,7 +160,7 @@ class Product extends Model
                         LEFT JOIN brands b ON p.brand_id = b.id
                         LEFT JOIN product_collections pc ON p.id = pc.product_id
                         LEFT JOIN collections c ON pc.collection_id = c.id
-                        WHERE p.status = 'published' AND (p.is_new = 1 OR pc.collection_id = 8)
+                        WHERE p.status = 'published' AND (p.is_new = 1 OR pc.collection_id IN (8, 19))
                         GROUP BY p.id
                         ORDER BY p.id DESC
                         LIMIT " . (int)$limit;
@@ -118,7 +191,7 @@ class Product extends Model
                         LEFT JOIN brands b ON p.brand_id = b.id
                         LEFT JOIN product_collections pc ON p.id = pc.product_id
                         LEFT JOIN collections c ON pc.collection_id = c.id
-                        WHERE p.status = 'published' AND (p.is_bestseller = 1 OR pc.collection_id = 9)
+                        WHERE p.status = 'published' AND (p.is_bestseller = 1 OR pc.collection_id IN (9, 20))
                         GROUP BY p.id
                         ORDER BY p.reviews_count DESC, p.id DESC
                         LIMIT " . (int)$limit;
@@ -282,11 +355,42 @@ class Product extends Model
 
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Compute and attach detected puff counts
+            foreach ($results as &$item) {
+                $item['detected_puffs'] = self::extractPuffs($item['title'] ?: ($item['name'] ?? ''), $item['spec_puffs'] ?? null);
+            }
+            unset($item);
+
+            return $results;
         } catch (\Exception $e) {
             error_log("Product::getCollectionProducts error: " . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Extract puff count number from title or specifications
+     */
+    public static function extractPuffs($title, $spec = null)
+    {
+        if (!empty($spec)) {
+            $clean = str_replace(',', '', $spec);
+            if (preg_match('/(\d{4,6})/', $clean, $m)) {
+                return (int)$m[1];
+            }
+        }
+        if (preg_match('/(\d{1,3}(?:,\d{3})+)\s*puffs?/i', $title, $m)) {
+            return (int)str_replace(',', '', $m[1]);
+        }
+        if (preg_match('/(?:MO|SW|N|CT|MT|RX|RYL)?\s*(\d{4,6})\b/i', $title, $m)) {
+            return (int)$m[1];
+        }
+        if (preg_match('/(\d{1,3})\s*k\b/i', $title, $m)) {
+            return (int)$m[1] * 1000;
+        }
+        return 0;
     }
 
     /**
@@ -382,9 +486,12 @@ class Product extends Model
      */
     public static function disposables($limit = 16)
     {
-        $results = self::byCollection('disposables', $limit);
+        $results = self::byCollection('disposable', $limit);
         if (empty($results)) {
-            $results = self::byCollection(1, $limit);
+            $results = self::byCollection('disposable-vapes', $limit);
+        }
+        if (empty($results)) {
+            $results = self::byCollection(16, $limit);
         }
         return $results;
     }
@@ -394,9 +501,12 @@ class Product extends Model
      */
     public static function vapeJuices($limit = 4)
     {
-        $results = self::byCollection('eliquids', $limit);
+        $results = self::byCollection('e-liquids', $limit);
         if (empty($results)) {
-            $results = self::byCollection(2, $limit);
+            $results = self::byCollection('eliquids', $limit);
+        }
+        if (empty($results)) {
+            $results = self::byCollection(17, $limit);
         }
         return $results;
     }
@@ -406,9 +516,12 @@ class Product extends Model
      */
     public static function nicotinePouches($limit = 4)
     {
-        $results = self::byCollection('pouches', $limit);
+        $results = self::byCollection('nicotine-pouches', $limit);
         if (empty($results)) {
-            $results = self::byCollection(3, $limit);
+            $results = self::byCollection('pouches', $limit);
+        }
+        if (empty($results)) {
+            $results = self::byCollection(18, $limit);
         }
         return $results;
     }
@@ -420,7 +533,10 @@ class Product extends Model
     {
         $results = self::byCollection('hemp-thc', $limit);
         if (empty($results)) {
-            $results = self::byCollection(4, $limit);
+            $results = self::byCollection(74, $limit); // Lifestyle fallback
+        }
+        if (empty($results)) {
+            $results = self::byCollection('lifestyle', $limit);
         }
         return $results;
     }
@@ -451,7 +567,7 @@ class Product extends Model
         // Generate or clean SKU
         $sku = trim($data['sku'] ?? '');
         if (empty($sku)) {
-            $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $title), 0, 4) ?: 'NV');
+            $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $title), 0, 4) ?: 'IVS');
             $sku = $prefix . '-' . rand(1000, 9999) . '-' . strtoupper(bin2hex(random_bytes(2)));
         }
 
@@ -476,6 +592,7 @@ class Product extends Model
         $customUrl = $slug;
         $shortDesc = trim($data['short_desc'] ?? $data['summary'] ?? '');
         $longDesc = trim($data['long_desc'] ?? $data['description'] ?? '');
+        $relatedPostsContent = !empty($data['related_posts_content']) ? trim($data['related_posts_content']) : null;
         $basePrice = (float)str_replace(['$', ','], '', $data['price'] ?? $data['base_price'] ?? 0);
         $comparePrice = !empty($data['compare_price']) ? (float)str_replace(['$', ','], '', $data['compare_price']) : null;
         $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (isset($data['stock']) ? (int)$data['stock'] : 0);
@@ -490,13 +607,17 @@ class Product extends Model
         $featuredImage = trim($data['featured_image'] ?? $data['image'] ?? $data['img'] ?? 'assets/images/vape-image.webp');
         $status = in_array($data['status'] ?? '', ['published', 'draft', 'archived']) ? $data['status'] : ($data['status'] === 'active' ? 'published' : 'published');
         $tags = is_array($data['tags'] ?? null) ? implode(', ', $data['tags']) : trim($data['tags'] ?? '');
-        $seoTitle = trim($data['seo_title'] ?? ($title . ' | New Vape'));
+        $optionNames = array_key_exists('option_names', $data) ? (is_array($data['option_names']) ? json_encode($data['option_names']) : $data['option_names']) : '["Flavor"]';
+        $seoTitle = trim($data['seo_title'] ?? ($title . ' | Infinity Vape Shop'));
         $seoDescription = trim($data['seo_description'] ?? strip_tags($shortDesc ?: $longDesc));
+        $bundleBannerActive = !empty($data['bundle_banner_active']) ? 1 : 0;
+        $bundleBannerImg = !empty($data['bundle_banner_img']) ? trim($data['bundle_banner_img']) : null;
+        $bundleBannerLink = !empty($data['bundle_banner_link']) ? trim($data['bundle_banner_link']) : null;
 
         try {
             $sql = "INSERT INTO products 
-                    (brand_id, name, title, sku, slug, custom_url, short_desc, long_desc, base_price, compare_price, stock_quantity, stock_status, featured_image, status, tags, seo_title, seo_description)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    (brand_id, name, title, sku, slug, custom_url, short_desc, long_desc, related_posts_content, base_price, compare_price, stock_quantity, stock_status, featured_image, status, tags, option_names, seo_title, seo_description, bundle_banner_active, bundle_banner_img, bundle_banner_link)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -508,6 +629,7 @@ class Product extends Model
                 $customUrl,
                 $shortDesc,
                 $longDesc,
+                $relatedPostsContent,
                 $basePrice,
                 $comparePrice,
                 $stockQuantity,
@@ -515,8 +637,12 @@ class Product extends Model
                 $featuredImage,
                 $status,
                 $tags,
+                $optionNames,
                 $seoTitle,
-                $seoDescription
+                $seoDescription,
+                $bundleBannerActive,
+                $bundleBannerImg,
+                $bundleBannerLink
             ]);
 
             $productId = (int)$db->lastInsertId();
@@ -548,16 +674,59 @@ class Product extends Model
 
             // Save Variants if provided
             if (!empty($data['variants']) && is_array($data['variants'])) {
-                $vStmt = $db->prepare("INSERT INTO product_variants (product_id, sku, variant_name, price, stock_quantity, is_default) VALUES (?, ?, ?, ?, ?, ?)");
+                $vStmt = $db->prepare("INSERT INTO product_variants (product_id, sku, variant_name, price, stock_quantity, is_default, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $seenSkus = [];
+                $totalVariantStock = 0;
                 foreach ($data['variants'] as $idx => $v) {
                     $vName = is_array($v) ? ($v['name'] ?? $v['variant_name'] ?? '') : (string)$v;
                     if (empty($vName)) continue;
-                    $vSku = is_array($v) ? ($v['sku'] ?? $sku . '-V' . ($idx + 1)) : $sku . '-V' . ($idx + 1);
+                    $rawSku = trim(is_array($v) ? ($v['sku'] ?? '') : '');
+                    $candidateSku = !empty($rawSku) ? $rawSku : ($sku . '-V' . ($idx + 1));
+
+                    // Ensure SKU is unique within this product's variants batch
+                    $vSku = $candidateSku;
+                    $dupCount = 1;
+                    while (in_array(strtoupper($vSku), $seenSkus)) {
+                        $vSku = $candidateSku . '-' . ($dupCount++);
+                    }
+
+                    // Check if this SKU collides with another product in product_variants
+                    $chk = $db->prepare("SELECT id FROM product_variants WHERE sku = ? AND product_id != ? LIMIT 1");
+                    $chk->execute([$vSku, $productId]);
+                    if ($chk->fetch()) {
+                        $vSku = $vSku . '-' . $productId . '-' . ($idx + 1);
+                    }
+
+                    $seenSkus[] = strtoupper($vSku);
+
                     $vPrice = is_array($v) ? (float)($v['price'] ?? $basePrice) : $basePrice;
-                    $vStock = is_array($v) ? (int)($v['stock'] ?? $v['stock_quantity'] ?? 10) : 10;
+                    $vStock = is_array($v) ? (int)($v['stock'] ?? $v['stock_quantity'] ?? 0) : 0;
+                    $totalVariantStock += $vStock;
+                    $vImg = is_array($v) ? (!empty($v['image_url']) ? $v['image_url'] : null) : null;
                     $isDefault = ($idx === 0) ? 1 : 0;
-                    $vStmt->execute([$productId, $vSku, $vName, $vPrice, $vStock, $isDefault]);
+
+                    try {
+                        $vStmt->execute([$productId, $vSku, $vName, $vPrice, $vStock, $isDefault, $vImg]);
+                    } catch (\Exception $vex) {
+                        error_log("Variant insert retry in create for product {$productId}: " . $vex->getMessage());
+                        $fallbackSku = $sku . '-V' . ($idx + 1) . '-' . bin2hex(random_bytes(2));
+                        $vStmt->execute([$productId, $fallbackSku, $vName, $vPrice, $vStock, $isDefault, $vImg]);
+                    }
                 }
+
+                // Automatically sync parent product stock_quantity & stock_status with variants
+                $stStatus = ($totalVariantStock <= 0) ? 'Out of Stock' : (($totalVariantStock < 15) ? 'Low Stock' : 'In Stock');
+                $db->prepare("UPDATE products SET stock_quantity = ?, stock_status = ? WHERE id = ?")->execute([$totalVariantStock, $stStatus, $productId]);
+            }
+
+            // Save Specifications if provided
+            if (isset($data['highlights']) || isset($data['specs'])) {
+                self::saveSpecifications($productId, $data['highlights'] ?? [], $data['specs'] ?? []);
+            }
+
+            // Save FAQs if provided
+            if (isset($data['faqs']) && is_array($data['faqs'])) {
+                self::saveFaqs($productId, $data['faqs']);
             }
 
             return $productId;
@@ -575,13 +744,16 @@ class Product extends Model
         $db = self::getDB();
         if (!$db) return false;
 
-        $title = trim($data['title'] ?? $data['name'] ?? '');
+        $existing = self::find($id);
+        if (!$existing) return false;
+
+        $title = trim($data['title'] ?? $data['name'] ?? $existing['title'] ?? '');
         if (empty($title)) return false;
 
         $name = $title;
 
         // Resolve Brand ID
-        $brandId = !empty($data['brand_id']) ? (int)$data['brand_id'] : null;
+        $brandId = !empty($data['brand_id']) ? (int)$data['brand_id'] : ($existing['brand_id'] ?? null);
         if (!$brandId && !empty($data['brand'])) {
             $brandName = trim($data['brand']);
             $bStmt = $db->prepare("SELECT id FROM brands WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
@@ -590,8 +762,8 @@ class Product extends Model
             if ($bRow) $brandId = (int)$bRow['id'];
         }
 
-        $sku = trim($data['sku'] ?? '');
-        $slug = trim($data['slug'] ?? '');
+        $sku = !empty($data['sku']) ? trim($data['sku']) : ($existing['sku'] ?? '');
+        $slug = !empty($data['slug']) ? trim($data['slug']) : ($existing['slug'] ?? '');
         if (empty($slug)) {
             $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $title));
             $slug = trim($slug, '-');
@@ -609,11 +781,12 @@ class Product extends Model
         }
 
         $customUrl = $slug;
-        $shortDesc = trim($data['short_desc'] ?? $data['summary'] ?? '');
-        $longDesc = trim($data['long_desc'] ?? $data['description'] ?? '');
-        $basePrice = (float)str_replace(['$', ','], '', $data['price'] ?? $data['base_price'] ?? 0);
-        $comparePrice = !empty($data['compare_price']) ? (float)str_replace(['$', ','], '', $data['compare_price']) : null;
-        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (isset($data['stock']) ? (int)$data['stock'] : 0);
+        $shortDesc = isset($data['short_desc']) ? trim($data['short_desc']) : ($existing['short_desc'] ?? '');
+        $longDesc = isset($data['long_desc']) ? trim($data['long_desc']) : (isset($data['description']) ? trim($data['description']) : ($existing['long_desc'] ?? ''));
+        $relatedPostsContent = array_key_exists('related_posts_content', $data) ? trim($data['related_posts_content']) : ($existing['related_posts_content'] ?? null);
+        $basePrice = isset($data['price']) || isset($data['base_price']) ? (float)str_replace(['$', ','], '', $data['price'] ?? $data['base_price'] ?? 0) : (float)($existing['base_price'] ?? 0);
+        $comparePrice = array_key_exists('compare_price', $data) ? (!empty($data['compare_price']) ? (float)str_replace(['$', ','], '', $data['compare_price']) : null) : ($existing['compare_price'] ?? null);
+        $stockQuantity = isset($data['stock_quantity']) ? (int)$data['stock_quantity'] : (isset($data['stock']) ? (int)$data['stock'] : (int)($existing['stock_quantity'] ?? 0));
         
         $stockStatus = 'In Stock';
         if ($stockQuantity <= 0) {
@@ -625,37 +798,51 @@ class Product extends Model
         $hasImageKey = array_key_exists('featured_image', $data) || array_key_exists('image', $data) || array_key_exists('img', $data);
         $featuredImage = $data['featured_image'] ?? $data['image'] ?? $data['img'] ?? null;
 
-        $status = in_array($data['status'] ?? '', ['published', 'draft', 'archived']) ? $data['status'] : ($data['status'] === 'active' ? 'published' : 'published');
-        $tags = is_array($data['tags'] ?? null) ? implode(', ', $data['tags']) : trim($data['tags'] ?? '');
-        $seoTitle = trim($data['seo_title'] ?? ($title . ' | New Vape'));
-        $seoDescription = trim($data['seo_description'] ?? strip_tags($shortDesc ?: $longDesc));
+        $statusVal = $data['status'] ?? $existing['status'] ?? 'published';
+        $status = in_array($statusVal, ['published', 'draft', 'archived']) ? $statusVal : ($statusVal === 'active' ? 'published' : 'published');
+        $tags = isset($data['tags']) ? (is_array($data['tags']) ? implode(', ', $data['tags']) : trim($data['tags'])) : ($existing['tags'] ?? '');
+        $optionNames = array_key_exists('option_names', $data) ? (is_array($data['option_names']) ? json_encode($data['option_names']) : $data['option_names']) : ($existing['option_names'] ?? '["Flavor"]');
+        $seoTitle = trim($data['seo_title'] ?? $existing['seo_title'] ?? ($title . ' | Infinity Vape Shop'));
+        $seoDescription = trim($data['seo_description'] ?? $existing['seo_description'] ?? strip_tags($shortDesc ?: $longDesc));
+
+        $bundleBannerActive = isset($data['bundle_banner_active']) ? (int)$data['bundle_banner_active'] : 0;
+        $bundleBannerImg = array_key_exists('bundle_banner_img', $data) ? $data['bundle_banner_img'] : null;
+        $bundleBannerLink = array_key_exists('bundle_banner_link', $data) ? $data['bundle_banner_link'] : null;
 
         try {
             if ($hasImageKey && $featuredImage !== null) {
                 $sql = "UPDATE products 
                         SET brand_id = ?, name = ?, title = ?, sku = ?, slug = ?, custom_url = ?, 
-                            short_desc = ?, long_desc = ?, base_price = ?, compare_price = ?, 
+                            short_desc = ?, long_desc = ?, related_posts_content = ?, base_price = ?, compare_price = ?, 
                             stock_quantity = ?, stock_status = ?, featured_image = ?, status = ?, 
-                            tags = ?, seo_title = ?, seo_description = ?, updated_at = CURRENT_TIMESTAMP
+                            tags = ?, option_names = ?, seo_title = ?, seo_description = ?,
+                            bundle_banner_active = ?, bundle_banner_img = ?, bundle_banner_link = ?,
+                            updated_at = CURRENT_TIMESTAMP
                         WHERE id = ?";
                 $params = [
                     $brandId, $name, $title, $sku, $slug, $customUrl,
-                    $shortDesc, $longDesc, $basePrice, $comparePrice,
+                    $shortDesc, $longDesc, $relatedPostsContent, $basePrice, $comparePrice,
                     $stockQuantity, $stockStatus, $featuredImage, $status,
-                    $tags, $seoTitle, $seoDescription, (int)$id
+                    $tags, $optionNames, $seoTitle, $seoDescription,
+                    $bundleBannerActive, $bundleBannerImg, $bundleBannerLink,
+                    (int)$id
                 ];
             } else {
                 $sql = "UPDATE products 
                         SET brand_id = ?, name = ?, title = ?, sku = ?, slug = ?, custom_url = ?, 
-                            short_desc = ?, long_desc = ?, base_price = ?, compare_price = ?, 
+                            short_desc = ?, long_desc = ?, related_posts_content = ?, base_price = ?, compare_price = ?, 
                             stock_quantity = ?, stock_status = ?, status = ?, 
-                            tags = ?, seo_title = ?, seo_description = ?, updated_at = CURRENT_TIMESTAMP
+                            tags = ?, option_names = ?, seo_title = ?, seo_description = ?,
+                            bundle_banner_active = ?, bundle_banner_img = ?, bundle_banner_link = ?,
+                            updated_at = CURRENT_TIMESTAMP
                         WHERE id = ?";
                 $params = [
                     $brandId, $name, $title, $sku, $slug, $customUrl,
-                    $shortDesc, $longDesc, $basePrice, $comparePrice,
+                    $shortDesc, $longDesc, $relatedPostsContent, $basePrice, $comparePrice,
                     $stockQuantity, $stockStatus, $status,
-                    $tags, $seoTitle, $seoDescription, (int)$id
+                    $tags, $optionNames, $seoTitle, $seoDescription,
+                    $bundleBannerActive, $bundleBannerImg, $bundleBannerLink,
+                    (int)$id
                 ];
             }
 
@@ -680,11 +867,30 @@ class Product extends Model
                 $pcStmt->execute([(int)$id, $colId]);
             }
 
-            // Save any newly uploaded images to product_images table
-            if (!empty($data['images']) && is_array($data['images'])) {
-                $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
-                foreach ($data['images'] as $order => $imgUrl) {
-                    if (!empty($imgUrl)) {
+            // Sync images in product_images table
+            if (isset($data['existing_images']) || isset($data['images'])) {
+                $finalImages = [];
+                if (!empty($data['existing_images']) && is_array($data['existing_images'])) {
+                    foreach ($data['existing_images'] as $eImg) {
+                        $eImg = trim($eImg);
+                        if (!empty($eImg) && !in_array($eImg, $finalImages)) {
+                            $finalImages[] = $eImg;
+                        }
+                    }
+                }
+                if (!empty($data['images']) && is_array($data['images'])) {
+                    foreach ($data['images'] as $nImg) {
+                        $nImg = trim($nImg);
+                        if (!empty($nImg) && !in_array($nImg, $finalImages)) {
+                            $finalImages[] = $nImg;
+                        }
+                    }
+                }
+
+                $db->prepare("DELETE FROM product_images WHERE product_id = ?")->execute([(int)$id]);
+                if (!empty($finalImages)) {
+                    $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
+                    foreach ($finalImages as $order => $imgUrl) {
                         $imgStmt->execute([(int)$id, $imgUrl, $order + 1]);
                     }
                 }
@@ -694,17 +900,60 @@ class Product extends Model
             if (isset($data['variants']) && is_array($data['variants'])) {
                 $db->prepare("DELETE FROM product_variants WHERE product_id = ?")->execute([(int)$id]);
                 if (!empty($data['variants'])) {
-                    $vStmt = $db->prepare("INSERT INTO product_variants (product_id, sku, variant_name, price, stock_quantity, is_default) VALUES (?, ?, ?, ?, ?, ?)");
+                    $vStmt = $db->prepare("INSERT INTO product_variants (product_id, sku, variant_name, price, stock_quantity, is_default, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $seenSkus = [];
+                    $totalVariantStock = 0;
                     foreach ($data['variants'] as $idx => $v) {
                         $vName = is_array($v) ? ($v['name'] ?? $v['variant_name'] ?? '') : (string)$v;
                         if (empty($vName)) continue;
-                        $vSku = is_array($v) ? ($v['sku'] ?? $sku . '-V' . ($idx + 1)) : $sku . '-V' . ($idx + 1);
+                        $rawSku = trim(is_array($v) ? ($v['sku'] ?? '') : '');
+                        $candidateSku = !empty($rawSku) ? $rawSku : ($sku . '-V' . ($idx + 1));
+
+                        // Ensure SKU is unique within this product's variants batch
+                        $vSku = $candidateSku;
+                        $dupCount = 1;
+                        while (in_array(strtoupper($vSku), $seenSkus)) {
+                            $vSku = $candidateSku . '-' . ($dupCount++);
+                        }
+
+                        // Check if this SKU collides with another product in product_variants
+                        $chk = $db->prepare("SELECT id FROM product_variants WHERE sku = ? AND product_id != ? LIMIT 1");
+                        $chk->execute([$vSku, (int)$id]);
+                        if ($chk->fetch()) {
+                            $vSku = $vSku . '-' . (int)$id . '-' . ($idx + 1);
+                        }
+
+                        $seenSkus[] = strtoupper($vSku);
+
                         $vPrice = is_array($v) ? (float)($v['price'] ?? $basePrice) : $basePrice;
-                        $vStock = is_array($v) ? (int)($v['stock'] ?? $v['stock_quantity'] ?? 10) : 10;
+                        $vStock = is_array($v) ? (int)($v['stock'] ?? $v['stock_quantity'] ?? 0) : 0;
+                        $totalVariantStock += $vStock;
+                        $vImg = is_array($v) ? (!empty($v['image_url']) ? $v['image_url'] : null) : null;
                         $isDefault = ($idx === 0) ? 1 : 0;
-                        $vStmt->execute([(int)$id, $vSku, $vName, $vPrice, $vStock, $isDefault]);
+
+                        try {
+                            $vStmt->execute([(int)$id, $vSku, $vName, $vPrice, $vStock, $isDefault, $vImg]);
+                        } catch (\Exception $vex) {
+                            error_log("Variant insert retry in update for product {$id}: " . $vex->getMessage());
+                            $fallbackSku = $sku . '-V' . ($idx + 1) . '-' . bin2hex(random_bytes(2));
+                            $vStmt->execute([(int)$id, $fallbackSku, $vName, $vPrice, $vStock, $isDefault, $vImg]);
+                        }
                     }
+
+                    // Automatically sync parent product stock_quantity & stock_status with variants
+                    $stStatus = ($totalVariantStock <= 0) ? 'Out of Stock' : (($totalVariantStock < 15) ? 'Low Stock' : 'In Stock');
+                    $db->prepare("UPDATE products SET stock_quantity = ?, stock_status = ? WHERE id = ?")->execute([$totalVariantStock, $stStatus, (int)$id]);
                 }
+            }
+
+            // Save Specifications if provided
+            if (isset($data['highlights']) || isset($data['specs'])) {
+                self::saveSpecifications($id, $data['highlights'] ?? [], $data['specs'] ?? []);
+            }
+
+            // Save FAQs if provided
+            if (isset($data['faqs']) && is_array($data['faqs'])) {
+                self::saveFaqs($id, $data['faqs']);
             }
 
             return true;
@@ -715,20 +964,67 @@ class Product extends Model
     }
 
     /**
-     * Get all images for a product
+     * Get only database-persisted images for a product (strictly for Admin Edit)
      */
-    public static function getImages($productId)
+    public static function getRawImages($productId)
     {
         $db = self::getDB();
+        if (!$db || empty($productId)) return [];
+        try {
+            $stmt = $db->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC");
+            $stmt->execute([(int)$productId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get all images for a product (from product_images table or featured image fallback)
+     */
+    public static function getImages($productId, $product = null)
+    {
+        $db = self::getDB();
+        $images = [];
         if ($db) {
             try {
                 $stmt = $db->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC");
                 $stmt->execute([(int)$productId]);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($rows)) return $rows;
+                if (!empty($rows)) {
+                    $images = $rows;
+                }
             } catch (\Exception $e) {}
         }
-        return [];
+
+        if (count($images) < 2) {
+            $featImg = !empty($images[0]['image_url']) ? $images[0]['image_url'] : (!empty($product['featured_image']) ? $product['featured_image'] : (!empty($product['img']) ? $product['img'] : 'assets/images/vape-image.webp'));
+            $pTitle = $product['title'] ?? ($product['name'] ?? 'Product');
+            
+            $images = [
+                [
+                    'image_url' => $featImg,
+                    'alt_text'  => $pTitle . ' - Front View'
+                ]
+            ];
+
+            // Complementary multi-view thumbnails (box, angle, flavor profile)
+            $boxIdx = (($productId % 6) + 1);
+            $images[] = [
+                'image_url' => "assets/images/product-box-{$boxIdx}.png",
+                'alt_text'  => $pTitle . ' - Packaging View'
+            ];
+            $images[] = [
+                'image_url' => 'assets/images/disposible.webp',
+                'alt_text'  => $pTitle . ' - Handheld View'
+            ];
+            $images[] = [
+                'image_url' => 'assets/images/e-liquid.webp',
+                'alt_text'  => $pTitle . ' - Flavor & Specs'
+            ];
+        }
+
+        return $images;
     }
 
     /**
@@ -761,9 +1057,9 @@ class Product extends Model
     }
 
     /**
-     * Dynamic Top 4 Highlight Boxes (Puffs, Nicotine, Battery, Capacity, Wattage, Bottle Size, etc.)
+     * Dynamic Top 4 Highlight Boxes (Puffs, Nicotine, Battery, Capacity)
      */
-    public static function getHighlights($productId)
+    public static function getHighlights($productId, $product = null)
     {
         $db = self::getDB();
         if ($db) {
@@ -775,18 +1071,13 @@ class Product extends Model
             } catch (\Exception $e) {}
         }
 
-        return [
-            ['label' => 'Puffs', 'value' => '35000', 'icon_type' => 'puffs'],
-            ['label' => 'Nicotine', 'value' => '50mg', 'icon_type' => 'nicotine'],
-            ['label' => 'Battery', 'value' => '1000mAh', 'icon_type' => 'battery'],
-            ['label' => 'Capacity', 'value' => '18ml', 'icon_type' => 'capacity']
-        ];
+        return [];
     }
 
     /**
      * Dynamic "More Information" Specifications Table
      */
-    public static function getSpecifications($productId)
+    public static function getSpecifications($productId, $product = null)
     {
         $db = self::getDB();
         if ($db) {
@@ -804,21 +1095,96 @@ class Product extends Model
             } catch (\Exception $e) {}
         }
 
-        return [
-            'Brand' => 'RYL',
-            'Nicotine Strength' => '50mg',
-            'Puff Count' => '35000',
-            'Battery Capacity' => '820mAh',
-            'Prefilled Capacity' => '16.5ml',
-            'Rechargeable' => 'Yes',
-            'Coil Type' => 'Dual Mesh'
-        ];
+        return [];
+    }
+
+    /**
+     * Get only database-persisted variants (strictly for Admin Edit)
+     */
+    public static function getRawVariants($productId)
+    {
+        $db = self::getDB();
+        if (!$db || empty($productId)) return [];
+        try {
+            $stmt = $db->prepare("SELECT * FROM product_variants WHERE product_id = ? ORDER BY id ASC");
+            $stmt->execute([(int)$productId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get raw highlights and specifications from DB for a product
+     */
+    public static function getRawSpecifications($productId)
+    {
+        $db = self::getDB();
+        $result = ['highlights' => [], 'specs' => []];
+        if (!$db || empty($productId)) return $result;
+        try {
+            $stmt = $db->prepare("SELECT * FROM product_specifications WHERE product_id = ? ORDER BY is_highlight DESC, sort_order ASC, id ASC");
+            $stmt->execute([(int)$productId]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as $r) {
+                if ((int)$r['is_highlight'] === 1) {
+                    $result['highlights'][] = $r;
+                } else {
+                    $result['specs'][] = $r;
+                }
+            }
+            return $result;
+        } catch (\Exception $e) {
+            return $result;
+        }
+    }
+
+    /**
+     * Save/Replace Specifications (both highlights and detailed table) for a product
+     */
+    public static function saveSpecifications($productId, array $highlights = [], array $specs = [])
+    {
+        $db = self::getDB();
+        if (!$db || empty($productId)) return false;
+
+        try {
+            $db->prepare("DELETE FROM product_specifications WHERE product_id = ?")->execute([(int)$productId]);
+
+            $stmt = $db->prepare("INSERT INTO product_specifications (product_id, spec_key, spec_value, is_highlight, icon_type, spec_group, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+            // Save Highlights (is_highlight = 1)
+            $hOrder = 1;
+            foreach ($highlights as $h) {
+                $key = trim($h['key'] ?? $h['spec_key'] ?? $h['label'] ?? '');
+                $val = trim($h['value'] ?? $h['spec_value'] ?? '');
+                $icon = trim($h['icon_type'] ?? 'general');
+                if (!empty($key) && !empty($val)) {
+                    $stmt->execute([(int)$productId, $key, $val, 1, $icon, 'Key Highlights', $hOrder++]);
+                }
+            }
+
+            // Save Detailed Specs (is_highlight = 0)
+            $sOrder = 1;
+            foreach ($specs as $s) {
+                $key = trim($s['key'] ?? $s['spec_key'] ?? '');
+                $val = trim($s['value'] ?? $s['spec_value'] ?? '');
+                $group = trim($s['spec_group'] ?? 'General Specs');
+                if (!empty($key) && !empty($val)) {
+                    $stmt->execute([(int)$productId, $key, $val, 0, 'general', $group, $sOrder++]);
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("Product::saveSpecifications() error: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
      * Dynamic Variants (Flavors, Strengths, Colors, etc.)
      */
-    public static function getVariants($productId)
+    public static function getVariants($productId, $product = null)
     {
         $db = self::getDB();
         if ($db) {
@@ -834,9 +1200,64 @@ class Product extends Model
     }
 
     /**
+     * Dynamic Related Products ("You May Also Like")
+     */
+    public static function getRelatedProducts($productId, $brandId = null, $collectionId = null, $limit = 6)
+    {
+        $db = self::getDB();
+        if ($db) {
+            try {
+                $sql = "SELECT p.*, 
+                               b.name AS brand,
+                               COALESCE(c.name, 'Disposables') AS category,
+                               c.slug AS category_slug,
+                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp') AS img
+                        FROM products p 
+                        LEFT JOIN brands b ON p.brand_id = b.id
+                        LEFT JOIN product_collections pc ON p.id = pc.product_id
+                        LEFT JOIN collections c ON pc.collection_id = c.id
+                        WHERE p.id != ? AND p.status = 'published' ";
+                
+                $params = [(int)$productId];
+                if (!empty($collectionId)) {
+                    $sql .= " AND (pc.collection_id = ? OR p.brand_id = ?) ";
+                    $params[] = (int)$collectionId;
+                    $params[] = (int)$brandId;
+                } elseif (!empty($brandId)) {
+                    $sql .= " AND p.brand_id = ? ";
+                    $params[] = (int)$brandId;
+                }
+
+                $sql .= " GROUP BY p.id ORDER BY p.is_bestseller DESC, p.id DESC LIMIT " . (int)$limit;
+                $stmt = $db->prepare($sql);
+                $stmt->execute($params);
+                $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (count($results) < $limit) {
+                    $fillSql = "SELECT p.*, b.name AS brand, COALESCE(c.name, 'Disposables') AS category, c.slug AS category_slug, COALESCE(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp') AS img
+                                FROM products p
+                                LEFT JOIN brands b ON p.brand_id = b.id
+                                LEFT JOIN product_collections pc ON p.id = pc.product_id
+                                LEFT JOIN collections c ON pc.collection_id = c.id
+                                WHERE p.id != ? AND p.status = 'published'
+                                GROUP BY p.id ORDER BY p.id DESC LIMIT " . (int)$limit;
+                    $fillStmt = $db->prepare($fillSql);
+                    $fillStmt->execute([(int)$productId]);
+                    $results = $fillStmt->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                return $results;
+            } catch (\Exception $e) {
+                error_log("Product::getRelatedProducts error: " . $e->getMessage());
+            }
+        }
+        return [];
+    }
+
+    /**
      * Dynamic Product FAQs (Tab 4)
      */
-    public static function getFaqs($productId)
+    public static function getFaqs($productId, $product = null)
     {
         $db = self::getDB();
         if ($db) {
@@ -852,6 +1273,35 @@ class Product extends Model
     }
 
     /**
+     * Save/Replace FAQs for a product
+     */
+    public static function saveFaqs($productId, array $faqs)
+    {
+        $db = self::getDB();
+        if (!$db || empty($productId)) return false;
+
+        try {
+            $db->prepare("DELETE FROM product_faqs WHERE product_id = ?")->execute([(int)$productId]);
+
+            if (!empty($faqs)) {
+                $stmt = $db->prepare("INSERT INTO product_faqs (product_id, question, answer, sort_order) VALUES (?, ?, ?, ?)");
+                $order = 1;
+                foreach ($faqs as $faq) {
+                    $question = trim($faq['question'] ?? '');
+                    $answer = trim($faq['answer'] ?? '');
+                    if (!empty($question) && !empty($answer)) {
+                        $stmt->execute([(int)$productId, $question, $answer, $order++]);
+                    }
+                }
+            }
+            return true;
+        } catch (\Exception $e) {
+            error_log("Product::saveFaqs() error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Dynamic Product Reviews (Tab 3)
      */
     public static function getReviews($productId)
@@ -859,10 +1309,17 @@ class Product extends Model
         $db = self::getDB();
         if ($db) {
             try {
-                $stmt = $db->prepare("SELECT customer_name, rating, title, comment, created_at FROM product_reviews WHERE product_id = ? AND status = 'approved' ORDER BY id DESC");
+                $stmt = $db->prepare("SELECT id, customer_name, rating, title, comment, created_at FROM product_reviews WHERE product_id = ? AND status = 'approved' ORDER BY id DESC");
                 $stmt->execute([(int)$productId]);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($rows)) return $rows;
+                if (!empty($rows)) {
+                    foreach ($rows as &$r) {
+                        if (!empty($r['created_at'])) {
+                            $r['created_at'] = date('M d, Y', strtotime($r['created_at']));
+                        }
+                    }
+                    return $rows;
+                }
             } catch (\Exception $e) {}
         }
 

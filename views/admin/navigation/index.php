@@ -69,6 +69,7 @@ $menus = $menus ?? \App\Models\Menu::all();
                     </a>
 
                     <form action="<?= url('admin/navigation/delete') ?>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this menu and all its items?');">
+                      <?= csrf_field() ?>
                       <input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
                       <button type="submit" class="btn-nav-action action-delete" title="Delete Menu">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -102,6 +103,7 @@ $menus = $menus ?? \App\Models\Menu::all();
       <button type="button" class="menu-modal-close-btn" id="closeAddMenuModalBtn">&times;</button>
     </div>
     <form action="<?= url('admin/navigation/create') ?>" method="POST" id="createMenuForm">
+      <?= csrf_field() ?>
       <div class="menu-modal-body">
         <div class="admin-form-group">
           <label class="admin-form-label font-medium">Menu Title <span class="text-danger">*</span></label>

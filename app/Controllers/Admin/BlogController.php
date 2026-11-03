@@ -54,6 +54,11 @@ class BlogController extends AdminController
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                $this->redirect('admin/blogs/add?error=' . urlencode('Security token expired or invalid. Please try again.'));
+                return;
+            }
+
             $title = trim($_POST['title'] ?? '');
             if (empty($title)) {
                 $this->redirect('admin/blogs/add?error=' . urlencode('Blog title is required'));
@@ -71,14 +76,33 @@ class BlogController extends AdminController
             $statusVal = $_POST['status'] ?? 'active';
             $isActive = ($statusVal === 'active' || $statusVal === 'visible' || $statusVal === '1') ? 1 : 0;
 
+            // Process Featured Image Upload
+            $featuredImageUrl = !empty($_POST['existing_featured_image']) ? trim($_POST['existing_featured_image']) : 'assets/images/no-image.svg';
+            if (!empty($_FILES['featured_image']['name']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
+                $fileTmp = $_FILES['featured_image']['tmp_name'];
+                $cleanExt = null;
+                if (is_valid_image_upload($fileTmp, $_FILES['featured_image']['name'], $cleanExt)) {
+                    $fileName = 'blog_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $baseDir = defined('ROOT_PATH') ? ROOT_PATH : dirname(dirname(dirname(__DIR__)));
+                    $targetDir = $baseDir . '/public/assets/images/blogs/';
+                    if (!is_dir($targetDir)) {
+                        @mkdir($targetDir, 0777, true);
+                    }
+                    if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
+                        $featuredImageUrl = 'assets/images/blogs/' . $fileName;
+                    }
+                }
+            } elseif (!empty($_POST['featured_image_url'])) {
+                $featuredImageUrl = trim($_POST['featured_image_url']);
+            }
+
             $data = [
                 'title'              => $title,
                 'slug'               => $slug,
                 'custom_url_path'    => $customUrl,
                 'category_id'        => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
-                'featured_image_url' => !empty($_POST['featured_image_url']) ? trim($_POST['featured_image_url']) : 'assets/images/blog-1.jpg',
-                'author_name'        => !empty($_POST['author_name']) ? trim($_POST['author_name']) : 'New Vape Editorial',
-                'read_time'          => !empty($_POST['read_time']) ? trim($_POST['read_time']) : '5 min read',
+                'featured_image_url' => $featuredImageUrl,
+                'author_name'        => 'New Vape',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
                 'tags'               => trim($_POST['tags'] ?? ''),
@@ -143,6 +167,11 @@ class BlogController extends AdminController
                 return;
             }
 
+            if (!verify_csrf_token()) {
+                $this->redirect('admin/blogs/edit?id=' . $id . '&error=' . urlencode('Security token expired or invalid. Please try again.'));
+                return;
+            }
+
             $title = trim($_POST['title'] ?? '');
             if (empty($title)) {
                 $this->redirect('admin/blogs/edit?id=' . $id . '&error=' . urlencode('Blog title is required'));
@@ -160,14 +189,33 @@ class BlogController extends AdminController
             $statusVal = $_POST['status'] ?? 'active';
             $isActive = ($statusVal === 'active' || $statusVal === 'visible' || $statusVal === '1') ? 1 : 0;
 
+            // Process Featured Image Upload
+            $featuredImageUrl = !empty($_POST['existing_featured_image']) ? trim($_POST['existing_featured_image']) : 'assets/images/no-image.svg';
+            if (!empty($_FILES['featured_image']['name']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
+                $fileTmp = $_FILES['featured_image']['tmp_name'];
+                $cleanExt = null;
+                if (is_valid_image_upload($fileTmp, $_FILES['featured_image']['name'], $cleanExt)) {
+                    $fileName = 'blog_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $baseDir = defined('ROOT_PATH') ? ROOT_PATH : dirname(dirname(dirname(__DIR__)));
+                    $targetDir = $baseDir . '/public/assets/images/blogs/';
+                    if (!is_dir($targetDir)) {
+                        @mkdir($targetDir, 0777, true);
+                    }
+                    if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
+                        $featuredImageUrl = 'assets/images/blogs/' . $fileName;
+                    }
+                }
+            } elseif (!empty($_POST['featured_image_url'])) {
+                $featuredImageUrl = trim($_POST['featured_image_url']);
+            }
+
             $data = [
                 'title'              => $title,
                 'slug'               => $slug,
                 'custom_url_path'    => $customUrl,
                 'category_id'        => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
-                'featured_image_url' => !empty($_POST['featured_image_url']) ? trim($_POST['featured_image_url']) : 'assets/images/blog-1.jpg',
-                'author_name'        => !empty($_POST['author_name']) ? trim($_POST['author_name']) : 'New Vape Editorial',
-                'read_time'          => !empty($_POST['read_time']) ? trim($_POST['read_time']) : '5 min read',
+                'featured_image_url' => $featuredImageUrl,
+                'author_name'        => 'New Vape',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
                 'tags'               => trim($_POST['tags'] ?? ''),
@@ -189,11 +237,16 @@ class BlogController extends AdminController
     }
 
     /**
-     * Delete blog post
+     * Delete blog post (Strictly via POST + CSRF)
      */
     public function delete()
     {
-        $id = $_POST['id'] ?? $_GET['id'] ?? null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
+            $this->redirect('admin/blogs?error=' . urlencode('Security token expired or invalid request method.'));
+            return;
+        }
+
+        $id = $_POST['id'] ?? null;
         if ($id && BlogPost::delete($id)) {
             $this->redirect('admin/blogs?success=' . urlencode('Blog post deleted successfully'));
             return;
@@ -225,6 +278,11 @@ class BlogController extends AdminController
     public function storeCategory()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                $this->redirect('admin/blog-categories?error=' . urlencode('Security token expired or invalid request.'));
+                return;
+            }
+
             $name = trim($_POST['name'] ?? '');
             if (empty($name)) {
                 $this->redirect('admin/blog-categories?error=' . urlencode('Category name is required'));
@@ -254,6 +312,11 @@ class BlogController extends AdminController
     public function updateCategory()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                $this->redirect('admin/blog-categories?error=' . urlencode('Security token expired or invalid request.'));
+                return;
+            }
+
             $id = $_POST['id'] ?? null;
             $name = trim($_POST['name'] ?? '');
             if ($id && !empty($name)) {
@@ -275,11 +338,16 @@ class BlogController extends AdminController
     }
 
     /**
-     * Delete blog category
+     * Delete blog category (Strictly via POST + CSRF)
      */
     public function deleteCategory()
     {
-        $id = $_POST['id'] ?? $_GET['id'] ?? null;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
+            $this->redirect('admin/blog-categories?error=' . urlencode('Security token expired or invalid request method.'));
+            return;
+        }
+
+        $id = $_POST['id'] ?? null;
         if ($id && BlogPost::deleteCategory($id)) {
             $this->redirect('admin/blog-categories?success=' . urlencode('Category deleted successfully'));
             return;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Global Helpers for New Vape MVC Framework
+ * Global Helpers for Infinity Vape Shop MVC Framework
  */
 
 if (!function_exists('env')) {
@@ -98,8 +98,8 @@ if (!function_exists('redirect')) {
 
 if (!function_exists('session_init')) {
     function session_init() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            @session_start();
         }
     }
 }
@@ -149,4 +149,98 @@ if (!function_exists('get_flash')) {
         return $default;
     }
 }
+
+if (!function_exists('is_valid_image_upload')) {
+    function is_valid_image_upload($fileTmp, $fileName, &$detectedExt = null) {
+        if (empty($fileTmp) || !file_exists($fileTmp) || !is_uploaded_file($fileTmp)) {
+            return false;
+        }
+
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif', 'avif'];
+        $ext = strtolower(pathinfo((string)$fileName, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowedExtensions, true)) {
+            return false;
+        }
+
+        if ($ext === 'svg') {
+            $content = file_get_contents($fileTmp, false, null, 0, 8192);
+            if ($content === false || (stripos($content, '<svg') === false && stripos($content, '<?xml') === false)) {
+                return false;
+            }
+            if (preg_match('#<script|onload|onerror|javascript:#i', $content)) {
+                return false;
+            }
+            $detectedExt = 'svg';
+            return true;
+        }
+
+        $info = @getimagesize($fileTmp);
+        if ($info === false) {
+            if ($ext === 'webp') {
+                $fh = @fopen($fileTmp, 'rb');
+                if ($fh) {
+                    $header = fread($fh, 12);
+                    fclose($fh);
+                    if (substr($header, 0, 4) === 'RIFF' && substr($header, 8, 4) === 'WEBP') {
+                        $detectedExt = 'webp';
+                        return true;
+                    }
+                }
+            }
+            if ($ext === 'avif') {
+                $fh = @fopen($fileTmp, 'rb');
+                if ($fh) {
+                    $header = fread($fh, 16);
+                    fclose($fh);
+                    if (substr($header, 4, 4) === 'ftyp' && (strpos($header, 'avif') !== false || strpos($header, 'avis') !== false)) {
+                        $detectedExt = 'avif';
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        $mime = strtolower($info['mime'] ?? '');
+        $allowedMimes = [
+            'image/jpeg',
+            'image/pjpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+            'image/avif'
+        ];
+
+        if (!in_array($mime, $allowedMimes, true)) {
+            return false;
+        }
+
+        $detectedExt = $ext;
+        return true;
+    }
+}
+
+if (!function_exists('blog_time_display')) {
+    function blog_time_display($datetime) {
+        if (empty($datetime)) return date('M d, Y');
+        $time = is_numeric($datetime) ? (int)$datetime : strtotime($datetime);
+        if (!$time) return date('M d, Y');
+
+        $diff = time() - $time;
+        if ($diff >= 0 && $diff < 60) {
+            return 'Just now';
+        } elseif ($diff >= 60 && $diff < 3600) {
+            $mins = max(1, (int)floor($diff / 60));
+            return $mins . ' mins ago';
+        } elseif ($diff >= 3600 && $diff < 86400) {
+            $hours = max(1, (int)floor($diff / 3600));
+            return $hours . ' hours ago';
+        } else {
+            return date('M d, Y', $time);
+        }
+    }
+}
+
+
 

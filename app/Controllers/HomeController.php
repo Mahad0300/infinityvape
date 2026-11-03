@@ -12,7 +12,6 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $products = Product::all();
         $brands = Brand::active(12);
         $categories = Collection::getMainCategories(4);
         $newArrivals = Product::newArrivals(10);
@@ -29,7 +28,6 @@ class HomeController extends Controller
         $this->render('front.home.index', [
             'page_title' => 'Online Vape Store | Every Flavor. In Stock.',
             'page_js' => 'home',
-            'products' => $products,
             'brands' => $brands,
             'categories' => $categories,
             'newArrivals' => $newArrivals,

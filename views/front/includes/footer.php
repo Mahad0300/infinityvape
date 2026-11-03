@@ -1,8 +1,86 @@
 <?php
 /**
- * NEW VAPE - GLOBAL FOOTER
+ * INFINITY VAPE SHOP - GLOBAL FOOTER
  * Included on all pages. Closes main tag and loads scripts.
  */
+
+// Fetch dynamic Footer Menu tree from database (handle: 'footer_menu' or menu id 2)
+$footerMenuTree = [];
+$footerPoliciesTree = [];
+if (class_exists('\\App\\Models\\Menu')) {
+    $footerMenuTree = \App\Models\Menu::getTreeByLocation('footer_menu');
+    if (empty($footerMenuTree)) {
+        // Fallback to menu id 2 if location wasn't matched
+        $menu2 = \App\Models\Menu::find(2);
+        if ($menu2 && !empty($menu2['location'])) {
+            $footerMenuTree = \App\Models\Menu::getTreeByLocation($menu2['location']);
+        }
+    }
+
+    $footerPoliciesTree = \App\Models\Menu::getTreeByLocation('footer_policies');
+    if (empty($footerPoliciesTree)) {
+        $menu3 = \App\Models\Menu::find(3);
+        if ($menu3 && !empty($menu3['location'])) {
+            $footerPoliciesTree = \App\Models\Menu::getTreeByLocation($menu3['location']);
+        }
+    }
+}
+
+// Helper to format footer navigation links cleanly
+$formatFooterUrl = function($link) {
+    if (empty($link) || $link === '#') return '#';
+    if (preg_match('~^(https?://|//|#|mailto:|tel:)~i', $link)) {
+        return $link;
+    }
+    // Normalize any legacy category?cat= or category?c= URLs to clean /collection/
+    if (preg_match('#^/?category\?(?:cat|c)=([^&]+)(.*)$#i', $link, $m)) {
+        $slug = $m[1];
+        $rest = $m[2];
+        if (!empty($rest) && strpos($rest, '&') === 0) {
+            $rest = '?' . substr($rest, 1);
+        }
+        $link = 'collection/' . $slug . $rest;
+    }
+    $clean = trim($link, '/');
+    if ($clean === 'terms-and-condition' || $clean === 'page/terms-and-condition' || $clean === 'terms-of-service' || $clean === 'page/terms-of-service') {
+        $clean = 'terms-and-conditions';
+    }
+    if ($clean === 'faq' || $clean === 'page/faq') {
+        $clean = 'faqs';
+    }
+
+    // Convert any collection links (e.g. collection/{slug} or clean slug) to canonical hierarchical SEO URLs
+    $cSlug = $clean;
+    if (preg_match('#^collections?/(.+)$#i', $clean, $colMatch)) {
+        $cSlug = $colMatch[1];
+    }
+    if ($cSlug === 'all' || $cSlug === 'shop') {
+        return function_exists('url') ? url('collections') : 'collections';
+    }
+    if (class_exists('\\App\\Models\\Collection') && !in_array($clean, [
+        'shipping-policy', 'refund-policy', 'fda-disclaimer', 
+        'terms-and-conditions', 'privacy-policy', 'terms-of-service', 
+        'age-verification', 'terms', 'privacy', 'shipping', 'returns',
+        'faqs', 'faq', 'about-us', 'contact-us', 'track-order', 'blog', 'brands'
+    ]) && !preg_match('#^(page|pages|admin|account|blog|tag|product|cart|checkout)/#i', $clean)) {
+        $colObj = \App\Models\Collection::findBySlug($cSlug);
+        if ($colObj) {
+            return \App\Models\Collection::getUrl($colObj);
+        }
+    }
+    $pageSlugs = [
+        'shipping-policy', 'refund-policy', 'fda-disclaimer', 
+        'terms-and-conditions', 'privacy-policy', 'terms-of-service', 
+        'age-verification', 'terms', 'privacy', 'shipping', 'returns',
+        'faqs', 'faq', 'about-us', 'contact-us', 'track-order'
+    ];
+    if (in_array($clean, $pageSlugs) || preg_match('#^pages?/#', $clean)) {
+        $link = 'page/' . preg_replace('#^pages?/#', '', $clean);
+    } else {
+        $link = ltrim($link, '/');
+    }
+    return function_exists('url') ? url($link) : $link;
+};
 ?>
   </main>
   <!-- Main Content Wrapper Ends -->
@@ -26,7 +104,7 @@
             </div>
             <div class="footer-help-text">
               <h3 class="footer-help-title">Need help? We're here for you</h3>
-              <p class="footer-help-desc">Check our <a href="<?= url('faq') ?>">FAQ</a>, <a href="<?= url('track-order') ?>">track your order</a> or <a href="<?= url('contact') ?>">contact us</a>. We're happy to help!</p>
+              <p class="footer-help-desc">Check our <a href="<?= url('page/faqs') ?>">FAQs</a>, <a href="<?= url('page/track-order') ?>">track your order</a> or <a href="<?= url('page/contact-us') ?>">contact us</a>. We're happy to help!</p>
             </div>
           </div>
 
@@ -52,7 +130,7 @@
               <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" class="footer-social-btn" aria-label="Pinterest">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 0a12 12 0 0 0-4.37 23.18c-.05-.98-.1-2.48.02-3.55l1.04-4.42s-.26-.52-.26-1.3c0-1.22.7-2.13 1.59-2.13.75 0 1.11.56 1.11 1.24 0 .76-.48 1.89-.73 2.94-.21.88.44 1.6 1.3 1.6 1.57 0 2.78-1.65 2.78-4.04 0-2.11-1.52-3.59-3.69-3.59-2.51 0-3.99 1.89-3.99 3.84 0 .76.29 1.58.66 2.02.07.09.08.17.06.26l-.25 1.02c-.04.16-.14.2-.32.12-1.18-.55-1.92-2.27-1.92-3.65 0-2.98 2.16-5.71 6.24-5.71 3.28 0 5.82 2.34 5.82 5.46 0 3.26-2.05 5.88-4.9 5.88-.96 0-1.86-.5-2.17-1.09l-.59 2.26c-.22.84-.8 1.89-1.2 2.52A12 12 0 1 0 12 0z"></path></svg>
               </a>
-              <a href="contact.php" class="footer-social-btn" aria-label="Community">
+              <a href="<?= url('page/contact-us') ?>" class="footer-social-btn" aria-label="Community">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"></path></svg>
               </a>
             </div>
@@ -70,7 +148,7 @@
           <!-- Left: Brand Logo (Aligned with Left Column) -->
           <div class="footer-newsletter-logo-col">
             <a href="<?= url() ?>" class="footer-brand-logo-link" aria-label="Homepage">
-              <img src="assets/images/logo.svg" alt="Logo" class="footer-brand-logo-img">
+              <img src="assets/images/logo.svg" alt="Infinity Vape Shop" class="footer-brand-logo-img">
             </a>
           </div>
 
@@ -96,50 +174,24 @@
       <div class="container">
         <div class="footer-columns-grid">
           
-          <!-- Col 1: Shop -->
-          <div class="footer-col">
-            <h4 class="footer-col-title">Shop</h4>
-            <ul class="footer-col-list">
-              <li><a href="<?= url('category') ?>?cat=disposables">Disposables</a></li>
-              <li><a href="<?= url('category') ?>?cat=eliquids">E-Liquids</a></li>
-              <li><a href="<?= url('category') ?>?cat=pouches">Nicotine Pouches</a></li>
-              <li><a href="<?= url('category') ?>?cat=hemp-thc">Hemp &amp; CBD</a></li>
-              <li><a href="shop.php?filter=new">New Arrivals</a></li>
-              <li><a href="shop.php?filter=bestsellers">Best Sellers</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 2: Customer Service -->
-          <div class="footer-col">
-            <h4 class="footer-col-title">Customer Service</h4>
-            <ul class="footer-col-list">
-              <li><a href="shipping.php">Shipping Information</a></li>
-              <li><a href="returns.php">Returns &amp; Exchanges</a></li>
-              <li><a href="faq.php">FAQ</a></li>
-              <li><a href="contact.php">Contact Us</a></li>
-              <li><a href="track-order.php">Track Your Order</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 3: About Us -->
-          <div class="footer-col">
-            <h4 class="footer-col-title">About Us</h4>
-            <ul class="footer-col-list">
-              <li><a href="about.php">About Us</a></li>
-              <li><a href="<?= url('blog') ?>">Blog</a></li>
-              <li><a href="age-verification.php">Age Verification</a></li>
-            </ul>
-          </div>
-
-          <!-- Col 4: My Account -->
-          <div class="footer-col">
-            <h4 class="footer-col-title">My Account</h4>
-            <ul class="footer-col-list">
-              <li><a href="<?= url('my-account') ?>">Sign In</a></li>
-              <li><a href="my-account.php?action=register">Create an Account</a></li>
-              <li><a href="my-account.php?tab=orders">Order History</a></li>
-            </ul>
-          </div>
+          <?php if (!empty($footerMenuTree)): ?>
+            <?php foreach ($footerMenuTree as $col): ?>
+              <div class="footer-col">
+                <h4 class="footer-col-title"><?= htmlspecialchars($col['title']) ?></h4>
+                <?php if (!empty($col['children'])): ?>
+                  <ul class="footer-col-list">
+                    <?php foreach ($col['children'] as $link): ?>
+                      <li>
+                        <a href="<?= htmlspecialchars($formatFooterUrl($link['link_value'] ?? '#')) ?>">
+                          <?= htmlspecialchars($link['title']) ?>
+                        </a>
+                      </li>
+                    <?php endforeach; ?>
+                  </ul>
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
 
         </div>
 
@@ -194,12 +246,21 @@
     <div class="footer-bottom-bar">
       <div class="container">
         <div class="footer-bottom-inner">
-          <p class="footer-copy-text">&copy; <?php echo date('Y'); ?> All rights reserved.</p>
+          <p class="footer-copy-text">&copy; <?php echo date('Y'); ?> Infinity Vape Shop. All rights reserved.</p>
           <div class="footer-legal-links">
-            <a href="<?= url('terms') ?>">Terms &amp; Conditions</a>
-            <a href="<?= url('privacy') ?>">Privacy Policy</a>
-            <a href="<?= url('shipping') ?>">Shipping Policy</a>
-            <a href="<?= url('cookies') ?>">Cookie Policy</a>
+            <?php if (!empty($footerPoliciesTree)): ?>
+              <?php foreach ($footerPoliciesTree as $policy): ?>
+                <a href="<?= htmlspecialchars($formatFooterUrl($policy['link_value'] ?? '#')) ?>">
+                  <?= htmlspecialchars($policy['title']) ?>
+                </a>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <a href="<?= url('page/terms-and-conditions') ?>">Terms &amp; Conditions</a>
+              <a href="<?= url('page/privacy-policy') ?>">Privacy Policy</a>
+              <a href="<?= url('page/shipping-policy') ?>">Shipping Policy</a>
+              <a href="<?= url('page/refund-policy') ?>">Refund Policy</a>
+              <a href="<?= url('page/fda-disclaimer') ?>">FDA Disclaimer</a>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -211,14 +272,14 @@
   <?php include __DIR__ . '/cart-drawer.php'; ?>
 
   <!-- Global Cart Drawer JavaScript -->
-  <script src="assets/js/cart-drawer.js?v=<?php echo time(); ?>"></script>
+  <script src="assets/js/cart-drawer.js?v=1.0.1"></script>
 
   <!-- Global JavaScript -->
-  <script src="assets/js/main.js?v=<?php echo time(); ?>"></script>
+  <script src="assets/js/main.js?v=1.0.0"></script>
 
   <!-- Page Specific JavaScript (if defined) -->
   <?php if (!empty($page_js)): ?>
-    <script src="assets/js/<?php echo htmlspecialchars($page_js); ?>.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/<?php echo htmlspecialchars($page_js); ?>.js?v=1.0.2"></script>
   <?php endif; ?>
 
 </body>

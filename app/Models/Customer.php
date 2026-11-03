@@ -74,7 +74,7 @@ class Customer extends Model
                         } elseif (!empty($row['state'])) {
                             $row['location'] = $row['state'];
                         } else {
-                            $row['location'] = 'Oklahoma City, OK';
+                            $row['location'] = 'Not set yet';
                         }
 
                         // Orders count formatting
@@ -101,33 +101,30 @@ class Customer extends Model
      */
     public static function find($id)
     {
+        $id = (int)$id;
+        if ($id <= 0) {
+            return null;
+        }
+
         $db = self::getDB();
         if (!$db) {
             $items = self::$defaultCustomers;
             foreach ($items as $item) {
                 if ($item['id'] == $id) return $item;
             }
-            return $items[0] ?? null;
+            return null;
         }
 
         try {
             $stmt = $db->prepare("SELECT u.*, CONCAT(TRIM(u.first_name), ' ', TRIM(u.last_name)) AS name 
                                    FROM users u 
-                                   WHERE u.id = ? 
+                                   WHERE u.id = ? AND u.role = 'customer' 
                                    LIMIT 1");
-            $stmt->execute([(int)$id]);
+            $stmt->execute([$id]);
             $customer = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            // If not found, fallback to first customer
             if (!$customer) {
-                $stmt = $db->prepare("SELECT u.*, CONCAT(TRIM(u.first_name), ' ', TRIM(u.last_name)) AS name 
-                                       FROM users u 
-                                       WHERE u.role = 'customer' 
-                                       ORDER BY u.id ASC 
-                                       LIMIT 1");
-                $stmt->execute();
-                $customer = $stmt->fetch(\PDO::FETCH_ASSOC);
-                if (!$customer) return null;
+                return null;
             }
 
             // Joined date formatting
@@ -165,24 +162,11 @@ class Customer extends Model
                 }
             }
 
-            // Defaults if address not present
-            if (!$customer['shipping']) {
-                $customer['shipping'] = [
-                    'name' => $customer['name'],
-                    'street' => '10800 S Penn Ave, Suite 16 #827',
-                    'street_address' => '10800 S Penn Ave, Suite 16 #827',
-                    'city' => 'Oklahoma City',
-                    'state' => 'OK',
-                    'zip' => '73170',
-                    'country' => 'United States'
-                ];
-            } else {
+            if ($customer['shipping']) {
                 $customer['shipping']['name'] = trim(($customer['shipping']['first_name'] ?? '') . ' ' . ($customer['shipping']['last_name'] ?? '')) ?: $customer['name'];
             }
 
-            if (!$customer['billing']) {
-                $customer['billing'] = $customer['shipping'];
-            } else {
+            if ($customer['billing']) {
                 $customer['billing']['name'] = trim(($customer['billing']['first_name'] ?? '') . ' ' . ($customer['billing']['last_name'] ?? '')) ?: $customer['name'];
             }
 

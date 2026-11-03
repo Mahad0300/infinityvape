@@ -43,37 +43,32 @@ class AdminAuth
         session_init();
         $email = trim(strtolower($email));
 
+        if (empty($email) || empty($password)) {
+            return false;
+        }
+
         $db = Database::getConnection();
         if ($db) {
             try {
                 $stmt = $db->prepare("SELECT id, first_name, last_name, email, password_hash, role, status FROM users WHERE LOWER(email) = ? AND role IN ('admin', 'superadmin') LIMIT 1");
                 $stmt->execute([$email]);
-                $user = $stmt->fetch();
+                $user = $stmt->fetch(\PDO::FETCH_ASSOC);
 
                 if ($user) {
+                    // Check if account status is active
                     if (isset($user['status']) && $user['status'] !== 'active') {
                         return false;
                     }
 
+                    // Verify password strictly against database password_hash
                     if (password_verify($password, $user['password_hash'])) {
                         self::login($user);
                         return true;
                     }
                 }
-            } catch (\Exception $e) {}
-        }
-
-        // Hardened fallback credentials for initial store setup / unmigrated dev environments
-        if ($email === 'admin@newvape.com' && ($password === 'admin123' || $password === 'password')) {
-            self::login([
-                'id' => 1,
-                'first_name' => 'Super',
-                'last_name' => 'Admin',
-                'email' => 'admin@newvape.com',
-                'role' => 'superadmin',
-                'status' => 'active'
-            ]);
-            return true;
+            } catch (\Exception $e) {
+                error_log("Admin authentication error: " . $e->getMessage());
+            }
         }
 
         return false;
@@ -91,16 +86,16 @@ class AdminAuth
 
         $fullName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
         if (empty($fullName)) {
-            $fullName = 'Super Admin';
+            $fullName = 'Administrator';
         }
 
         $_SESSION[self::$sessionKey] = [
-            'id' => (int)($user['id'] ?? 1),
+            'id' => (int)($user['id'] ?? 0),
             'name' => $fullName,
-            'first_name' => $user['first_name'] ?? 'Super',
-            'last_name' => $user['last_name'] ?? 'Admin',
-            'email' => $user['email'] ?? 'admin@newvape.com',
-            'role' => $user['role'] ?? 'superadmin',
+            'first_name' => $user['first_name'] ?? '',
+            'last_name' => $user['last_name'] ?? '',
+            'email' => $user['email'] ?? '',
+            'role' => $user['role'] ?? 'admin',
             'logged_in_at' => time()
         ];
     }

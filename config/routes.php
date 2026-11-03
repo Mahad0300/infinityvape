@@ -23,12 +23,47 @@ return [
     'checkout.php'         => [\App\Controllers\CheckoutController::class, 'index'],
     'my-account'           => [\App\Controllers\AccountController::class, 'index'],
     'my-account.php'       => [\App\Controllers\AccountController::class, 'index'],
+    'account/login'        => [\App\Controllers\AccountController::class, 'login'],
+    'account/register'     => [\App\Controllers\AccountController::class, 'register'],
+    'account/logout'       => [\App\Controllers\AccountController::class, 'logout'],
+    'account/update-profile' => [\App\Controllers\AccountController::class, 'updateProfile'],
+    'account/save-address' => [\App\Controllers\AccountController::class, 'saveAddress'],
     'blog'                 => [\App\Controllers\BlogController::class, 'index'],
     'blog.php'             => [\App\Controllers\BlogController::class, 'index'],
     'blog-detail'          => [\App\Controllers\BlogController::class, 'detail'],
     'blog-detail.php'      => [\App\Controllers\BlogController::class, 'detail'],
     'tag'                  => [\App\Controllers\TagController::class, 'index'],
     'tag.php'              => [\App\Controllers\TagController::class, 'index'],
+
+    // Legal, Policy & Informational Pages
+    'page/shipping-policy'     => [\App\Controllers\PageController::class, 'shippingPolicy'],
+    'shipping-policy'          => [\App\Controllers\PageController::class, 'shippingPolicy'],
+
+    'page/refund-policy'       => [\App\Controllers\PageController::class, 'refundPolicy'],
+    'refund-policy'            => [\App\Controllers\PageController::class, 'refundPolicy'],
+
+    'page/fda-disclaimer'      => [\App\Controllers\PageController::class, 'fdaDisclaimer'],
+    'fda-disclaimer'           => [\App\Controllers\PageController::class, 'fdaDisclaimer'],
+
+    'page/terms-and-conditions' => [\App\Controllers\PageController::class, 'terms'],
+    'terms-and-conditions'      => [\App\Controllers\PageController::class, 'terms'],
+
+    'page/privacy-policy'      => [\App\Controllers\PageController::class, 'privacy'],
+    'privacy-policy'           => [\App\Controllers\PageController::class, 'privacy'],
+
+    'page/age-verification'    => [\App\Controllers\PageController::class, 'fdaDisclaimer'],
+
+    'page/contact-us'          => [\App\Controllers\PageController::class, 'contact'],
+    'contact-us'               => [\App\Controllers\PageController::class, 'contact'],
+
+    'page/faqs'                 => [\App\Controllers\PageController::class, 'faqs'],
+    'faqs'                      => [\App\Controllers\PageController::class, 'faqs'],
+
+    'page/about-us'            => [\App\Controllers\PageController::class, 'about'],
+    'about-us'                 => [\App\Controllers\PageController::class, 'about'],
+
+    'page/track-order'         => [\App\Controllers\PageController::class, 'trackOrder'],
+    'track-order'              => [\App\Controllers\PageController::class, 'trackOrder'],
 
     // Admin Auth Routes
     'admin/login'          => [\App\Controllers\Admin\AuthController::class, 'login'],
@@ -119,4 +154,15 @@ return [
     'admin/theme-sections/save-hero'          => [\App\Controllers\Admin\ThemeSectionController::class, 'saveHero'],
     'admin/theme-sections/save-twin-banners'  => [\App\Controllers\Admin\ThemeSectionController::class, 'saveTwinBanners'],
     'admin/theme-sections/save-seo-content'   => [\App\Controllers\Admin\ThemeSectionController::class, 'saveSeoContent'],
+
+    // Customer Reviews API
+    'api/reviews/submit'                      => [\App\Controllers\ProductController::class, 'submitReview'],
+
+    // Admin Customer Reviews CRUD
+    'admin/reviews'                           => [\App\Controllers\Admin\ReviewController::class, 'index'],
+    'admin/reviews.php'                       => [\App\Controllers\Admin\ReviewController::class, 'index'],
+    'admin/reviews/store'                     => [\App\Controllers\Admin\ReviewController::class, 'store'],
+    'admin/reviews/update'                    => [\App\Controllers\Admin\ReviewController::class, 'update'],
+    'admin/reviews/status'                    => [\App\Controllers\Admin\ReviewController::class, 'updateStatus'],
+    'admin/reviews/delete'                    => [\App\Controllers\Admin\ReviewController::class, 'delete'],
 ];

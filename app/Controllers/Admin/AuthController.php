@@ -13,6 +13,11 @@ class AuthController extends Controller
     {
         // Handle POST submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                set_flash('error', 'Security session expired. Please refresh and try again.');
+                $this->redirect('admin/login');
+            }
+
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
@@ -35,7 +40,7 @@ class AuthController extends Controller
         }
 
         $this->render('admin.auth.login', [
-            'page_title' => 'Admin Login | New Vape',
+            'page_title' => 'Admin Login | Infinity Vape Shop',
             'error' => get_flash('error'),
             'success' => get_flash('success')
         ]);

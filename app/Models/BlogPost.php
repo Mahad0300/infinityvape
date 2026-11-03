@@ -15,6 +15,13 @@ class BlogPost extends Model
         if (!$db) return [];
 
         try {
+            // Ensure author name is Infinity Vape Shop across legacy records
+            static $authorUpdated = false;
+            if (!$authorUpdated) {
+                @$db->exec("UPDATE blog_posts SET author_name = 'Infinity Vape Shop' WHERE author_name = 'New Vape' OR author_name IS NULL OR author_name = ''");
+                $authorUpdated = true;
+            }
+
             $stmt = $db->query("
                 SELECT b.*, c.name as category_name, c.slug as category_slug
                 FROM blog_posts b 
@@ -38,6 +45,13 @@ class BlogPost extends Model
         if (!$db) return [];
 
         try {
+            // Ensure author name is Infinity Vape Shop across legacy records
+            static $authorUpdated = false;
+            if (!$authorUpdated) {
+                @$db->exec("UPDATE blog_posts SET author_name = 'Infinity Vape Shop' WHERE author_name = 'New Vape' OR author_name IS NULL OR author_name = ''");
+                $authorUpdated = true;
+            }
+
             $stmt = $db->query("
                 SELECT b.*, c.name as category_name, c.slug as category_slug
                 FROM blog_posts b 
@@ -49,6 +63,172 @@ class BlogPost extends Model
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
             error_log("BlogPost::latest() error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get active blog posts by category slugs with optional fallback
+     */
+    public static function getByCategorySlugs(array $categorySlugs, $limit = 4, $fallbackToAny = true)
+    {
+        $db = self::getDB();
+        if (!$db || empty($categorySlugs)) return [];
+
+        try {
+            $placeholders = implode(',', array_fill(0, count($categorySlugs), '?'));
+            $sql = "
+                SELECT b.*, c.name as category_name, c.slug as category_slug
+                FROM blog_posts b 
+                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                WHERE b.is_active = 1 AND c.slug IN ($placeholders)
+                ORDER BY b.published_at DESC, b.id DESC
+                LIMIT " . (int)$limit;
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_values($categorySlugs));
+            $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // If we have fewer than limit and fallback is enabled, fill with other active posts
+            if ($fallbackToAny && count($posts) < $limit) {
+                $existingIds = array_column($posts, 'id');
+                $excludeSql = !empty($existingIds) ? " AND b.id NOT IN (" . implode(',', array_map('intval', $existingIds)) . ")" : "";
+                $needed = (int)$limit - count($posts);
+
+                $fallbackSql = "
+                    SELECT b.*, c.name as category_name, c.slug as category_slug
+                    FROM blog_posts b 
+                    LEFT JOIN blog_categories c ON b.category_id = c.id 
+                    WHERE b.is_active = 1 $excludeSql
+                    ORDER BY b.published_at DESC, b.id DESC
+                    LIMIT $needed";
+                $fallbackStmt = $db->query($fallbackSql);
+                $fallbackPosts = $fallbackStmt ? $fallbackStmt->fetchAll(PDO::FETCH_ASSOC) : [];
+                $posts = array_merge($posts, $fallbackPosts);
+            }
+
+            return $posts;
+        } catch (\Exception $e) {
+            error_log("BlogPost::getByCategorySlugs() error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get active blog posts by Tag with pagination
+     */
+    public static function byTag($tag, $page = 1, $perPage = 12)
+    {
+        $db = self::getDB();
+        if (!$db) return ['data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
+
+        try {
+            $page = max(1, (int)$page);
+            $perPage = max(1, (int)$perPage);
+            $offset = ($page - 1) * $perPage;
+
+            $normalizedTag = trim(str_replace(['-', '_'], ' ', $tag));
+            $tagWildcard = '%' . $normalizedTag . '%';
+            $slugWildcard = '%' . trim($tag) . '%';
+
+            $whereSql = "WHERE b.is_active = 1 AND (b.tags LIKE ? OR b.tags LIKE ?)";
+            $params = [$tagWildcard, $slugWildcard];
+
+            $countStmt = $db->prepare("SELECT COUNT(*) FROM blog_posts b $whereSql");
+            $countStmt->execute($params);
+            $total = (int)$countStmt->fetchColumn();
+
+            $sql = "
+                SELECT b.*, c.name as category_name, c.slug as category_slug
+                FROM blog_posts b 
+                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                $whereSql
+                ORDER BY b.published_at DESC, b.id DESC
+                LIMIT $perPage OFFSET $offset";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                'data' => $data,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int)ceil($total / $perPage) ?: 1
+            ];
+        } catch (\Exception $e) {
+            error_log("BlogPost::byTag() error: " . $e->getMessage());
+            return ['data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
+        }
+    }
+
+    /**
+     * Get archive months with post count
+     */
+    public static function getArchiveMonths()
+    {
+        $db = self::getDB();
+        if (!$db) return [];
+
+        try {
+            // Ensure author name is Infinity Vape Shop across legacy records
+            static $authorUpdated = false;
+            if (!$authorUpdated) {
+                @$db->exec("UPDATE blog_posts SET author_name = 'Infinity Vape Shop' WHERE author_name = 'New Vape' OR author_name IS NULL OR author_name = ''");
+                $authorUpdated = true;
+            }
+
+            $stmt = $db->query("
+                SELECT 
+                    DATE_FORMAT(published_at, '%Y-%m') as ym,
+                    DATE_FORMAT(published_at, '%M %Y') as label,
+                    COUNT(id) as count
+                FROM blog_posts
+                WHERE is_active = 1
+                GROUP BY ym, label
+                ORDER BY ym DESC
+                LIMIT 12
+            ");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("BlogPost::getArchiveMonths() error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get all unique tags from active blog posts
+     */
+    public static function getAllTags()
+    {
+        $db = self::getDB();
+        if (!$db) return [];
+
+        try {
+            // Ensure author name is Infinity Vape Shop across legacy records
+            static $authorUpdated = false;
+            if (!$authorUpdated) {
+                @$db->exec("UPDATE blog_posts SET author_name = 'Infinity Vape Shop' WHERE author_name = 'New Vape' OR author_name IS NULL OR author_name = ''");
+                $authorUpdated = true;
+            }
+
+            $stmt = $db->query("SELECT tags FROM blog_posts WHERE is_active = 1 AND tags IS NOT NULL AND tags != ''");
+            $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            $tagList = [];
+            foreach ($rows as $row) {
+                $parts = explode(',', $row);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if ($p !== '' && !in_array($p, $tagList)) {
+                        $tagList[] = $p;
+                    }
+                }
+            }
+            return $tagList;
+        } catch (\Exception $e) {
+            error_log("BlogPost::getAllTags() error: " . $e->getMessage());
             return [];
         }
     }
@@ -181,11 +361,11 @@ class BlogPost extends Model
 
             $sql = "INSERT INTO blog_posts (
                 category_id, author_id, title, slug, custom_url_path,
-                featured_image_url, author_name, read_time, excerpt, content,
+                featured_image_url, author_name, excerpt, content,
                 tags, published_at, meta_title, meta_desc, is_active
             ) VALUES (
                 :category_id, :author_id, :title, :slug, :custom_url_path,
-                :featured_image_url, :author_name, :read_time, :excerpt, :content,
+                :featured_image_url, :author_name, :excerpt, :content,
                 :tags, :published_at, :meta_title, :meta_desc, :is_active
             )";
 
@@ -197,8 +377,7 @@ class BlogPost extends Model
                 ':slug'               => $slug,
                 ':custom_url_path'    => $customUrl,
                 ':featured_image_url' => !empty($data['featured_image_url']) ? $data['featured_image_url'] : 'assets/images/blog-1.jpg',
-                ':author_name'        => !empty($data['author_name']) ? trim($data['author_name']) : 'New Vape Editorial',
-                ':read_time'          => !empty($data['read_time']) ? trim($data['read_time']) : '5 min read',
+                ':author_name'        => 'New Vape',
                 ':excerpt'            => $data['excerpt'] ?? '',
                 ':content'            => $data['content'] ?? '',
                 ':tags'               => $data['tags'] ?? '',
@@ -229,7 +408,7 @@ class BlogPost extends Model
 
             $allowed = [
                 'category_id', 'author_id', 'title', 'slug', 'custom_url_path',
-                'featured_image_url', 'author_name', 'read_time', 'excerpt', 'content',
+                'featured_image_url', 'author_name', 'excerpt', 'content',
                 'tags', 'published_at', 'meta_title', 'meta_desc', 'is_active'
             ];
 
@@ -277,6 +456,13 @@ class BlogPost extends Model
         if (!$db) return [];
 
         try {
+            // Ensure author name is Infinity Vape Shop across legacy records
+            static $authorUpdated = false;
+            if (!$authorUpdated) {
+                @$db->exec("UPDATE blog_posts SET author_name = 'Infinity Vape Shop' WHERE author_name = 'New Vape' OR author_name IS NULL OR author_name = ''");
+                $authorUpdated = true;
+            }
+
             $stmt = $db->query("
                 SELECT c.*, COUNT(b.id) as post_count 
                 FROM blog_categories c 

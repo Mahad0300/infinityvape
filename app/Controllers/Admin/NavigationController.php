@@ -144,11 +144,17 @@ class NavigationController extends AdminController
     }
 
     /**
-     * Delete a menu
+     * Delete a menu (Strictly via POST + CSRF)
      */
     public function delete()
     {
-        $id = isset($_POST['id']) ? (int)$_POST['id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
+            set_flash('error', 'Security token expired or invalid request method.');
+            $this->redirect('admin/navigation');
+            return;
+        }
+
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 
         if ($id) {
             Menu::delete($id);

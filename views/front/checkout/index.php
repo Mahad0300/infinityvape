@@ -1,9 +1,9 @@
 <?php
 /**
- * NEW VAPE - SECURE CHECKOUT PAGE (checkout.php)
+ * INFINITY VAPE SHOP - SECURE CHECKOUT PAGE (checkout.php)
  * High-converting 2-column e-commerce checkout page matching vaporhatch.
  */
-$page_title   = 'Secure Checkout - New Vape';
+$page_title   = 'Secure Checkout - Infinity Vape Shop';
 $current_page = 'checkout';
 $page_js      = 'checkout';
 
@@ -11,14 +11,22 @@ include dirname(__DIR__) . '/includes/header.php';
 ?>
 
 <!-- Breadcrumb Navigation -->
-<nav class="breadcrumb-nav" aria-label="Breadcrumb">
+<nav class="category-breadcrumb-nav" aria-label="Breadcrumb">
   <div class="container">
     <ol class="breadcrumb-list">
-      <li class="breadcrumb-item"><a href="<?= url() ?>">HOME</a></li>
-      <li class="breadcrumb-separator">/</li>
-      <li class="breadcrumb-item"><a href="<?= url('category') ?>">SHOP</a></li>
-      <li class="breadcrumb-separator">/</li>
-      <li class="breadcrumb-item active" aria-current="page">CHECKOUT</li>
+      <li class="breadcrumb-item"><a href="<?= url() ?>">Home</a></li>
+      <li class="breadcrumb-separator" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </li>
+      <li class="breadcrumb-item"><a href="<?= url('collections') ?>">Shop</a></li>
+      <li class="breadcrumb-separator" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">Checkout</li>
     </ol>
   </div>
 </nav>
@@ -363,7 +371,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <div class="form-checkbox-wrap">
                   <input type="checkbox" id="ageVerificationCheck" name="ageVerification" class="form-checkbox" required checked>
                   <label for="ageVerificationCheck" class="checkbox-label">
-                    <strong>Age Verification Agreement:</strong> I certify that I am at least <strong>21 years of age</strong> (or the legal smoking age in my jurisdiction) and agree to New Vape's <a href="terms.php" target="_blank" class="link-highlight">Terms of Service</a> and <a href="privacy.php" target="_blank" class="link-highlight">Privacy Policy</a>.
+                    <strong>Age Verification Agreement:</strong> I certify that I am at least <strong>21 years of age</strong> (or the legal smoking age in my jurisdiction) and agree to Infinity Vape Shop's <a href="<?= url('page/terms-and-conditions') ?>" target="_blank" class="link-highlight">Terms &amp; Conditions</a> and <a href="<?= url('page/privacy-policy') ?>" target="_blank" class="link-highlight">Privacy Policy</a>.
                   </label>
                 </div>
                 <span class="field-error-msg" id="ageErrorMsg" style="display: none;">You must confirm you are 21+ to proceed.</span>
@@ -524,7 +532,7 @@ include dirname(__DIR__) . '/includes/header.php';
       </svg>
     </div>
     <h2 class="success-title">Thank You For Your Order!</h2>
-    <p class="success-order-num">Order Confirmation: <strong id="modalOrderNumber">#NV-<?php echo rand(104820, 989210); ?></strong></p>
+    <p class="success-order-num">Order Confirmation: <strong id="modalOrderNumber">#INF-<?php echo rand(104820, 989210); ?></strong></p>
     <p class="success-message">A confirmation receipt and tracking number have been sent to your email address. We're packing your order right now!</p>
     
     <div class="success-details-card">

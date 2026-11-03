@@ -162,16 +162,17 @@ include dirname(__DIR__) . '/includes/header.php';
                       </svg>
                     </a>
 
-                    <!-- Delete Action with confirmation -->
-                    <a href="<?= url('admin/delete-brand') ?>?id=<?= $brand['id'] ?>" 
-                       class="btn-icon-only danger btn-delete-row" 
-                       title="Delete Brand"
-                       onclick="return confirm('Are you sure you want to delete brand \'<?= e(addslashes($brand['name'])) ?>\'?');">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </a>
+                    <!-- Delete Action with confirmation (POST + CSRF) -->
+                    <form action="<?= url('admin/delete-brand') ?>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete brand \'<?= e(addslashes($brand['name'])) ?>\'?');">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="id" value="<?= $brand['id'] ?>">
+                      <button type="submit" class="btn-icon-only danger btn-delete-row" title="Delete Brand" style="background:none; border:none; padding:0; cursor:pointer;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </form>
                   </div>
                 </td>
               </tr>

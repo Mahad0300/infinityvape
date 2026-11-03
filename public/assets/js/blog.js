@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnClearFilter = document.getElementById('btnClearFilter');
   const blogPosts = document.querySelectorAll('.blog-post-item');
   const articlesCount = document.getElementById('blogArticlesCount');
-  
+
   let currentCategory = 'all';
   let searchQuery = '';
 
@@ -94,13 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 3. Clear Filter Button
-  const tagPills = document.querySelectorAll('.blog-tag-pill');
-  let currentTag = '';
-
   if (btnClearFilter) {
     btnClearFilter.addEventListener('click', () => {
       currentCategory = 'all';
-      currentTag = '';
       searchQuery = '';
       if (searchInput) searchInput.value = '';
 
@@ -112,40 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      tagPills.forEach((p) => p.classList.remove('active'));
-
       filterPosts();
     });
   }
-
-  // 3b. Tag Pills Filtering
-  tagPills.forEach((pill) => {
-    pill.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tagText = pill.textContent.trim().toLowerCase();
-      
-      if (currentTag === tagText) {
-        // Toggle off
-        currentTag = '';
-        pill.classList.remove('active');
-        searchQuery = '';
-        if (searchInput) searchInput.value = '';
-      } else {
-        tagPills.forEach((p) => p.classList.remove('active'));
-        pill.classList.add('active');
-        currentTag = tagText;
-        searchQuery = tagText;
-        if (searchInput) searchInput.value = tagText;
-      }
-
-      filterPosts();
-
-      const mainCol = document.querySelector('.blog-main-col');
-      if (mainCol) {
-        mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
 
   // 4. Pagination
   const pageButtons = document.querySelectorAll('.blog-num-btn');

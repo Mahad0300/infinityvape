@@ -1,14 +1,250 @@
 <?php
+
 /**
  * PRODUCT DETAILS PAGE (product.php)
- * Static template showcasing single product details with gallery, specs, flavor selector & buy box.
+ * Dynamic product details view with gallery, specs, flavor selector, buy box, and related products.
  */
 
-$page_title = 'Lost Mary MT35000 Turbo Vape - 35,000 Puffs, 37 Flavors | New Vape';
-$page_js    = 'product';
+// Fallback if accessed directly or via include without controller context
+if (!isset($product) || empty($product)) {
+  $identifier = $_GET['slug'] ?? ($_GET['p'] ?? ($_GET['id'] ?? null));
+  if ($identifier) {
+    $product = \App\Models\Product::find($identifier);
+  }
+  if (!$product) {
+    $product = \App\Models\Product::find(1);
+  }
+}
+
+$productTitle = $product['title'] ?? ($product['name'] ?? 'Product Details');
+$brandName = $product['brand'] ?? 'Vape Brand';
+$brandSlug = $product['brand_slug'] ?? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $brandName)));
+$categoryName = $product['category'] ?? 'Disposables';
+$categorySlug = $product['category_slug'] ?? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $categoryName)));
+$sku = !empty($product['sku']) ? $product['sku'] : ('SKU-' . ($product['id'] ?? '100'));
+$stockStatus = !empty($product['stock_status']) ? ucfirst(str_replace('_', ' ', $product['stock_status'])) : (!empty($product['status']) ? ucfirst($product['status']) : 'In Stock');
+
+// Pricing & Discount calculation
+$basePrice = (float) ($product['base_price'] ?? $product['price'] ?? 0);
+$comparePrice = !empty($product['compare_price']) ? (float) $product['compare_price'] : 0;
+$hasDiscount = ($comparePrice > $basePrice);
+$discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
+
+$page_title = $productTitle . ' | Infinity Vape Shop';
+$page_js = 'product';
 
 include dirname(__DIR__) . '/includes/header.php';
 ?>
+
+<style>
+/* Product Image Gallery & Layout (50% / 50% Grid) */
+.product-main-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 44px !important;
+  align-items: start !important;
+}
+
+.product-gallery-col {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.product-gallery-sticky {
+  position: sticky !important;
+  top: 24px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.product-main-image-card {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  aspect-ratio: 1 / 1 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Main Large Image Hover Navigation Buttons (< and >) */
+.main-image-nav-btn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 10 !important;
+  opacity: 0 !important;
+  transition: all 0.25s ease !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.product-main-image-card:hover .main-image-nav-btn {
+  opacity: 1 !important;
+}
+
+.main-image-nav-btn:hover {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  transform: translateY(-50%) scale(1.08) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25) !important;
+}
+
+.main-image-nav-btn.prev {
+  left: 16px !important;
+}
+
+.main-image-nav-btn.next {
+  right: 16px !important;
+}
+
+/* Horizontal Scrollable Thumbnails Container */
+.product-thumbnails-wrap {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 16px auto 0 !important;
+  padding: 0 38px !important; /* Space for always-visible arrow buttons */
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.product-thumbnails-track {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 4px 2px !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  /* Scrollbar completely hidden */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.product-thumbnails-track::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.product-thumb-btn {
+  width: 76px !important;
+  height: 76px !important;
+  flex: 0 0 76px !important;
+  background-color: #ffffff !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  padding: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  overflow: hidden !important;
+}
+
+.product-thumb-btn img {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+.product-thumb-btn:hover {
+  border-color: #94a3b8 !important;
+  transform: translateY(-2px) !important;
+}
+
+.product-thumb-btn.active {
+  border-color: #f25c27 !important;
+  box-shadow: 0 0 0 2px rgba(242, 92, 39, 0.25) !important;
+  background-color: #ffffff !important;
+}
+
+/* Thumbnail Navigation Arrows (ALWAYS VISIBLE - BINA HOVER KE BHI) */
+.thumb-scroll-btn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 5 !important;
+  opacity: 1 !important; /* Always visible */
+  pointer-events: auto !important;
+  transition: all 0.2s ease !important;
+}
+
+.thumb-scroll-btn:hover {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25) !important;
+  transform: translateY(-50%) scale(1.08) !important;
+}
+
+.thumb-scroll-btn.thumb-scroll-prev {
+  left: 0 !important;
+}
+
+.thumb-scroll-btn.thumb-scroll-next {
+  right: 0 !important;
+}
+
+.thumb-scroll-btn:disabled,
+.thumb-scroll-btn.is-disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+}
+
+@media (max-width: 991px) {
+  .product-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+  }
+  .main-image-nav-btn {
+    opacity: 0.9 !important;
+  }
+}
+</style>
 
 <!-- ==========================================
      1. BREADCRUMB NAVIGATION
@@ -25,7 +261,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </svg>
       </li>
       <li class="breadcrumb-item">
-        <a href="<?= url('category') ?>?cat=disposables">Disposables</a>
+        <a href="<?= class_exists('\\App\\Models\\Collection') ? \App\Models\Collection::getUrl($categorySlug) : url('collection/' . urlencode($categorySlug)) ?>"><?= htmlspecialchars($categoryName) ?></a>
       </li>
       <li class="breadcrumb-separator" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -33,7 +269,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </svg>
       </li>
       <li class="breadcrumb-item active" aria-current="page">
-        Lost Mary MT35000 Turbo Vape - 35,000 Puffs, 37 Flavors, Hidden Display
+        <?= htmlspecialchars($productTitle) ?>
       </li>
     </ol>
   </div>
@@ -52,39 +288,59 @@ include dirname(__DIR__) . '/includes/header.php';
       <div class="product-gallery-col">
         <div class="product-gallery-sticky">
           
-          <?php 
-            $galleryList = [];
-            if (!empty($productImages)) {
-              foreach ($productImages as $pImg) {
-                $galleryList[] = $pImg['image_url'];
-              }
+          <?php
+          $galleryList = [];
+          if (!empty($productImages)) {
+            foreach ($productImages as $pImg) {
+              $galleryList[] = $pImg['image_url'];
             }
-            if (empty($galleryList)) {
-              $galleryList[] = !empty($product['featured_image']) ? $product['featured_image'] : (!empty($product['img']) ? $product['img'] : 'assets/images/no-image.svg');
-            }
-            $mainImgSrc = $galleryList[0];
+          }
+          if (empty($galleryList)) {
+            $galleryList[] = !empty($product['featured_image']) ? $product['featured_image'] : (!empty($product['img']) ? $product['img'] : 'assets/images/vape-image.webp');
+          }
+          $mainImgSrc = $galleryList[0];
           ?>
           <!-- Main Large Image Card -->
           <div class="product-main-image-card">
+            <?php if (count($galleryList) > 1): ?>
+            <button type="button" class="main-image-nav-btn prev" id="mainImgPrev" aria-label="Previous image">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <?php endif; ?>
+
             <div class="main-image-viewport">
               <img 
                 id="productMainImage" 
                 src="<?= asset($mainImgSrc) ?>" 
-                alt="<?= e($product['title'] ?? 'Product') ?>" 
+                alt="<?= htmlspecialchars($productTitle) ?>" 
                 class="product-main-img"
-                onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';"
+                onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';"
               >
             </div>
+
+            <?php if (count($galleryList) > 1): ?>
+            <button type="button" class="main-image-nav-btn next" id="mainImgNext" aria-label="Next image">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <?php endif; ?>
           </div>
 
-          <!-- Thumbnails Row -->
+          <!-- Thumbnails Row (Scrollable Gallery with Always-Visible Buttons) -->
           <?php if (count($galleryList) > 1): ?>
-          <div class="product-thumbnails-track">
-            <?php foreach ($galleryList as $tIdx => $tImg): ?>
-              <button type="button" class="product-thumb-btn <?= $tIdx === 0 ? 'active' : '' ?>" data-img="<?= asset($tImg) ?>" aria-label="View product image <?= $tIdx + 1 ?>">
-                <img src="<?= asset($tImg) ?>" alt="<?= e($product['title'] ?? 'Product') ?> thumbnail <?= $tIdx + 1 ?>">
-              </button>
-            <?php endforeach; ?>
+          <div class="product-thumbnails-wrap" id="productThumbnailsWrap">
+            <button type="button" class="thumb-scroll-btn thumb-scroll-prev" id="thumbScrollPrev" aria-label="Previous thumbnails">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="product-thumbnails-track" id="productThumbnailsTrack">
+              <?php foreach ($galleryList as $tIdx => $tImg): ?>
+                <button type="button" class="product-thumb-btn <?= $tIdx === 0 ? 'active' : '' ?>" data-index="<?= $tIdx ?>" data-img="<?= asset($tImg) ?>" aria-label="View product image <?= $tIdx + 1 ?>">
+                  <img src="<?= asset($tImg) ?>" alt="<?= htmlspecialchars($productTitle) ?> thumbnail <?= $tIdx + 1 ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';">
+                </button>
+              <?php endforeach; ?>
+            </div>
+            <button type="button" class="thumb-scroll-btn thumb-scroll-next" id="thumbScrollNext" aria-label="Next thumbnails">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
           </div>
           <?php endif; ?>
 
@@ -98,48 +354,63 @@ include dirname(__DIR__) . '/includes/header.php';
         
         <!-- Brand Name -->
         <div class="product-brand-tag">
-          <a href="<?= url('category') ?>?brand=<?= urlencode(strtolower($product['brand'] ?? 'LOST MARY')) ?>">
-            <?= e($product['brand'] ?? 'LOST MARY') ?>
+          <a href="<?= url('collection/' . urlencode($categorySlug) . '?brand=' . urlencode(strtolower($brandName))) ?>">
+            <?= htmlspecialchars(strtoupper($brandName)) ?>
           </a>
         </div>
 
         <!-- Product Title -->
         <h1 class="product-details-title">
-          <?= e($product['title'] ?? 'Lost Mary MT35000 Turbo Vape - 35,000 Puffs, 37 Flavors, Hidden Display') ?>
+          <?= htmlspecialchars($productTitle) ?>
         </h1>
 
         <!-- SKU & Star Rating Row -->
+        <?php
+        $reviewCount = !empty($productReviews) ? count($productReviews) : 0;
+        $avgRating = 5;
+        if ($reviewCount > 0) {
+          $sumRating = 0;
+          foreach ($productReviews as $pr) {
+            $sumRating += (int) ($pr['rating'] ?? 5);
+          }
+          $avgRating = (int) round($sumRating / $reviewCount);
+        }
+        ?>
         <div class="product-meta-row">
-          <span class="product-sku">SKU: <?= e($product['sku'] ?? 'LM-MT35000-35K-DV') ?></span>
+          <span class="product-sku">SKU: <?= htmlspecialchars($sku) ?></span>
           <div class="product-rating-wrap">
-            <div class="rating-stars" aria-label="5 out of 5 stars">
-              ★★★★★
+            <div class="rating-stars" aria-label="<?= $avgRating ?> out of 5 stars">
+              <?= $reviewCount > 0 ? (str_repeat('★', $avgRating) . str_repeat('☆', 5 - $avgRating)) : '☆☆☆☆☆' ?>
             </div>
-            <a href="#reviews" class="rating-count"><?= !empty($productReviews) ? count($productReviews) : 3 ?> Reviews</a>
+            <a href="#tab-reviews" class="rating-count"><?= $reviewCount ?> <?= $reviewCount === 1 ? 'Review' : 'Reviews' ?></a>
           </div>
         </div>
 
         <!-- Pricing Row -->
         <div class="product-price-section">
-          <?php if (!empty($product['compare_price'])): ?>
-          <span class="product-price-old"><?= strpos((string)$product['compare_price'], '$') === false ? '$' . number_format((float)$product['compare_price'], 2) : e($product['compare_price']) ?></span>
+          <?php if ($hasDiscount): ?>
+            <span class="product-price-old">$<?= number_format($comparePrice, 2) ?></span>
           <?php endif; ?>
-          <span class="product-price-current"><?= strpos((string)($product['price'] ?? $product['base_price'] ?? '$18.49'), '$') === false ? '$' . number_format((float)($product['price'] ?? $product['base_price']), 2) : e($product['price'] ?? $product['base_price'] ?? '$18.49') ?></span>
-          <span class="product-discount-pill">SAVE 13%</span>
+          <span class="product-price-current">$<?= number_format($basePrice, 2) ?></span>
         </div>
 
         <!-- Stock Status Strip -->
-        <div class="product-stock-status in-stock">
+        <?php
+        $isOutOfStock = strtolower(str_replace(' ', '_', $product['stock_status'] ?? '')) === 'out_of_stock' || (isset($product['stock_quantity']) && (int) $product['stock_quantity'] <= 0);
+        ?>
+        <div class="product-stock-status <?= $isOutOfStock ? 'out-of-stock' : 'in-stock' ?>">
           <span class="stock-dot"></span>
           <span class="stock-text">
-            <strong><?= e($product['status'] ?? $product['stock_status'] ?? 'In Stock') ?>.</strong> Ships today if ordered by 3:00 PM EST
+            <strong><?= $isOutOfStock ? 'Out of Stock' : htmlspecialchars($stockStatus) ?>.</strong> <?= $isOutOfStock ? 'Currently unavailable.' : 'Ships today if ordered by 3:00 PM EST' ?>
           </span>
         </div>
 
         <!-- Short Description Paragraph -->
+        <?php if (!empty(trim(strip_tags($product['short_desc'] ?? '')))): ?>
         <p class="product-short-desc">
-          <?= !empty($product['short_desc']) ? $product['short_desc'] : 'The <strong>Lost Mary MT35000 Turbo</strong> is a 35,000 puff disposable vape with 18ml of 5% nicotine salt, dual mesh coils and a 1000mAh battery. A hidden display shows battery mode and e-liquid when you draw. 37 flavors in stock.' ?>
+          <?= nl2br(htmlspecialchars(trim($product['short_desc']))) ?>
         </p>
+        <?php endif; ?>
 
         <!-- Dynamic Spec / Feature Boxes Grid -->
         <?php if (!empty($productHighlights)): ?>
@@ -148,9 +419,9 @@ include dirname(__DIR__) . '/includes/header.php';
           <div class="spec-box">
             <div class="spec-icon">
               <?php
-                $icon = strtolower($highlight['icon_type'] ?? $highlight['label'] ?? '');
-                if (strpos($icon, 'puff') !== false):
-              ?>
+              $icon = strtolower($highlight['icon_type'] ?? $highlight['label'] ?? '');
+              if (strpos($icon, 'puff') !== false):
+                ?>
               <!-- Puffs Vapor Icon -->
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 3v3m6.366 1.634l-2.12 2.12M21 12h-3m-1.634 6.366l-2.12-2.12M12 21v-3m-6.366-1.634l2.12-2.12M3 12h3m1.634-6.366l2.12 2.12"></path>
@@ -178,8 +449,8 @@ include dirname(__DIR__) . '/includes/header.php';
               <?php endif; ?>
             </div>
             <div class="spec-details">
-              <span class="spec-label"><?= e($highlight['label']) ?></span>
-              <span class="spec-value"><?= e($highlight['value']) ?></span>
+              <span class="spec-label"><?= htmlspecialchars($highlight['label']) ?></span>
+              <span class="spec-value"><?= htmlspecialchars($highlight['value']) ?></span>
             </div>
           </div>
           <?php endforeach; ?>
@@ -194,9 +465,24 @@ include dirname(__DIR__) . '/includes/header.php';
           </label>
           <div class="flavor-select-wrapper">
             <select id="flavorSelect" class="product-flavor-select">
-              <?php foreach ($productVariants as $idx => $variant): ?>
-              <option value="<?= e($variant['variant_name']) ?>" <?= $idx === 0 ? 'selected' : '' ?>>
-                <?= e($variant['variant_name']) ?>
+              <?php
+              foreach ($productVariants as $idx => $variant):
+                $vPrice = !empty($variant['price']) ? (float) $variant['price'] : $basePrice;
+                $vCompare = !empty($variant['compare_price']) ? (float) $variant['compare_price'] : $comparePrice;
+                $vSku = !empty($variant['sku']) ? $variant['sku'] : $sku;
+                $vStock = isset($variant['stock_quantity']) ? (int) $variant['stock_quantity'] : 0;
+                $vImage = !empty($variant['image_url']) ? asset($variant['image_url']) : '';
+                ?>
+              <option 
+                value="<?= htmlspecialchars($variant['variant_name']) ?>" 
+                data-price="<?= number_format($vPrice, 2, '.', '') ?>"
+                data-compare-price="<?= $vCompare ? number_format($vCompare, 2, '.', '') : '' ?>"
+                data-sku="<?= htmlspecialchars($vSku) ?>"
+                data-stock="<?= $vStock ?>"
+                data-image="<?= htmlspecialchars($vImage) ?>"
+                <?= $idx === 0 ? 'selected' : '' ?>
+              >
+                <?= htmlspecialchars($variant['variant_name']) ?>
               </option>
               <?php endforeach; ?>
             </select>
@@ -230,16 +516,19 @@ include dirname(__DIR__) . '/includes/header.php';
           Buy it now
         </button>
 
-        <!-- Limited-Time Bundle Promotional Banner -->
+        <!-- Limited-Time Bundle Promotional Banner (Dynamic per product) -->
+        <?php if (!empty($product['bundle_banner_active']) && !empty($product['bundle_banner_img'])): ?>
         <div class="product-promo-banner-card">
-          <a href="shop.php?bundle=promo" class="product-promo-link">
+          <a href="<?= !empty($product['bundle_banner_link']) ? (preg_match('/^https?:\/\//i', $product['bundle_banner_link']) ? htmlspecialchars($product['bundle_banner_link']) : url(htmlspecialchars(ltrim($product['bundle_banner_link'], '/')))) : 'javascript:void(0);' ?>" class="product-promo-link">
             <img 
-              src="assets/images/limited-time.webp" 
-              alt="Limited-Time Bundle: Buy The Kit, Get 2 Pods Free" 
+              src="<?= asset($product['bundle_banner_img']) ?>" 
+              alt="<?= htmlspecialchars($productTitle) ?> Promotional Deal" 
               class="product-promo-img"
+              onerror="this.onerror=null;this.src='<?= asset('assets/images/limited-time.webp') ?>';"
             >
           </a>
         </div>
+        <?php endif; ?>
 
         <!-- Trust / Features Bar -->
         <div class="product-trust-features-strip">
@@ -306,123 +595,150 @@ include dirname(__DIR__) . '/includes/header.php';
 
 <!-- ==========================================
      3. PRODUCT TABS SECTION
-     (Description, More Information, Reviews, FAQs, Related Posts)
      ========================================== -->
+<?php
+$hasDesc = !empty(trim(strip_tags($product['long_desc'] ?? '')));
+$hasMoreInfo = !empty($productSpecs);
+$hasReviews = true;  // Customers can submit reviews and read approved reviews
+$hasFaqs = !empty($productFaqs);
+$hasRelatedPosts = !empty(trim(strip_tags($product['related_posts_content'] ?? ''))) || !empty($relatedPosts);
+
+$tabs = [];
+if ($hasDesc) {
+  $tabs['tab-description'] = 'Description';
+}
+if ($hasMoreInfo) {
+  $tabs['tab-more-info'] = 'More Information';
+}
+if ($hasReviews) {
+  $tabs['tab-reviews'] = 'Reviews (' . $reviewCount . ')';
+}
+if ($hasFaqs) {
+  $tabs['tab-faqs'] = 'FAQs';
+}
+if ($hasRelatedPosts) {
+  $tabs['tab-related-posts'] = 'Related Posts';
+}
+
+$firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
+?>
+
+<?php if (!empty($tabs)): ?>
+<style>
+/* Rich text styling for Description (Tab 1) & Related Posts (Tab 5) */
+.tab-description-content,
+.related-posts-rich-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #1e293b;
+}
+.tab-description-content h1, .related-posts-rich-text h1,
+.tab-description-content h2, .related-posts-rich-text h2,
+.tab-description-content h3, .related-posts-rich-text h3,
+.tab-description-content h4, .related-posts-rich-text h4,
+.tab-description-content h5, .related-posts-rich-text h5,
+.tab-description-content h6, .related-posts-rich-text h6 {
+  color: #082142 !important;
+  font-family: 'Outfit', sans-serif;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.tab-description-content h1, .related-posts-rich-text h1 { font-size: 1.6rem; }
+.tab-description-content h2, .related-posts-rich-text h2 { font-size: 1.4rem; }
+.tab-description-content h3, .related-posts-rich-text h3 { font-size: 1.22rem; }
+.tab-description-content h4, .related-posts-rich-text h4 { font-size: 1.1rem; }
+.tab-description-content h5, .related-posts-rich-text h5 { font-size: 1rem; }
+.tab-description-content h6, .related-posts-rich-text h6 { font-size: 0.9rem; text-transform: uppercase; }
+
+.tab-description-content p,
+.related-posts-rich-text p {
+  margin-bottom: 1em;
+  color: #1e293b !important;
+}
+.tab-description-content a,
+.related-posts-rich-text a {
+  color: #f25c27 !important;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.tab-description-content a:hover,
+.related-posts-rich-text a:hover {
+  color: #db4915 !important;
+}
+.tab-description-content mark, .tab-description-content .rte-highlight,
+.related-posts-rich-text mark, .related-posts-rich-text .rte-highlight {
+  background-color: #fef08a !important;
+  color: #082142 !important;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.tab-description-content ul, .related-posts-rich-text ul,
+.tab-description-content ol, .related-posts-rich-text ol {
+  margin: 0 0 1em 1.5em;
+  padding-left: 0;
+  color: #1e293b !important;
+}
+.tab-description-content li, .related-posts-rich-text li {
+  margin-bottom: 0.35em;
+  color: #1e293b !important;
+}
+.tab-description-content span:not(.rte-highlight):not(mark),
+.related-posts-rich-text span:not(.rte-highlight):not(mark) {
+  color: inherit !important;
+}
+</style>
 <section class="product-tabs-section" id="productTabsSection">
   <div class="container">
     
     <!-- Tab Navigation Header Strip -->
     <div class="product-tabs-nav-wrap">
       <ul class="product-tabs-nav" role="tablist">
+        <?php foreach ($tabs as $tId => $tLabel): ?>
         <li class="product-tab-item" role="presentation">
-          <button type="button" class="product-tab-btn active" role="tab" aria-selected="true" data-tab="tab-description" id="tabBtnDescription">
-            Description
+          <button type="button" class="product-tab-btn <?= $tId === $firstTabId ? 'active' : '' ?>" role="tab" aria-selected="<?= $tId === $firstTabId ? 'true' : 'false' ?>" data-tab="<?= $tId ?>" id="btn-<?= $tId ?>">
+            <?= htmlspecialchars($tLabel) ?>
           </button>
         </li>
-        <li class="product-tab-item" role="presentation">
-          <button type="button" class="product-tab-btn" role="tab" aria-selected="false" data-tab="tab-more-info" id="tabBtnMoreInfo">
-            More Information
-          </button>
-        </li>
-        <li class="product-tab-item" role="presentation">
-          <button type="button" class="product-tab-btn" role="tab" aria-selected="false" data-tab="tab-reviews" id="tabBtnReviews">
-            Reviews
-          </button>
-        </li>
-        <li class="product-tab-item" role="presentation">
-          <button type="button" class="product-tab-btn" role="tab" aria-selected="false" data-tab="tab-faqs" id="tabBtnFaqs">
-            FAQs
-          </button>
-        </li>
-        <li class="product-tab-item" role="presentation">
-          <button type="button" class="product-tab-btn" role="tab" aria-selected="false" data-tab="tab-related-posts" id="tabBtnRelatedPosts">
-            Related Posts
-          </button>
-        </li>
+        <?php endforeach; ?>
       </ul>
     </div>
 
     <!-- Tab Panels Container -->
     <div class="product-tabs-content">
 
-      <!-- ========================================
-           TAB 1: DESCRIPTION
-           ======================================== -->
-      <div class="product-tab-pane active" id="tab-description" role="tabpanel" aria-labelledby="tabBtnDescription">
+      <!-- TAB 1: DESCRIPTION -->
+      <?php if ($hasDesc): ?>
+      <div class="product-tab-pane <?= $firstTabId === 'tab-description' ? 'active' : '' ?>" id="tab-description" role="tabpanel" aria-labelledby="btn-tab-description">
         <div class="tab-description-content">
-          <h3 class="tab-content-title">What is the Lost Mary MT35000 Turbo?</h3>
-          <p>
-            The Lost Mary MT35000 Turbo is a rechargeable disposable vape rated for 35,000 puffs in Smooth Mode and about 20,000 in Turbo Mode. It carries 18mL of 5% nicotine salt, dual mesh coils, a 1,000mAh battery and a display that stays hidden until you draw. With 37 flavors in stock at New Vape, it has the widest menu of any 35K device we sell.
-          </p>
-
-          <h3 class="tab-content-title">How many puffs do you really get?</h3>
-          <p>
-            Treat 35,000 as the ceiling. That figure assumes Smooth Mode and short draws. Turbo Mode raises the power for warmer, denser vapor and a firmer throat hit, and it cuts the rating to about 20,000. Most people mix the two, so an average daily vaper lands around two months per device. Heavy Turbo use gets closer to a month.
-          </p>
-          <p>
-            Smooth Mode is the everyday setting: cooler draws, steady flavor, maximum puff count. Turbo Mode is for the first pulls of the day or when you want a harder hit. A switch on the body changes modes, and the display confirms which one is active.
-          </p>
-
-          <h3 class="tab-content-title">Which of the 37 flavors should you pick?</h3>
-          <p>
-            Baja Splash is the crowd favorite and the one to start with. Scary Berry and Tigers Blood are the complex picks for fruit fans. Miami Mint, Winter Mint and Black Mint cover the mint side from light to deep. The Pixy editions (Red, Purple, White, Yellow and Orange) are candy-forward, and Half &amp; Half and Classic Tobacco are the two non-fruit options. Read our <a href="<?= url('blog') ?>?article=flavors-guide">MT35000 Turbo flavors guide</a> for every flavor ranked.
-          </p>
-
-          <h3 class="tab-content-title">Battery, charging and the hidden display</h3>
-          <p>
-            The 1,000mAh battery is the largest in the brand's 35K tier and charges by USB-C in about 90 minutes. No cable is included. The Blend-In display stays dark until you take a puff, then shows battery level, active mode and remaining e-liquid and switches off again. It saves battery and keeps the device discreet.
-          </p>
-
-          <h3 class="tab-content-title">Specs at a glance</h3>
-          <ul class="tab-specs-bullet-list">
-            <li><strong>Puffs:</strong> up to 35,000 in Smooth Mode, about 20,000 in Turbo Mode</li>
-            <li><strong>E-liquid:</strong> 18mL, 5% (50mg/mL) nicotine salt</li>
-            <li><strong>Coils:</strong> dual mesh</li>
-            <li><strong>Battery:</strong> 1,000mAh, USB-C, about 90 minutes to full</li>
-            <li><strong>Display:</strong> hidden Blend-In screen for battery, mode and e-liquid</li>
-            <li><strong>Airflow:</strong> fixed, a slightly loose mouth-to-lung draw</li>
-            <li><strong>Size:</strong> 43 x 23 x 106 mm, draw activated</li>
-            <li><strong>Flavors:</strong> 37 at New Vape</li>
-          </ul>
-
-          <h3 class="tab-content-title">MT35000 Turbo or Ultrasonic 35K?</h3>
-          <p>
-            Both are Lost Mary at 35,000 puffs. Pick the MT35000 Turbo for the 37-flavor menu, the bigger battery and the hidden display. Pick the <a href="<?= url('product') ?>?id=ultrasonic-35k">Lost Mary Ultrasonic 35K</a> if you want a smoother draw, a 20mL tank and a dial that tunes flavor intensity, and you're fine with 10 flavors.
-          </p>
-          <p>
-            It's in stock at New Vape. Unused devices in original packaging can be returned within 14 days. Adults 21 and over only.
-          </p>
+          <?= $product['long_desc'] ?>
         </div>
       </div>
+      <?php endif; ?>
 
-      <!-- ========================================
-           TAB 2: MORE INFORMATION
-           ======================================== -->
-      <div class="product-tab-pane" id="tab-more-info" role="tabpanel" aria-labelledby="tabBtnMoreInfo">
+      <!-- TAB 2: MORE INFORMATION -->
+      <?php if ($hasMoreInfo): ?>
+      <div class="product-tab-pane <?= $firstTabId === 'tab-more-info' ? 'active' : '' ?>" id="tab-more-info" role="tabpanel" aria-labelledby="btn-tab-more-info">
         <div class="tab-specs-table-wrap">
           <table class="tab-specs-table">
             <tbody>
-              <?php if (!empty($productSpecs)): ?>
-                <?php foreach ($productSpecs as $specKey => $specVal): ?>
-                <tr>
-                  <th scope="row"><?= e($specKey) ?></th>
-                  <td><?= e($specVal) ?></td>
-                </tr>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <tr>
-                  <td colspan="2">No detailed specifications listed for this product.</td>
-                </tr>
-              <?php endif; ?>
+              <?php foreach ($productSpecs as $specKey => $specVal): ?>
+              <tr>
+                <th scope="row"><?= htmlspecialchars($specKey) ?></th>
+                <td><?= htmlspecialchars($specVal) ?></td>
+              </tr>
+              <?php endforeach; ?>
             </tbody>
           </table>
         </div>
       </div>
+      <?php endif; ?>
 
-      <!-- ========================================
-           TAB 3: REVIEWS
-           ======================================== -->
-      <div class="product-tab-pane" id="tab-reviews" role="tabpanel" aria-labelledby="tabBtnReviews">
+      <!-- TAB 3: REVIEWS -->
+      <?php if ($hasReviews): ?>
+      <div class="product-tab-pane <?= $firstTabId === 'tab-reviews' ? 'active' : '' ?>" id="tab-reviews" role="tabpanel" aria-labelledby="btn-tab-reviews">
         <div class="tab-reviews-container">
 
           <!-- Reviews List -->
@@ -430,12 +746,12 @@ include dirname(__DIR__) . '/includes/header.php';
             <?php if (!empty($productReviews)): ?>
               <?php foreach ($productReviews as $rev): ?>
               <div class="review-item">
-                <div class="review-stars-row" aria-label="<?= (int)($rev['rating'] ?? 5) ?> stars">
-                  <?= str_repeat('★', (int)($rev['rating'] ?? 5)) ?>
+                <div class="review-stars-row" aria-label="<?= (int) ($rev['rating'] ?? 5) ?> stars">
+                  <?= str_repeat('★', (int) ($rev['rating'] ?? 5)) ?>
                 </div>
-                <h4 class="review-item-title"><?= e($rev['title']) ?></h4>
-                <p class="review-item-body"><?= e($rev['comment']) ?></p>
-                <div class="review-meta"><?= e($rev['customer_name']) ?> &bull; <?= e($rev['created_at']) ?></div>
+                <h4 class="review-item-title"><?= htmlspecialchars($rev['title']) ?></h4>
+                <p class="review-item-body"><?= htmlspecialchars($rev['comment']) ?></p>
+                <div class="review-meta"><?= htmlspecialchars($rev['customer_name']) ?> &bull; <?= htmlspecialchars($rev['created_at']) ?></div>
               </div>
               <?php endforeach; ?>
             <?php else: ?>
@@ -445,7 +761,7 @@ include dirname(__DIR__) . '/includes/header.php';
 
           <!-- Reviews Bottom Bar (Count + Show dropdown) -->
           <div class="reviews-pagination-bar">
-            <span class="reviews-count-text">3 Item(s)</span>
+            <span class="reviews-count-text"><?= !empty($productReviews) ? count($productReviews) : 0 ?> Item(s)</span>
             <div class="reviews-show-select-wrap">
               <label for="reviewsShowSelect">Show</label>
               <select id="reviewsShowSelect" class="reviews-show-select">
@@ -460,7 +776,10 @@ include dirname(__DIR__) . '/includes/header.php';
           <div class="write-review-section">
             <h3 class="write-review-heading">Write a Review</h3>
 
+            <div id="reviewAlertBox" style="display:none; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 500;"></div>
+
             <form class="write-review-form" id="writeReviewForm" action="javascript:void(0);">
+              <input type="hidden" name="product_id" id="reviewProductId" value="<?= (int) ($product['id'] ?? 1) ?>">
               
               <!-- Star Rating Input -->
               <div class="form-group-rating">
@@ -503,61 +822,65 @@ include dirname(__DIR__) . '/includes/header.php';
 
         </div>
       </div>
+      <?php endif; ?>
 
-      <!-- ========================================
-           TAB 4: FAQS
-           ======================================== -->
-      <div class="product-tab-pane" id="tab-faqs" role="tabpanel" aria-labelledby="tabBtnFaqs">
+      <!-- TAB 4: FAQS -->
+      <?php if ($hasFaqs): ?>
+      <div class="product-tab-pane <?= $firstTabId === 'tab-faqs' ? 'active' : '' ?>" id="tab-faqs" role="tabpanel" aria-labelledby="btn-tab-faqs">
         <div class="faqs-accordion-list">
-          <?php if (!empty($productFaqs)): ?>
-            <?php foreach ($productFaqs as $idx => $faq): ?>
-            <div class="faq-accordion-card">
+          <?php foreach ($productFaqs as $idx => $faq): ?>
+          <div class="faq-accordion-card">
+            <h3 class="faq-accordion-heading">
               <button type="button" class="faq-header-btn" aria-expanded="false">
-                <span class="faq-question"><?= e($faq['question']) ?></span>
+                <span class="faq-question"><?= htmlspecialchars($faq['question']) ?></span>
                 <span class="faq-chevron-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </span>
               </button>
-              <div class="faq-body-collapse">
-                <div class="faq-body-inner">
-                  <?= e($faq['answer']) ?>
-                </div>
+            </h3>
+            <div class="faq-body-collapse">
+              <div class="faq-body-inner">
+                <?= htmlspecialchars($faq['answer']) ?>
               </div>
             </div>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <p>No frequently asked questions available for this product.</p>
-          <?php endif; ?>
+          </div>
+          <?php endforeach; ?>
         </div>
       </div>
+      <?php endif; ?>
 
-      <!-- ========================================
-           TAB 5: RELATED POSTS
-           ======================================== -->
-      <div class="product-tab-pane" id="tab-related-posts" role="tabpanel" aria-labelledby="tabBtnRelatedPosts">
+      <!-- TAB 5: RELATED POSTS -->
+      <?php if ($hasRelatedPosts): ?>
+      <div class="product-tab-pane <?= $firstTabId === 'tab-related-posts' ? 'active' : '' ?>" id="tab-related-posts" role="tabpanel" aria-labelledby="btn-tab-related-posts">
         <div class="tab-related-posts-content">
-          <ul class="related-posts-link-list">
-            <?php if (!empty($relatedPosts)): ?>
+          <?php if (!empty($product['related_posts_content'])): ?>
+            <div class="related-posts-rich-text">
+              <?= $product['related_posts_content'] ?>
+            </div>
+          <?php endif; ?>
+
+          <?php if (!empty($relatedPosts)): ?>
+            <ul class="related-posts-link-list" style="<?= !empty($product['related_posts_content']) ? 'margin-top: 20px;' : '' ?>">
               <?php foreach ($relatedPosts as $post): ?>
               <li>
-                <a href="<?= url('blog-detail') ?>?post=<?= urlencode($post['slug'] ?? '') ?>" class="related-post-link">
-                  <?= e($post['title']) ?>
+                <a href="<?= url('blog/' . urlencode($post['slug'] ?? '')) ?>" class="related-post-link">
+                  <?= htmlspecialchars($post['title']) ?>
                 </a>
               </li>
               <?php endforeach; ?>
-            <?php else: ?>
-              <li>No related posts available.</li>
-            <?php endif; ?>
-          </ul>
+            </ul>
+          <?php endif; ?>
         </div>
       </div>
+      <?php endif; ?>
 
     </div>
 
   </div>
 </section>
+<?php endif; ?>
 
 <!-- ==========================================
      4. YOU MAY ALSO LIKE SECTION
@@ -573,149 +896,56 @@ include dirname(__DIR__) . '/includes/header.php';
       </div>
     </div>
 
-    <!-- Products Grid (6 Product Cards - Fixed Non-Sliding Grid) -->
+    <!-- Products Grid (Dynamic Related Products) -->
     <div class="products-grid you-may-also-like-grid">
-      
-      <!-- Card 1: RAZ LTX 25000 -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-bogo">BOGO</span>
-            <span class="badge badge-hot">🔥 HOT</span>
+      <?php if (!empty($relatedProducts)): ?>
+        <?php
+        foreach ($relatedProducts as $rel):
+          $relSlug = !empty($rel['slug']) ? $rel['slug'] : $rel['id'];
+          $relTitle = !empty($rel['title']) ? $rel['title'] : ($rel['name'] ?? 'Vape Device');
+          $relUrl = url('product/' . urlencode($relSlug));
+          $relImg = !empty($rel['featured_image']) ? $rel['featured_image'] : (!empty($rel['img']) ? $rel['img'] : 'assets/images/vape-image.webp');
+          if (!preg_match('~^(https?://|//|#)~i', $relImg)) {
+            $relImg = url($relImg);
+          }
+          $relBasePrice = (float) ($rel['base_price'] ?? $rel['price'] ?? 19.99);
+          $relCompPrice = (float) ($rel['compare_price'] ?? 0);
+          $relHasDiscount = ($relCompPrice > $relBasePrice);
+          $relDiscPct = $relHasDiscount ? round((($relCompPrice - $relBasePrice) / $relCompPrice) * 100) : 0;
+          ?>
+        <div class="product-card">
+          <div class="product-card-media">
+            <a href="<?= htmlspecialchars($relUrl) ?>" class="product-img-wrap">
+              <img src="<?= htmlspecialchars($relImg) ?>" 
+                   alt="<?= htmlspecialchars($relTitle) ?>" 
+                   class="product-img" 
+                   loading="lazy"
+                   onerror="this.onerror=null;this.src='<?= url('assets/images/vape-image.webp') ?>';">
+            </a>
+            <div class="product-action-wrap">
+              <button type="button" class="btn-add-to-cart" data-id="<?= $rel['id'] ?>" data-title="<?= htmlspecialchars($relTitle) ?>" data-price="<?= $relBasePrice ?>" data-image="<?= htmlspecialchars($relImg) ?>">
+                ADD TO CART
+              </button>
+            </div>
           </div>
-          <a href="<?= url('product') ?>?id=raz-ltx-25000" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="RAZ LTX 25000 Vape" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=raz-ltx-25000">RAZ LTX 25000 Vape - 25K Puffs, Dual Mesh, 50 Flavors</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$21.99</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 2: Sea XS 15000 -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-bogo">BOGO</span>
-          </div>
-          <a href="<?= url('product') ?>?id=sea-xs-15000" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="Sea XS 15000 Disposable Vape" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=sea-xs-15000">Sea XS 15000 Disposable Vape - World's Slimmest 15K Puff Device</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$15.99</span>
+          <div class="product-card-info">
+            <h3 class="product-title">
+              <a href="<?= htmlspecialchars($relUrl) ?>" title="<?= htmlspecialchars($relTitle) ?>">
+                <?= htmlspecialchars($relTitle) ?>
+              </a>
+            </h3>
+            <div class="product-price-row">
+              <span class="current-price">$<?= number_format($relBasePrice, 2) ?></span>
+              <?php if ($relHasDiscount): ?>
+                <span class="old-price">$<?= number_format($relCompPrice, 2) ?></span>
+              <?php endif; ?>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Card 3: VIHO TRX 50K -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-bogo">BOGO</span>
-          </div>
-          <a href="<?= url('product') ?>?id=viho-trx-50k" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="VIHO TRX 50K Vape" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=viho-trx-50k">VIHO TRX 50K Vape - Quad Mesh Coil, Boost Mode, 50,000 Puffs</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$19.99</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 4: Foger Switch Pro -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-discount">-20%</span>
-          </div>
-          <a href="<?= url('product') ?>?id=foger-switch-pro-refill" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="Foger Switch Pro Refill Pods" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=foger-switch-pro-refill">Foger Switch Pro Refill Pods - 30K Replacement Pod, 19mL,...</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$13.59</span>
-            <span class="old-price">$16.99</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 5: Beri Crush 50K -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-bogo">BOGO</span>
-          </div>
-          <a href="<?= url('product') ?>?id=beri-crush-50k" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="Beri Crush 50K Vape" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=beri-crush-50k">Beri Crush 50K Vape - Quad Coil, Crush Mode, 50,000 Puffs</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$19.99</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 6: Lost Mary MT35000 -->
-      <div class="product-card">
-        <div class="product-card-media">
-          <div class="product-badges">
-            <span class="badge badge-bogo">BOGO</span>
-          </div>
-          <a href="<?= url('product') ?>?id=lost-mary-mt35000" class="product-img-wrap">
-            <img src="assets/images/vape-image.webp" alt="Lost Mary MT35000 Turbo Vape" class="product-img">
-          </a>
-          <div class="product-action-wrap">
-            <button type="button" class="btn-add-to-cart">ADD TO CART</button>
-          </div>
-        </div>
-        <div class="product-card-info">
-          <h3 class="product-title">
-            <a href="<?= url('product') ?>?id=lost-mary-mt35000">Lost Mary MT35000 Turbo Vape - 35,000 Puffs, 37 Flavors, Hidde...</a>
-          </h3>
-          <div class="product-price-row">
-            <span class="current-price">$19.99</span>
-          </div>
-        </div>
-      </div>
-
+        <?php endforeach; ?>
+      <?php else: ?>
+        <p style="grid-column: 1 / -1; text-align: center; color: #718096; padding: 24px 0;">No related products found.</p>
+      <?php endif; ?>
     </div>
 
   </div>

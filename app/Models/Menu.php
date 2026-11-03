@@ -108,6 +108,9 @@ class Menu extends Model
         try {
             $db->beginTransaction();
 
+            // Sever self-referential parent_id links before deletion to prevent foreign key errors
+            $db->prepare("UPDATE menu_items SET parent_id = NULL WHERE menu_id = ?")->execute([(int)$id]);
+
             $stmtItems = $db->prepare("DELETE FROM menu_items WHERE menu_id = ?");
             $stmtItems->execute([(int)$id]);
 
@@ -217,12 +220,19 @@ class Menu extends Model
             $saveRecursive($items, null);
 
             // 3. Delete removed items
-            $toDelete = array_diff($existingIds, $retainedIds);
+            $existingIds = array_map('intval', $existingIds);
+            $retainedIds = array_map('intval', $retainedIds);
+            $toDelete = array_values(array_diff($existingIds, $retainedIds));
             if (!empty($toDelete)) {
                 $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
-                $delStmt = $db->prepare("DELETE FROM menu_items WHERE id IN ($placeholders) AND menu_id = ?");
-                $params = array_values($toDelete);
+                $params = $toDelete;
                 $params[] = (int)$menuId;
+
+                // Sever self-referential parent_id links before deletion to avoid foreign key failures
+                $db->prepare("UPDATE menu_items SET parent_id = NULL WHERE parent_id IN ($placeholders) AND menu_id = ?")->execute($params);
+                $db->prepare("UPDATE menu_items SET parent_id = NULL WHERE id IN ($placeholders) AND menu_id = ?")->execute($params);
+
+                $delStmt = $db->prepare("DELETE FROM menu_items WHERE id IN ($placeholders) AND menu_id = ?");
                 $delStmt->execute($params);
             }
 
@@ -262,6 +272,11 @@ class Menu extends Model
             }
 
             $placeholders = implode(',', array_fill(0, count($allIds), '?'));
+
+            // Sever self-referential parent_id links before deletion to prevent foreign key constraint violations
+            $db->prepare("UPDATE menu_items SET parent_id = NULL WHERE parent_id IN ($placeholders)")->execute($allIds);
+            $db->prepare("UPDATE menu_items SET parent_id = NULL WHERE id IN ($placeholders)")->execute($allIds);
+
             $delStmt = $db->prepare("DELETE FROM menu_items WHERE id IN ($placeholders)");
             $delStmt->execute($allIds);
 
@@ -271,6 +286,95 @@ class Menu extends Model
             if ($db->inTransaction()) $db->rollBack();
             error_log("Menu::deleteItem error: " . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Ensure all standard policy & info pages exist in pages table with correct titles and slugs
+     */
+    public static function syncDefaultPages($db)
+    {
+        if (!$db) return;
+        try {
+            $defaultPages = [
+                'shipping-policy' => [
+                    'title' => 'Shipping Policy',
+                    'path' => '/page/shipping-policy',
+                    'meta_title' => 'Shipping Policy | Vape City USA',
+                    'meta_desc' => 'Information regarding delivery times, adult signature requirements, and shipping policies.'
+                ],
+                'refund-policy' => [
+                    'title' => 'Refund Policy',
+                    'path' => '/page/refund-policy',
+                    'meta_title' => 'Refund & Return Policy | Vape City USA',
+                    'meta_desc' => 'Official refund and return guidelines for Vape City USA products.'
+                ],
+                'fda-disclaimer' => [
+                    'title' => 'FDA Disclaimer',
+                    'path' => '/page/fda-disclaimer',
+                    'meta_title' => 'FDA Disclaimer & Nicotine Warning | Vape City USA',
+                    'meta_desc' => 'Mandatory FDA nicotine warning and age verification statements.'
+                ],
+                'terms-and-conditions' => [
+                    'title' => 'Terms & Conditions',
+                    'path' => '/page/terms-and-conditions',
+                    'meta_title' => 'Terms & Conditions | Infinity Vape Shop',
+                    'meta_desc' => 'Terms and conditions of use and purchase for Infinity Vape Shop.'
+                ],
+                'privacy-policy' => [
+                    'title' => 'Privacy Policy',
+                    'path' => '/page/privacy-policy',
+                    'meta_title' => 'Privacy Policy | Vape City USA',
+                    'meta_desc' => 'Official privacy policy of New Vape.'
+                ],
+                'about-us' => [
+                    'title' => 'About Us',
+                    'path' => '/page/about-us',
+                    'meta_title' => 'About Us | New Vape',
+                    'meta_desc' => 'Learn about New Vape, our mission, and authentic vape products.'
+                ],
+                'contact-us' => [
+                    'title' => 'Contact Us',
+                    'path' => '/page/contact-us',
+                    'meta_title' => 'Contact Us | New Vape Support',
+                    'meta_desc' => 'Reach out to our customer service team via email, phone, or contact form.'
+                ],
+                'faqs' => [
+                    'title' => 'FAQs',
+                    'path' => '/page/faqs',
+                    'meta_title' => 'FAQs | Infinity Vape Shop',
+                    'meta_desc' => 'Find answers to common questions about Infinity Vape Shop, including age verification, orders, shipping, tracking, returns, refunds, and vape products.'
+                ],
+                'track-order' => [
+                    'title' => 'Track Your Order',
+                    'path' => '/page/track-order',
+                    'meta_title' => 'Track Your Order | New Vape',
+                    'meta_desc' => 'Look up your package tracking status in real time.'
+                ]
+            ];
+
+            // Normalize existing legacy names/slugs
+            $db->exec("UPDATE pages SET title = 'Shipping Policy', custom_url_path = '/page/shipping-policy' WHERE slug = 'shipping-policy'");
+            $db->exec("UPDATE pages SET title = 'FDA Disclaimer', slug = 'fda-disclaimer', custom_url_path = '/page/fda-disclaimer' WHERE slug = 'age-verification'");
+            $db->exec("UPDATE pages SET title = 'Terms & Conditions', slug = 'terms-and-conditions', custom_url_path = '/page/terms-and-conditions' WHERE slug = 'terms-and-condition' OR slug = 'terms-of-service' OR slug = 'terms-and-conditions'");
+            $db->exec("UPDATE menu_items SET link_value = 'page/terms-and-conditions' WHERE link_value LIKE '%terms-and-condition%' OR link_value LIKE '%terms-of-service%'");
+            $db->exec("UPDATE pages SET title = 'FAQs', slug = 'faqs', custom_url_path = '/page/faqs' WHERE slug = 'faq'");
+            $db->exec("UPDATE menu_items SET link_value = 'page/faqs' WHERE link_value LIKE '%page/faq%' OR link_value = 'faq'");
+            $db->exec("UPDATE pages SET custom_url_path = '/page/privacy-policy' WHERE slug = 'privacy-policy'");
+            $db->exec("UPDATE pages SET custom_url_path = '/page/about-us' WHERE slug = 'about-us'");
+            $db->exec("UPDATE pages SET custom_url_path = '/page/contact-us' WHERE slug = 'contact-us'");
+
+            // Insert any missing pages
+            foreach ($defaultPages as $slug => $p) {
+                $chk = $db->prepare("SELECT id FROM pages WHERE slug = ? LIMIT 1");
+                $chk->execute([$slug]);
+                if (!$chk->fetch()) {
+                    $ins = $db->prepare("INSERT INTO pages (title, slug, custom_url_path, meta_title, meta_desc, is_active) VALUES (?, ?, ?, ?, ?, 1)");
+                    $ins->execute([$p['title'], $slug, $p['path'], $p['meta_title'], $p['meta_desc']]);
+                }
+            }
+        } catch (\Exception $e) {
+            error_log("Menu::syncDefaultPages error: " . $e->getMessage());
         }
     }
 
@@ -289,11 +393,16 @@ class Menu extends Model
         if (!$db) return $res;
 
         try {
+            self::syncDefaultPages($db);
+
             $cStmt = $db->query("SELECT id, name, slug FROM collections WHERE is_active = 1 ORDER BY name ASC");
             if ($cStmt) $res['collections'] = $cStmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $bStmt = $db->query("SELECT id, name, slug FROM brands WHERE is_active = 1 ORDER BY name ASC");
             if ($bStmt) $res['brands'] = $bStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $pStmt = $db->query("SELECT id, title, slug, custom_url_path FROM pages WHERE is_active = 1 ORDER BY title ASC");
+            if ($pStmt) $res['pages'] = $pStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } catch (\Exception $e) {
             error_log("Menu::getAvailableEntities error: " . $e->getMessage());

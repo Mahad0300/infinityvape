@@ -4,7 +4,8 @@ $current_admin_page = 'blogs';
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
-<form action="<?= url('admin/blogs/update') ?>" method="POST" id="blogPostForm">
+<form action="<?= url('admin/blogs/update') ?>" method="POST" enctype="multipart/form-data" id="blogPostForm">
+  <?= csrf_field() ?>
   <input type="hidden" name="id" value="<?= $post['id'] ?>">
 
   <!-- Title & Action Bar -->
@@ -168,17 +169,20 @@ include dirname(__DIR__) . '/includes/header.php';
       <!-- Featured Image Card -->
       <div class="admin-card" style="padding: 20px;">
         <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Featured Image</h4>
+        <input type="hidden" name="existing_featured_image" value="<?= e($post['featured_image_url'] ?? '') ?>">
         <div class="admin-form-group">
+          <label class="admin-form-label" style="font-size: 12px; margin-bottom: 6px; display: block;">Change Image File</label>
           <input 
-            type="text" 
-            name="featured_image_url" 
+            type="file" 
+            name="featured_image" 
             id="featuredImageInput" 
             class="admin-form-input" 
-            value="<?= e($post['featured_image_url'] ?? 'assets/images/blog-1.jpg') ?>"
+            accept="image/*"
+            style="padding: 8px 12px; cursor: pointer;"
           >
         </div>
         <?php
-          $currCover = !empty($post['featured_image_url']) ? $post['featured_image_url'] : 'assets/images/blog-1.jpg';
+          $currCover = !empty($post['featured_image_url']) ? $post['featured_image_url'] : 'assets/images/no-image.svg';
           if (!preg_match('~^(https?://|//|#)~i', $currCover)) {
               $currCover = url($currCover);
           }
@@ -188,12 +192,13 @@ include dirname(__DIR__) . '/includes/header.php';
           <img 
             id="featuredImagePreview" 
             src="<?= e($currCover) ?>" 
+            data-default-src="<?= e($currCover) ?>"
             alt="Preview" 
             style="width: 100%; height: 100%; object-fit: cover;"
             onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
           >
         </div>
-        <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Image path relative to public directory or absolute URL.</small>
+        <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Supports JPG, PNG, WEBP, AVIF. Leave empty to keep existing image.</small>
       </div>
 
       <!-- Excerpt Card -->
@@ -208,20 +213,13 @@ include dirname(__DIR__) . '/includes/header.php';
         <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">This summary appears on the homepage blog cards.</small>
       </div>
 
-      <!-- Author & Read Time -->
+      <!-- Tags & Organization -->
       <div class="admin-card" style="padding: 20px;">
-        <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Author &amp; Meta</h4>
-        <div class="admin-form-group">
-          <label class="admin-form-label" style="font-size: 12px;">Author Name</label>
-          <input type="text" name="author_name" class="admin-form-input" value="<?= e($post['author_name'] ?? 'New Vape Editorial') ?>">
-        </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label" style="font-size: 12px;">Estimated Read Time</label>
-          <input type="text" name="read_time" class="admin-form-input" value="<?= e($post['read_time'] ?? '5 min read') ?>">
-        </div>
+        <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Tags &amp; Organization</h4>
         <div class="admin-form-group" style="margin-bottom: 0;">
           <label class="admin-form-label" style="font-size: 12px;">Tags (comma separated)</label>
-          <input type="text" name="tags" class="admin-form-input" value="<?= e($post['tags'] ?? '') ?>">
+          <input type="text" name="tags" class="admin-form-input" value="<?= e($post['tags'] ?? '') ?>" placeholder="Disposables, Vaping Guides, News">
+          <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Author is automatically published as <strong>New Vape</strong>.</small>
         </div>
       </div>
 
@@ -235,51 +233,5 @@ include dirname(__DIR__) . '/includes/header.php';
     <button type="submit" class="btn-admin btn-admin-primary" style="padding: 0 24px;">Update Blog Post</button>
   </div>
 </form>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const titleInput = document.getElementById('blogTitleInput');
-  const slugInput = document.getElementById('blogSlugInput');
-  const seoTitleInput = document.getElementById('seoTitleInput');
-  const seoDescInput = document.getElementById('seoDescInput');
-  const excerptInput = document.getElementById('excerptInput');
-  const previewTitle = document.getElementById('previewTitle');
-  const previewDesc = document.getElementById('previewDesc');
-  const previewSlug = document.getElementById('previewSlug');
-  const seoTitleCount = document.getElementById('seoTitleCount');
-  const seoDescCount = document.getElementById('seoDescCount');
-  const imgInput = document.getElementById('featuredImageInput');
-  const imgPreview = document.getElementById('featuredImagePreview');
-
-  slugInput.addEventListener('input', () => {
-    previewSlug.textContent = slugInput.value || 'post-handle';
-  });
-
-  seoTitleInput.addEventListener('input', () => {
-    seoTitleCount.textContent = `${seoTitleInput.value.length} / 70`;
-    previewTitle.textContent = seoTitleInput.value || titleInput.value || 'Article Title';
-  });
-
-  seoDescInput.addEventListener('input', () => {
-    seoDescCount.textContent = `${seoDescInput.value.length} / 320`;
-    previewDesc.textContent = seoDescInput.value || excerptInput.value || 'Write a concise meta description...';
-  });
-
-  excerptInput.addEventListener('input', () => {
-    if (!seoDescInput.value) {
-      previewDesc.textContent = excerptInput.value || 'Write a concise meta description...';
-    }
-  });
-
-  // Featured image preview
-  imgInput.addEventListener('input', () => {
-    let val = imgInput.value.trim();
-    if (val && !val.startsWith('http') && !val.startsWith('/')) {
-      val = '<?= url() ?>/' + val;
-    }
-    imgPreview.src = val || '<?= url("assets/images/no-image.svg") ?>';
-  });
-});
-</script>
 
 <?php include dirname(__DIR__) . '/includes/footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * NEW VAPE - CART DRAWER COMPONENT
+ * INFINITY VAPE SHOP - CART DRAWER COMPONENT
  * Slide-out mini-cart drawer included globally on all pages.
  */
 ?>

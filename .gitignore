@@ -1,15 +1,1 @@
-/vendor/
-/storage/logs/*
-!/storage/logs/.gitkeep
-/storage/cache/*
-!/storage/cache/.gitkeep
-/storage/uploads/*
-!/storage/uploads/.gitkeep
-.env
-.env.backup
-.DS_Store
-Thumbs.db
-*.log
-*.tmp
-.idea/
-.vscode/
+# Everything is included (nothing ignored as requested)

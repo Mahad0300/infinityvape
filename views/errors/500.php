@@ -1,5 +1,5 @@
 <?php
-$page_title = '500 - Server Error | New Vape';
+$page_title = '500 - Server Error | Infinity Vape Shop';
 ?>
 <!DOCTYPE html>
 <html lang="en">

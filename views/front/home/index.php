@@ -197,7 +197,7 @@ if (!empty($activeSlides)):
       <?php $categories = $categories ?? []; ?>
       <?php if (!empty($categories)): ?>
         <?php foreach ($categories as $cat): 
-          $catUrl = url('category') . '?cat=' . urlencode($cat['slug']);
+          $catUrl = url('collection/' . urlencode($cat['slug']));
           $imgUrl = !empty($cat['header_image_url']) ? $cat['header_image_url'] : 'assets/images/no-image.svg';
           if (!preg_match('~^(https?://|//|#)~i', $imgUrl)) {
               $imgUrl = url($imgUrl);
@@ -278,7 +278,7 @@ if (!empty($activeSlides)):
         <p class="products-section-subtitle">Our newest products, shipped same day.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=new-arrivals" class="view-all-link">
+        <a href="<?= url('collection/new-arrivals') ?>" class="view-all-link">
           View All New Arrivals
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -314,33 +314,19 @@ if (!empty($activeSlides)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <div class="product-badges">
-                <?php if ($pCompare > $pPrice): ?>
-                  <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                  <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                <?php endif; ?>
-                <?php if (!empty($prod['is_new'])): ?>
-                  <span class="badge badge-new">NEW</span>
-                <?php endif; ?>
-                <?php if (!empty($pBadgeText) && $pBadgeType !== 'discount' && $pBadgeText !== 'NEW'): ?>
-                  <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'hot') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                <?php endif; ?>
-              </div>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <div class="product-price-row">
                 <span class="current-price">$<?= number_format($pPrice, 2) ?></span>
@@ -369,7 +355,7 @@ if (!empty($activeSlides)):
         <p class="products-section-subtitle">Most popular vapes and e-liquids chosen by our customers.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=best-sellers" class="view-all-link">
+        <a href="<?= url('collection/best-sellers') ?>" class="view-all-link">
           View All Best Sellers
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -405,35 +391,21 @@ if (!empty($activeSlides)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
             $ratingVal = round((float)($prod['rating_avg'] ?? 5));
             $reviewsCount = (int)($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <div class="product-badges">
-                <?php if (!empty($pBadgeText) && $pBadgeType !== 'discount'): ?>
-                  <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'bogo') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                <?php endif; ?>
-                <?php if ($pCompare > $pPrice): ?>
-                  <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                  <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                <?php endif; ?>
-                <?php if ($reviewsCount >= 100 && $pBadgeText !== '🔥 HOT'): ?>
-                  <span class="badge badge-hot">🔥 HOT</span>
-                <?php endif; ?>
-              </div>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <?php if ($reviewsCount > 0): ?>
                 <div class="product-rating">
@@ -517,7 +489,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">Pre-filled disposable vape devices with high puff counts.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=disposables" class="view-all-link">
+        <a href="<?= url('collection/disposable') ?>" class="view-all-link">
           Shop All Disposables
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -541,41 +513,30 @@ if (!empty($activeTwins)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
             $ratingVal = round((float)($prod['rating_avg'] ?? 5));
             $reviewsCount = (int)($prod['reviews_count'] ?? 0);
             $isUsa = (!empty($prod['tags']) && stripos($prod['tags'], 'USA') !== false);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice || !empty($pBadgeText) || $isUsa): ?>
+              <?php if ($isUsa): ?>
                 <div class="product-badges">
-                  <?php if ($pCompare > $pPrice): ?>
-                    <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                    <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                  <?php endif; ?>
-                  <?php if ($isUsa): ?>
-                    <span class="badge badge-usa">
-                      <svg viewBox="0 0 16 12" width="12" height="9" style="border-radius:1px;"><rect width="16" height="12" fill="#b22234"/><rect y="1.85" width="16" height="1.85" fill="#fff"/><rect y="5.54" width="16" height="1.85" fill="#fff"/><rect y="9.23" width="16" height="1.85" fill="#fff"/><rect width="6.4" height="6.46" fill="#3c3b6e"/></svg>
-                      USA
-                    </span>
-                  <?php endif; ?>
-                  <?php if (!empty($pBadgeText) && $pBadgeType !== 'discount'): ?>
-                    <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'hot') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                  <?php endif; ?>
+                  <span class="badge badge-usa">
+                    <svg viewBox="0 0 16 12" width="12" height="9" style="border-radius:1px;"><rect width="16" height="12" fill="#b22234"/><rect y="1.85" width="16" height="1.85" fill="#fff"/><rect y="5.54" width="16" height="1.85" fill="#fff"/><rect y="9.23" width="16" height="1.85" fill="#fff"/><rect width="6.4" height="6.46" fill="#3c3b6e"/></svg>
+                    USA
+                  </span>
                 </div>
               <?php endif; ?>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <?php if ($reviewsCount > 0): ?>
                 <div class="product-rating">
@@ -614,7 +575,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">E-liquids in nicotine salt, freebase and zero-nic options.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=eliquids" class="view-all-link">
+        <a href="<?= url('collection/e-liquids') ?>" class="view-all-link">
           Shop All Vape Juices
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -638,34 +599,21 @@ if (!empty($activeTwins)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
             $ratingVal = round((float)($prod['rating_avg'] ?? 5));
             $reviewsCount = (int)($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice || !empty($pBadgeText)): ?>
-                <div class="product-badges">
-                  <?php if ($pCompare > $pPrice): ?>
-                    <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                    <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                  <?php endif; ?>
-                  <?php if (!empty($pBadgeText) && $pBadgeType !== 'discount'): ?>
-                    <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'hot') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img juice-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <?php if ($reviewsCount > 0): ?>
                 <div class="product-rating">
@@ -704,7 +652,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">Tobacco-free nicotine pouches from ZYN, VELO and more.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=pouches" class="view-all-link">
+        <a href="<?= url('collection/nicotine-pouches') ?>" class="view-all-link">
           Shop All Pouches
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -728,34 +676,21 @@ if (!empty($activeTwins)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
             $ratingVal = round((float)($prod['rating_avg'] ?? 5));
             $reviewsCount = (int)($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice || !empty($pBadgeText)): ?>
-                <div class="product-badges">
-                  <?php if ($pCompare > $pPrice): ?>
-                    <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                    <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                  <?php endif; ?>
-                  <?php if (!empty($pBadgeText) && $pBadgeType !== 'discount'): ?>
-                    <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'hot') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img pouch-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <?php if ($reviewsCount > 0): ?>
                 <div class="product-rating">
@@ -794,8 +729,8 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">THCA vapes, THC-P disposables, hemp prerolls &amp; more.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('category') ?>?cat=hemp-thc" class="view-all-link">
-          Shop All Hemp
+        <a href="<?= url('collection/lifestyle') ?>" class="view-all-link">
+          Shop All Lifestyle
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
@@ -818,38 +753,19 @@ if (!empty($activeTwins)):
             if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                 $pImg = url($pImg);
             }
-            $pBadgeText = $prod['badge_text'] ?? '';
-            $pBadgeType = $prod['badge_type'] ?? '';
-            $isLowStock = ($prod['stock_status'] === 'Low Stock' || $pBadgeType === 'lowstock');
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice || !empty($pBadgeText) || $isLowStock): ?>
-                <div class="product-badges">
-                  <?php if ($isLowStock): ?>
-                    <span class="badge badge-lowstock">LOW STOCK</span>
-                  <?php endif; ?>
-                  <?php if ($pCompare > $pPrice && $pBadgeType !== 'discount'): ?>
-                    <?php $discountPct = round((($pCompare - $pPrice) / $pCompare) * 100); ?>
-                    <span class="badge badge-discount">-<?= $discountPct ?>%</span>
-                  <?php endif; ?>
-                  <?php if (!empty($pBadgeText) && $pBadgeType !== 'lowstock' && $pBadgeType !== 'discount'): ?>
-                    <span class="badge badge-<?= htmlspecialchars($pBadgeType ?: 'hot') ?>"><?= htmlspecialchars($pBadgeText) ?></span>
-                  <?php elseif ($pBadgeType === 'discount' && !$isLowStock): ?>
-                    <span class="badge badge-discount"><?= htmlspecialchars($pBadgeText) ?></span>
-                  <?php endif; ?>
-                </div>
-              <?php endif; ?>
-              <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>" class="product-img-wrap">
+              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
                 <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img hemp-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>">ADD TO CART</button>
+                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
               </div>
             </div>
             <div class="product-card-info">
               <h3 class="product-title">
-                <a href="<?= url('product') ?>?id=<?= urlencode($pSlug) ?>"><?= htmlspecialchars($pTitle) ?></a>
+                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
               </h3>
               <div class="product-price-row">
                 <span class="current-price">$<?= number_format($pPrice, 2) ?></span>
@@ -862,8 +778,6 @@ if (!empty($activeTwins)):
         <?php endforeach; ?>
       <?php endif; ?>
     </div>
-  </div>
-
   </div>
 </section>
 
@@ -933,7 +847,7 @@ if (!empty($activeTwins)):
           if (!preg_match('~^(https?://|//|#)~i', $blogImg)) {
               $blogImg = url($blogImg);
           }
-          $blogDate = !empty($blog['published_at']) ? date('M d, Y', strtotime($blog['published_at'])) : date('M d, Y');
+          $blogDate = blog_time_display($blog['published_at'] ?? '');
           $blogCat = !empty($blog['category_name']) ? $blog['category_name'] : 'Guide';
         ?>
           <article class="blog-card">

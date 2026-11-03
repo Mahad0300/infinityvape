@@ -370,6 +370,7 @@ if (empty($avatar_initials)) $avatar_initials = 'CU';
       </div>
       <div class="admin-card-body">
         <form id="customerNoteForm" class="admin-ajax-form">
+          <?= csrf_field() ?>
           <input type="hidden" name="customer_id" value="<?php echo (int)$customer['id']; ?>">
           <div class="admin-form-group">
             <textarea name="admin_notes" id="adminNotesTextarea" class="admin-form-textarea" rows="3" placeholder="Add private note about this customer (e.g. VIP buyer, preferred delivery instructions)..."><?php echo htmlspecialchars($customer['admin_notes'] ?? ''); ?></textarea>

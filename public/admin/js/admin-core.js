@@ -206,7 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteBtn = e.target.closest('.btn-delete-row, [data-confirm-delete]');
     if (deleteBtn) {
       e.preventDefault();
-      const itemName = deleteBtn.getAttribute('data-item-name') || 'this record';
+      const itemName = deleteBtn.getAttribute('data-item-name') || 
+                       deleteBtn.closest('tr')?.querySelector('.table-product-title, .table-cell-title, td:nth-child(2)')?.textContent?.trim() || 
+                       'this record';
       const confirmed = await window.adminConfirm({
         title: 'Delete Item?',
         text: `Are you sure you want to delete ${itemName}? This action cannot be undone.`,
@@ -216,6 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (confirmed) {
+        const form = deleteBtn.closest('form');
+        if (form) {
+          form.onsubmit = null;
+          HTMLFormElement.prototype.submit.call(form);
+          return;
+        }
+
         const row = deleteBtn.closest('tr');
         if (row) {
           row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';

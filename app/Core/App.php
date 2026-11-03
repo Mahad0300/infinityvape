@@ -39,10 +39,68 @@ class App
             return $this->dispatch([\App\Controllers\CollectionController::class, 'show']);
         }
 
+        // Dynamic route matching for product (/products/{slug} or /product/{slug})
+        if (preg_match('#^products?/(.+)$#', $trimmedUri, $matches)) {
+            $_GET['slug'] = basename($matches[1]);
+            return $this->dispatch([\App\Controllers\ProductController::class, 'index']);
+        }
+
         // Dynamic route matching for category (/category/{slug})
         if (preg_match('#^category/(.+)$#', $trimmedUri, $matches)) {
             $_GET['cat'] = basename($matches[1]);
             return $this->dispatch([\App\Controllers\CategoryController::class, 'index']);
+        }
+
+        // Dynamic route matching for blog posts (/blog/{slug})
+        if (preg_match('#^blog/(.+)$#', $trimmedUri, $matches)) {
+            $_GET['slug'] = basename($matches[1]);
+            return $this->dispatch([\App\Controllers\BlogController::class, 'detail']);
+        }
+
+        // Dynamic route matching for blog tags (/tag/{slug})
+        if (preg_match('#^tag/(.+)$#', $trimmedUri, $matches)) {
+            $_GET['tag'] = basename($matches[1]);
+            return $this->dispatch([\App\Controllers\TagController::class, 'index']);
+        }
+
+        // Dynamic route matching for static pages (/pages/{slug} or /page/{slug})
+        if (preg_match('#^pages?/(.+)$#', $trimmedUri, $matches)) {
+            $slug = basename($matches[1]);
+            if (isset($this->routes[$slug])) {
+                return $this->dispatch($this->routes[$slug]);
+            }
+            $viewPath = dirname(dirname(__DIR__)) . '/views/front/page/' . $slug . '.php';
+            if (file_exists($viewPath)) {
+                return View::render('front.page.' . $slug);
+            }
+        }
+
+        // Dynamic Hierarchical & Clean Collection Routes:
+        // Case 1: Child under Parent: /{parent_slug}/{child_slug} (e.g. /disposable-vapes/5000-puff-disposable-vape)
+        // Case 2: Top-level Collection: /{slug} (e.g. /disposable-vapes)
+        $uriSegments = explode('/', $trimmedUri);
+        $segCount = count($uriSegments);
+
+        if ($segCount === 2) {
+            $possibleParent = $uriSegments[0];
+            $possibleChild  = $uriSegments[1];
+
+            if (class_exists('\\App\\Models\\Collection') && !empty($possibleChild)) {
+                $matchedCol = \App\Models\Collection::findBySlug($possibleChild);
+                if ($matchedCol) {
+                    $_GET['slug'] = $possibleChild;
+                    $_GET['parent_slug'] = $possibleParent;
+                    return $this->dispatch([\App\Controllers\CollectionController::class, 'show']);
+                }
+            }
+        } elseif ($segCount === 1 && !empty($trimmedUri)) {
+            if (class_exists('\\App\\Models\\Collection')) {
+                $matchedCol = \App\Models\Collection::findBySlug($trimmedUri);
+                if ($matchedCol) {
+                    $_GET['slug'] = $trimmedUri;
+                    return $this->dispatch([\App\Controllers\CollectionController::class, 'show']);
+                }
+            }
         }
 
         // 404 Not Found

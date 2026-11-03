@@ -29,6 +29,7 @@ class CustomerController extends AdminController
         $customer = Customer::find($id);
 
         if (!$customer) {
+            set_flash('error', 'The requested customer profile does not exist.');
             $this->redirect('admin/customers');
             return;
         }
@@ -47,6 +48,13 @@ class CustomerController extends AdminController
 
         // Check if JSON request or POST form
         $input = json_decode(file_get_contents('php://input'), true);
+        $token = $input['_token'] ?? $_POST['_token'] ?? null;
+        if (!verify_csrf_token($token)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Security token expired. Please refresh the page.']);
+            exit;
+        }
+
         $customerId = isset($input['customer_id']) ? (int)$input['customer_id'] : (int)($_POST['customer_id'] ?? 0);
         $notes = isset($input['admin_notes']) ? $input['admin_notes'] : ($_POST['admin_notes'] ?? '');
 

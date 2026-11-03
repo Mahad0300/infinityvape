@@ -16,7 +16,9 @@ $prodId = (int)($product['id'] ?? $product_id ?? 1);
 $product_data = [
   'id' => $prodId,
   'title' => $product['title'] ?? $product['name'] ?? '',
+  'short_desc' => $product['short_desc'] ?? '',
   'description' => $product['long_desc'] ?? $product['description'] ?? '',
+  'related_posts_content' => $product['related_posts_content'] ?? '',
   'price' => (string)($product['base_price'] ?? $product['price'] ?? '0.00'),
   'compare_price' => (string)($product['compare_price'] ?? ''),
   'sku' => $product['sku'] ?? '',
@@ -28,9 +30,124 @@ $product_data = [
   'seo_title' => $product['seo_title'] ?? '',
   'seo_desc' => $product['seo_description'] ?? '',
   'slug' => $product['slug'] ?? '',
-  'image' => $product['featured_image'] ?? $product['img'] ?? ''
+  'image' => $product['featured_image'] ?? $product['img'] ?? '',
+  'bundle_banner_active' => (int)($product['bundle_banner_active'] ?? 0),
+  'bundle_banner_img' => $product['bundle_banner_img'] ?? '',
+  'bundle_banner_link' => $product['bundle_banner_link'] ?? ''
 ];
+
+$prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
 ?>
+
+<style>
+.rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-bottom: 1px solid #cbd5e1;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+.rte-format-select {
+  height: 30px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  min-width: 140px;
+  transition: all 0.15s ease;
+}
+.rte-format-select:focus {
+  border-color: #082142;
+}
+.rte-divider {
+  width: 1px;
+  height: 20px;
+  background: #cbd5e1;
+  margin: 0 3px;
+}
+.rte-toolbar button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  transition: all 0.15s ease;
+}
+.rte-toolbar button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+.rte-toolbar button:active {
+  background: #e2e8f0;
+}
+.highlight-swatch {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  background: #fde047;
+  border: 1px solid #ca8a04;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+.rte-editor-content {
+  min-height: 200px;
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #1e293b;
+  outline: none;
+}
+.rte-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+}
+.rte-editor-content h1,
+.rte-editor-content h2,
+.rte-editor-content h3,
+.rte-editor-content h4,
+.rte-editor-content h5,
+.rte-editor-content h6 {
+  color: #082142 !important;
+}
+.rte-editor-content h1 { font-size: 1.5rem; font-weight: 800; margin: 16px 0 8px; }
+.rte-editor-content h2 { font-size: 1.35rem; font-weight: 700; margin: 14px 0 6px; }
+.rte-editor-content h3 { font-size: 1.18rem; font-weight: 600; margin: 12px 0 5px; }
+.rte-editor-content h4 { font-size: 1.05rem; font-weight: 600; margin: 10px 0 4px; }
+.rte-editor-content h5 { font-size: 0.95rem; font-weight: 600; margin: 8px 0 3px; }
+.rte-editor-content h6 { font-size: 0.88rem; font-weight: 600; margin: 8px 0 3px; text-transform: uppercase; }
+.rte-editor-content p,
+.rte-editor-content li,
+.rte-editor-content div {
+  color: #1e293b !important;
+}
+.rte-editor-content span:not(.rte-highlight):not(mark) {
+  color: inherit !important;
+}
+.rte-editor-content p { margin: 0 0 8px; }
+.rte-editor-content ul, .rte-editor-content ol { margin: 0 0 10px 22px; padding-left: 0; }
+.rte-editor-content li { margin-bottom: 4px; }
+.rte-editor-content a { color: #f25c27 !important; text-decoration: underline; font-weight: 600; }
+.rte-editor-content mark, .rte-editor-content .rte-highlight { background-color: #fef08a !important; padding: 1px 3px; border-radius: 2px; color: #082142 !important; }
+</style>
 
 <!-- Title & Action Bar -->
 <div class="page-title-bar">
@@ -95,10 +212,10 @@ $product_data = [
     <!-- Left Column: Main Product Configuration -->
     <div class="admin-col-main">
       
-      <!-- 1. Title & Descriptions Card -->
+      <!-- 1. Product Title, Short Description & Feature Highlights Card -->
       <div class="admin-card">
         <div class="admin-card-header">
-          <h2 class="admin-card-title">Product Description &amp; Details</h2>
+          <h2 class="admin-card-title">Product Title, Short Description &amp; Feature Highlights</h2>
         </div>
         <div class="admin-card-body">
           
@@ -108,22 +225,54 @@ $product_data = [
             <input type="text" id="productTitle" name="title" class="admin-form-input" placeholder="e.g. Juice Head Salt x Vaporesso 50K Bundle" value="<?php echo htmlspecialchars($product_data['title']); ?>" required>
           </div>
 
-          <!-- Full Description with Rich Text Editor -->
-          <div class="admin-form-group mb-0">
-            <label class="admin-form-label">Full Detailed Description</label>
-            <div class="rich-text-editor">
-              <div class="rte-toolbar">
-                <button type="button" data-command="bold" title="Bold"><strong>B</strong></button>
-                <button type="button" data-command="italic" title="Italic"><em>I</em></button>
-                <button type="button" data-command="underline" title="Underline"><u>U</u></button>
-                <button type="button" data-command="formatBlock" data-value="h2" title="Heading 2">H2</button>
-                <button type="button" data-command="formatBlock" data-value="h3" title="Heading 3">H3</button>
-                <button type="button" data-command="insertUnorderedList" title="Bullet List">• Bullets</button>
-                <button type="button" data-command="insertOrderedList" title="Numbered List">1. Numbers</button>
-                <button type="button" data-command="removeFormat" title="Clear Formatting">Tx</button>
+          <!-- Short Description -->
+          <div class="admin-form-group">
+            <label for="productShortDesc" class="admin-form-label">Short Description</label>
+            <textarea id="productShortDesc" name="short_desc" class="admin-form-textarea" rows="3" placeholder="Brief product summary displayed right next to images, price, and buy button on storefront..."><?php echo htmlspecialchars($product_data['short_desc']); ?></textarea>
+          </div>
+
+          <!-- Top 4 Feature -->
+          <?php
+            $hlPuffs = ''; $hlNic = ''; $hlBat = ''; $hlCap = '';
+            if (!empty($highlights)) {
+              foreach ($highlights as $hl) {
+                $icon = strtolower($hl['icon_type'] ?? $hl['spec_key'] ?? '');
+                if (strpos($icon, 'puff') !== false) $hlPuffs = $hl['spec_value'];
+                elseif (strpos($icon, 'nic') !== false) $hlNic = $hl['spec_value'];
+                elseif (strpos($icon, 'bat') !== false) $hlBat = $hl['spec_value'];
+                elseif (strpos($icon, 'cap') !== false) $hlCap = $hl['spec_value'];
+              }
+            }
+          ?>
+          <div style="margin-top: 20px;">
+            <div style="margin-bottom: 12px;">
+              <h3 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Top 4 Feature</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+              <div class="admin-form-group mb-0">
+                <label class="admin-form-label">Puff Count</label>
+                <input type="hidden" name="highlights[0][key]" value="Puffs">
+                <input type="hidden" name="highlights[0][icon_type]" value="puffs">
+                <input type="text" name="highlights[0][value]" class="admin-form-input" placeholder="e.g. 35,000 Puffs" value="<?= htmlspecialchars($hlPuffs) ?>">
               </div>
-              <div class="rte-editor-content" contenteditable="true" data-placeholder="Write detailed flavor notes, battery specifications, pod capacity, and packaging details..."><?php echo $product_data['description']; ?></div>
-              <textarea name="description" class="d-none"><?php echo htmlspecialchars($product_data['description']); ?></textarea>
+              <div class="admin-form-group mb-0">
+                <label class="admin-form-label">Nicotine Strength</label>
+                <input type="hidden" name="highlights[1][key]" value="Nicotine">
+                <input type="hidden" name="highlights[1][icon_type]" value="nicotine">
+                <input type="text" name="highlights[1][value]" class="admin-form-input" placeholder="e.g. 50mg (5%)" value="<?= htmlspecialchars($hlNic) ?>">
+              </div>
+              <div class="admin-form-group mb-0">
+                <label class="admin-form-label">Battery Capacity</label>
+                <input type="hidden" name="highlights[2][key]" value="Battery">
+                <input type="hidden" name="highlights[2][icon_type]" value="battery">
+                <input type="text" name="highlights[2][value]" class="admin-form-input" placeholder="e.g. 1000mAh Type-C" value="<?= htmlspecialchars($hlBat) ?>">
+              </div>
+              <div class="admin-form-group mb-0">
+                <label class="admin-form-label">Liquid Capacity</label>
+                <input type="hidden" name="highlights[3][key]" value="Capacity">
+                <input type="hidden" name="highlights[3][icon_type]" value="capacity">
+                <input type="text" name="highlights[3][value]" class="admin-form-input" placeholder="e.g. 18mL" value="<?= htmlspecialchars($hlCap) ?>">
+              </div>
             </div>
           </div>
 
@@ -155,12 +304,16 @@ $product_data = [
               <?php foreach ($images as $idx => $img): ?>
                 <div class="media-preview-item <?= $idx === 0 ? 'is-featured' : '' ?>" data-existing="1">
                   <img src="<?= asset($img['image_url']) ?>" alt="Product image">
+                  <input type="hidden" name="existing_images[]" value="<?= htmlspecialchars($img['image_url']) ?>">
+                  <button type="button" class="media-preview-remove btn-remove-existing-img" title="Remove">&times;</button>
                   <?php if ($idx === 0): ?><span class="media-preview-badge">★ Featured</span><?php endif; ?>
                 </div>
               <?php endforeach; ?>
             <?php elseif (!empty($product_data['image'])): ?>
               <div class="media-preview-item is-featured" data-existing="1">
                 <img src="<?= asset($product_data['image']) ?>" alt="Main product image">
+                <input type="hidden" name="existing_images[]" value="<?= htmlspecialchars($product_data['image']) ?>">
+                <button type="button" class="media-preview-remove btn-remove-existing-img" title="Remove">&times;</button>
                 <span class="media-preview-badge">★ Featured</span>
               </div>
             <?php endif; ?>
@@ -174,11 +327,20 @@ $product_data = [
           <h2 class="admin-card-title">Pricing</h2>
         </div>
         <div class="admin-card-body">
-          <div class="admin-form-group price-input-narrow">
-            <label for="productBasePrice" class="admin-form-label">Price <span class="required">*</span></label>
-            <div class="input-prefix-container">
-              <span class="prefix">$</span>
-              <input type="number" id="productBasePrice" name="price" step="0.01" placeholder="29.99" value="<?php echo htmlspecialchars($product_data['price']); ?>" required>
+          <div class="form-grid-2">
+            <div class="admin-form-group price-input-narrow">
+              <label for="productBasePrice" class="admin-form-label">Price <span class="required">*</span></label>
+              <div class="input-prefix-container">
+                <span class="prefix">$</span>
+                <input type="number" id="productBasePrice" name="price" step="0.01" placeholder="29.99" value="<?php echo htmlspecialchars($product_data['price']); ?>" required>
+              </div>
+            </div>
+            <div class="admin-form-group price-input-narrow">
+              <label for="productComparePrice" class="admin-form-label">Compare-at Price (Optional)</label>
+              <div class="input-prefix-container">
+                <span class="prefix">$</span>
+                <input type="number" id="productComparePrice" name="compare_price" step="0.01" placeholder="39.99" value="<?php echo htmlspecialchars($product_data['compare_price']); ?>">
+              </div>
             </div>
           </div>
         </div>
@@ -213,528 +375,352 @@ $product_data = [
         </div>
       </div>
 
-      <!-- 5. Shopify-Style Variants Section -->
+      <!-- 5. Dynamic Variants Section (Shopify style) -->
       <div class="admin-card">
         <div class="admin-card-header">
-          <h2 class="admin-card-title">Variants</h2>
-          <div class="d-flex align-center gap-sm">
-            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" data-modal-target="#bulkEditModal">Bulk edit</button>
-            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" id="addVariantOptionBtn">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>Add variant</span>
-            </button>
+          <div>
+            <h2 class="admin-card-title">Variants</h2>
+            <p class="form-help-text">Add variations of this product, like sizes, colors, and flavors.</p>
           </div>
         </div>
         
         <div class="admin-card-body">
-          
-          <!-- Options Box -->
-          <div class="variants-options-card">
-            
-            <!-- Option 1: FLAVOR -->
-            <div class="variant-option-row" data-option-type="flavor">
-              <div class="variant-drag-handle" title="Drag to reorder">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <circle cx="9" cy="6" r="1.5"></circle>
-                  <circle cx="15" cy="6" r="1.5"></circle>
-                  <circle cx="9" cy="12" r="1.5"></circle>
-                  <circle cx="15" cy="12" r="1.5"></circle>
-                  <circle cx="9" cy="18" r="1.5"></circle>
-                  <circle cx="15" cy="18" r="1.5"></circle>
-                </svg>
+          <!-- Options Toggle (Shopify style) -->
+          <div class="checkbox-group mb-md">
+            <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+              <input type="checkbox" id="hasVariantsToggle" name="has_variants" value="1" <?= !empty($variants) ? 'checked' : '' ?>>
+              <span><strong>This product has options</strong>, like size, flavor, nicotine strength, or color</span>
+            </label>
+          </div>
+
+          <div id="variantsOptionsWrapper" style="<?= empty($variants) ? 'display: none;' : '' ?>">
+            <!-- Options Box -->
+            <div class="variants-options-card">
+              <div id="optionsListContainer">
+                <!-- Option rows generated purely dynamically -->
               </div>
-              <div class="variant-option-content">
-                <input type="text" class="variant-option-name-input" value="FLAVOR:" placeholder="Option 1 Name (e.g. FLAVOR, COLOR)">
-                <div class="variant-pills-list">
-                  <span class="variant-pill-tag" data-val="Berry Lemonade" title="Click to edit name"><span class="pill-text">Berry Lemonade</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <span class="variant-pill-tag" data-val="Sour Watermelon" title="Click to edit name"><span class="pill-text">Sour Watermelon</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <span class="variant-pill-tag" data-val="Strawberry Kiwi ICE" title="Click to edit name"><span class="pill-text">Strawberry Kiwi ICE</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <span class="variant-pill-tag" data-val="Strawberry Watermelon" title="Click to edit name"><span class="pill-text">Strawberry Watermelon</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <span class="variant-pill-tag" data-val="Sweet Peach Pineapple" title="Click to edit name"><span class="pill-text">Sweet Peach Pineapple</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <div class="inline-tag-input-wrap">
-                    <input type="text" class="inline-tag-input inline-flavor-input" placeholder="+ Add flavor">
+
+              <!-- Add another option trigger -->
+              <div class="variant-add-option-footer">
+                <button type="button" class="btn-add-option-link" id="addAnotherOptionLink">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                  </svg>
+                  <span>Add another option</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Variants Matrix Table (Shopify Style) -->
+            <div class="variants-table-wrap" id="variantsTableWrap" style="margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff;">
+              <!-- Bulk Actions / Counter Toolbar -->
+              <div class="variants-table-header-toolbar" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; min-height: 46px;">
+                <div class="d-flex align-center gap-md" style="flex-wrap: wrap;">
+                  <span id="variantsCountBadge" style="font-size: 13px; font-weight: 600; color: #475569;">0 variants</span>
+                  <div id="bulkActionsGroup" style="display: none; align-items: center; gap: 8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid #cbd5e1;">
+                    <span id="selectedCountText" style="font-size: 12.5px; font-weight: 600; color: #0f172a;">0 selected</span>
+                    <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" id="btnBulkEditPrice" style="padding: 3px 8px; font-size: 12px;">Edit price</button>
+                    <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" id="btnBulkEditStock" style="padding: 3px 8px; font-size: 12px;">Edit quantity</button>
+                    <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" id="btnBulkDelete" style="padding: 3px 8px; font-size: 12px; color: #ef4444;">Delete</button>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Option 2: Strength -->
-            <div class="variant-option-row" data-option-type="strength">
-              <div class="variant-drag-handle" title="Drag to reorder">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <circle cx="9" cy="6" r="1.5"></circle>
-                  <circle cx="15" cy="6" r="1.5"></circle>
-                  <circle cx="9" cy="12" r="1.5"></circle>
-                  <circle cx="15" cy="12" r="1.5"></circle>
-                  <circle cx="9" cy="18" r="1.5"></circle>
-                  <circle cx="15" cy="18" r="1.5"></circle>
-                </svg>
-              </div>
-              <div class="variant-option-content">
-                <input type="text" class="variant-option-name-input" value="STRENGTH:" placeholder="Option 2 Name (e.g. STRENGTH, SIZE)">
-                <div class="variant-pills-list">
-                  <span class="variant-pill-tag" data-val="3mg" title="Click to edit name"><span class="pill-text">3mg</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <span class="variant-pill-tag" data-val="6mg" title="Click to edit name"><span class="pill-text">6mg</span> <button type="button" class="pill-remove" title="Remove">&times;</button></span>
-                  <div class="inline-tag-input-wrap">
-                    <input type="text" class="inline-tag-input inline-strength-input" placeholder="+ Add strength">
-                  </div>
+                <div>
+                  <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" data-modal-target="#bulkEditModal" style="padding: 4px 10px; font-size: 12px;">Bulk edit all</button>
                 </div>
               </div>
-            </div>
 
-            <!-- Dynamic Additional Option Container -->
-            <div id="additionalOptionsContainer"></div>
-
-            <!-- Add another option trigger -->
-            <div class="variant-add-option-footer">
-              <button type="button" class="btn-add-option-link" id="addAnotherOptionLink">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                  <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                <span>Add another option</span>
-              </button>
-            </div>
-
-          </div>
-
-          <!-- Table Controls Toolbar -->
-          <div class="variant-table-toolbar">
-            <div class="variant-group-by-wrap">
-              <span>Group by</span>
-              <select class="variant-group-select" id="variantGroupBySelect">
-                <option value="flavor">FLAVOR:</option>
-                <option value="strength">STRENGTH:</option>
-              </select>
-            </div>
-            
-            <div class="variant-toolbar-right">
-              <button type="button" class="btn-variant-icon-tool" title="Search & Filter">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="4" y1="6" x2="20" y2="6"></line>
-                  <line x1="7" y1="12" x2="17" y2="12"></line>
-                  <line x1="10" y1="18" x2="14" y2="18"></line>
-                </svg>
-              </button>
-              
-              <select class="variant-group-select">
-                <option>All locations</option>
-                <option>Main Warehouse (OKC)</option>
-              </select>
+              <div class="table-responsive">
+                <table class="variants-matrix-table" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                      <th style="width: 44px; text-align: center; padding: 10px;">
+                        <input type="checkbox" id="selectAllVariants" title="Select all variants" style="width: 16px; height: 16px; accent-color: #0f172a; cursor: pointer;">
+                      </th>
+                      <th style="min-width: 220px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Variant</th>
+                      <th style="width: 130px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Price</th>
+                      <th style="width: 135px; min-width: 135px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Available</th>
+                      <th style="min-width: 160px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">SKU</th>
+                      <th style="width: 44px; text-align: right; padding: 10px 14px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="variantsTableBody">
+                    <tr id="emptyVariantsRow">
+                      <td colspan="6" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="margin: 0 auto 8px; display: block; stroke: #94a3b8;">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="12" y1="8" x2="12" y2="12"></line>
+                          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        No variant values added yet. Add an option name and values above to generate combinations.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-
-          <!-- Variants Matrix Table -->
-          <div class="table-responsive variants-table-wrap">
-            <table class="variants-matrix-table">
-              <thead>
-                <tr>
-                  <th class="col-checkbox">
-                    <input type="checkbox" id="selectAllVariants">
-                  </th>
-                  <th>Variant</th>
-                  <th>Price</th>
-                  <th>Available</th>
-                  <th class="col-toggle">
-                    <button type="button" class="variant-toggle-btn" id="toggleAllSubrows" title="Toggle All Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-              <tbody id="variantsTableBody">
-                <!-- 1. Berry Lemonade -->
-                <tr class="variant-parent-row" data-target-group="subrow-1" data-flavor="Berry Lemonade">
-                  <td class="text-center">
-                    <input type="checkbox" class="variant-checkbox">
-                  </td>
-                  <td>
-                    <div class="variant-item-cell">
-                      <div class="variant-thumb-box">
-                        <img src="../assets/images/product-1.webp" alt="Berry Lemonade">
-                      </div>
-                      <div>
-                        <div class="variant-item-name">Berry Lemonade</div>
-                        <div class="variant-item-meta"><span class="subrow-count">2</span> variants</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-price-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <span class="variant-available-stock">96</span>
-                  </td>
-                  <td class="text-right">
-                    <button type="button" class="variant-toggle-btn" data-toggle-group="subrow-1" title="Expand Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </td>
-                </tr>
-                <tr class="variant-subrow subrow-1" data-flavor="Berry Lemonade" data-strength="3mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">3mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-BL-3</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="48">
-                  </td>
-                  <td></td>
-                </tr>
-                <tr class="variant-subrow subrow-1" data-flavor="Berry Lemonade" data-strength="6mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">6mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-BL-6</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="48">
-                  </td>
-                  <td></td>
-                </tr>
-
-                <!-- 2. Sour Watermelon -->
-                <tr class="variant-parent-row" data-target-group="subrow-2" data-flavor="Sour Watermelon">
-                  <td class="text-center">
-                    <input type="checkbox" class="variant-checkbox">
-                  </td>
-                  <td>
-                    <div class="variant-item-cell">
-                      <div class="variant-thumb-box">
-                        <img src="../assets/images/product-2.webp" alt="Sour Watermelon">
-                      </div>
-                      <div>
-                        <div class="variant-item-name">Sour Watermelon</div>
-                        <div class="variant-item-meta"><span class="subrow-count">2</span> variants</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-price-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <span class="variant-available-stock">94</span>
-                  </td>
-                  <td class="text-right">
-                    <button type="button" class="variant-toggle-btn" data-toggle-group="subrow-2" title="Expand Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </td>
-                </tr>
-                <tr class="variant-subrow subrow-2" data-flavor="Sour Watermelon" data-strength="3mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">3mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SW-3</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="47">
-                  </td>
-                  <td></td>
-                </tr>
-                <tr class="variant-subrow subrow-2" data-flavor="Sour Watermelon" data-strength="6mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">6mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SW-6</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="47">
-                  </td>
-                  <td></td>
-                </tr>
-
-                <!-- 3. Strawberry Kiwi ICE -->
-                <tr class="variant-parent-row" data-target-group="subrow-3" data-flavor="Strawberry Kiwi ICE">
-                  <td class="text-center">
-                    <input type="checkbox" class="variant-checkbox">
-                  </td>
-                  <td>
-                    <div class="variant-item-cell">
-                      <div class="variant-thumb-box">
-                        <img src="../assets/images/product-3.webp" alt="Strawberry Kiwi ICE">
-                      </div>
-                      <div>
-                        <div class="variant-item-name">Strawberry Kiwi ICE</div>
-                        <div class="variant-item-meta"><span class="subrow-count">2</span> variants</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-price-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <span class="variant-available-stock">94</span>
-                  </td>
-                  <td class="text-right">
-                    <button type="button" class="variant-toggle-btn" data-toggle-group="subrow-3" title="Expand Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </td>
-                </tr>
-                <tr class="variant-subrow subrow-3" data-flavor="Strawberry Kiwi ICE" data-strength="3mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">3mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SK-3</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="47">
-                  </td>
-                  <td></td>
-                </tr>
-                <tr class="variant-subrow subrow-3" data-flavor="Strawberry Kiwi ICE" data-strength="6mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">6mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SK-6</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="47">
-                  </td>
-                  <td></td>
-                </tr>
-
-                <!-- 4. Strawberry Watermelon -->
-                <tr class="variant-parent-row" data-target-group="subrow-4" data-flavor="Strawberry Watermelon">
-                  <td class="text-center">
-                    <input type="checkbox" class="variant-checkbox">
-                  </td>
-                  <td>
-                    <div class="variant-item-cell">
-                      <div class="variant-thumb-box">
-                        <img src="../assets/images/product-4.webp" alt="Strawberry Watermelon">
-                      </div>
-                      <div>
-                        <div class="variant-item-name">Strawberry Watermelon</div>
-                        <div class="variant-item-meta"><span class="subrow-count">2</span> variants</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-price-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <span class="variant-available-stock">80</span>
-                  </td>
-                  <td class="text-right">
-                    <button type="button" class="variant-toggle-btn" data-toggle-group="subrow-4" title="Expand Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </td>
-                </tr>
-                <tr class="variant-subrow subrow-4" data-flavor="Strawberry Watermelon" data-strength="3mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">3mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-STW-3</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="40">
-                  </td>
-                  <td></td>
-                </tr>
-                <tr class="variant-subrow subrow-4" data-flavor="Strawberry Watermelon" data-strength="6mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">6mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-STW-6</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="40">
-                  </td>
-                  <td></td>
-                </tr>
-
-                <!-- 5. Sweet Peach Pineapple -->
-                <tr class="variant-parent-row" data-target-group="subrow-5" data-flavor="Sweet Peach Pineapple">
-                  <td class="text-center">
-                    <input type="checkbox" class="variant-checkbox">
-                  </td>
-                  <td>
-                    <div class="variant-item-cell">
-                      <div class="variant-thumb-box">
-                        <img src="../assets/images/product-5.webp" alt="Sweet Peach Pineapple">
-                      </div>
-                      <div>
-                        <div class="variant-item-name">Sweet Peach Pineapple</div>
-                        <div class="variant-item-meta"><span class="subrow-count">2</span> variants</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-price-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <span class="variant-available-stock">85</span>
-                  </td>
-                  <td class="text-right">
-                    <button type="button" class="variant-toggle-btn" data-toggle-group="subrow-5" title="Expand Sub-variants">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-                  </td>
-                </tr>
-                <tr class="variant-subrow subrow-5" data-flavor="Sweet Peach Pineapple" data-strength="3mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">3mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SPP-3</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="43">
-                  </td>
-                  <td></td>
-                </tr>
-                <tr class="variant-subrow subrow-5" data-flavor="Sweet Peach Pineapple" data-strength="6mg">
-                  <td></td>
-                  <td>
-                    <div class="variant-subrow-content">
-                      <span class="variant-subrow-bullet"></span>
-                      <div>
-                        <strong class="variant-subrow-title">6mg</strong>
-                        <div class="variant-subrow-sku">SKU: VH-JH-50K-SPP-6</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="variant-price-box variant-subrow-price-box">
-                      <span>$</span>
-                      <input type="text" class="variant-subprice-input" value="14.50">
-                    </div>
-                  </td>
-                  <td>
-                    <input type="number" class="admin-form-input variant-stock-input variant-subrow-stock-input" value="42">
-                  </td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
         </div>
       </div>
 
-      <!-- 7. Search Engine Listing (SEO) Card -->
+      <!-- Server JSON for Variants & Options -->
+      <script id="serverVariantsData" type="application/json">
+        <?= json_encode($variants ?? []) ?>
+      </script>
+      <script id="serverOptionNames" type="application/json">
+        <?= json_encode(!empty($product['option_names']) ? (is_array($product['option_names']) ? $product['option_names'] : json_decode($product['option_names'], true)) : []) ?>
+      </script>
+
+      <!-- 6. Full Detailed Description Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <h2 class="admin-card-title">Full Detailed Description</h2>
+            <p class="form-help-text">Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.</p>
+          </div>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-0">
+            <div class="rich-text-editor">
+              <div class="rte-toolbar">
+                <select class="rte-format-select" title="Heading Size / Paragraph">
+                  <option value="p">Paragraph</option>
+                  <option value="h1">Heading 1 (H1)</option>
+                  <option value="h2">Heading 2 (H2)</option>
+                  <option value="h3">Heading 3 (H3)</option>
+                  <option value="h4">Heading 4 (H4)</option>
+                  <option value="h5">Heading 5 (H5)</option>
+                  <option value="h6">Heading 6 (H6)</option>
+                </select>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="bold" title="Bold"><strong>B</strong></button>
+                <button type="button" data-command="italic" title="Italic"><em>I</em></button>
+                <button type="button" data-command="underline" title="Underline"><u>U</u></button>
+                <button type="button" data-command="highlight" title="Highlight Text" class="rte-btn-highlight"><span class="highlight-swatch"></span> Highlight</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="insertUnorderedList" title="Bullet List">• Bullets</button>
+                <button type="button" data-command="insertOrderedList" title="Numbered List">1. Numbers</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="createLink" title="Insert Link">🔗 Link</button>
+                <button type="button" data-command="unlink" title="Remove Link">Unlink</button>
+                <button type="button" data-command="removeFormat" title="Clear Formatting">Tx Clear</button>
+              </div>
+              <div class="rte-editor-content" contenteditable="true" data-placeholder="Write comprehensive product description, flavor notes, safety instructions, and features..."><?php echo $product_data['description']; ?></div>
+              <textarea name="description" class="d-none"><?php echo htmlspecialchars($product_data['description']); ?></textarea>
+            </div>
+            <p class="form-help-text mt-xs">Use the toolbar to choose Heading 1 to 6 or Paragraph, Bold, Italic, Underline, Highlight, Bullets, Numbers, and Links.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Specifications Card -->
+      <div class="admin-card">
+        <div class="admin-card-header d-flex justify-between align-center">
+          <div>
+            <h2 class="admin-card-title">Specifications</h2>
+            <p class="form-help-text">Configure detailed specification rows for the More Information tab. If no specifications are added, the More Information tab will not appear on the website.</p>
+          </div>
+          <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm" id="btnAddSpecRow">
+            <span>+ Add Specification</span>
+          </button>
+        </div>
+        <div class="admin-card-body">
+          <div id="specsContainer">
+            <?php if (!empty($specs)): ?>
+              <?php foreach ($specs as $sIdx => $sp): ?>
+                <div class="spec-input-row" style="display: flex; gap: 12px; margin-bottom: 10px; align-items: center;">
+                  <input type="text" name="specs[<?= $sIdx ?>][key]" class="admin-form-input" style="flex: 1;" placeholder="Spec name (e.g. Coil Technology)" value="<?= htmlspecialchars($sp['spec_key']) ?>" required>
+                  <input type="text" name="specs[<?= $sIdx ?>][value]" class="admin-form-input" style="flex: 1.5;" placeholder="Value (e.g. Dual Mesh 0.8 ohm)" value="<?= htmlspecialchars($sp['spec_value']) ?>" required>
+                  <button type="button" class="btn-remove-spec-row" title="Delete specification" style="background: none; border: none; color: #ef4444; font-size: 20px; cursor: pointer; padding: 2px 8px;">&times;</button>
+                </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+          <div id="emptySpecsNotice" style="<?= !empty($specs) ? 'display: none;' : '' ?> padding: 16px; text-align: center; border: 1px dashed var(--border-color); border-radius: 8px; background: #fafbfc; color: #64748b; font-size: 13px;">
+            No custom detailed specs added yet. If left empty, the More Information tab will be hidden on the storefront. Click "+ Add Specification" above to add custom specs.
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Customer Reviews Card -->
+      <div class="admin-card">
+        <div class="admin-card-header d-flex justify-between align-center">
+          <div>
+            <h2 class="admin-card-title">Reviews</h2>
+            <p class="form-help-text">Reviews are submitted directly by verified customers on the product page and require administrator approval before appearing live.</p>
+          </div>
+          <a href="<?= url('admin/reviews') ?>" class="btn-admin btn-admin-secondary btn-admin-sm" target="_blank">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <span>Moderate Reviews</span>
+          </a>
+        </div>
+        <div class="admin-card-body">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; display: flex; align-items: flex-start; gap: 14px;">
+            <div style="background: #e0f2fe; color: #0284c7; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div>
+              <p style="margin: 0 0 6px 0; font-weight: 600; color: #1e293b; font-size: 14px;">How Customer Reviews Work</p>
+              <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+                Users add reviews directly from the product page with a star rating and comment. All submissions go to the <strong>Admin &gt; Reviews</strong> dashboard as <em>Pending</em>. Once you approve them, they appear under the Reviews tab on the product page.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. Product FAQs Card -->
+      <div class="admin-card">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 class="admin-card-title">FAQs</h2>
+            <p class="form-help-text" style="margin-top: 4px;">Add or modify specific FAQs for this product. If left empty, the FAQs tab will not appear on the website.</p>
+          </div>
+          <button type="button" class="btn-admin btn-admin-secondary" id="btnAddFaqRow" style="padding: 7px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Add FAQ</span>
+          </button>
+        </div>
+        <div class="admin-card-body">
+          <div id="productFaqsContainer">
+            <?php if (!empty($prodFaqs)): ?>
+              <?php foreach ($prodFaqs as $i => $faq): ?>
+              <div class="prod-faq-item-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; background: #fff; margin-bottom: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span class="faq-row-badge" style="font-size: 12px; font-weight: 700; color: var(--color-primary-navy); background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">FAQ #<?= $i + 1 ?></span>
+                  <button type="button" class="btn-remove-faq" title="Delete question" style="border: none; background: none; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Remove
+                  </button>
+                </div>
+                <div class="admin-form-group" style="margin-bottom: 10px;">
+                  <label class="admin-form-label" style="font-size: 13px;">Question</label>
+                  <input type="text" name="faqs[<?= $i ?>][question]" class="admin-form-input" placeholder="e.g. How many puffs does this device deliver?" value="<?= htmlspecialchars($faq['question'] ?? '') ?>" required>
+                </div>
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                  <label class="admin-form-label" style="font-size: 13px;">Answer</label>
+                  <textarea name="faqs[<?= $i ?>][answer]" class="admin-form-textarea" rows="2" placeholder="e.g. Up to 15,000 puffs depending on draw duration..." required><?= htmlspecialchars($faq['answer'] ?? '') ?></textarea>
+                </div>
+              </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+
+          <!-- Empty State (Shown when no FAQs exist) -->
+          <div id="emptyFaqsNotice" style="<?= !empty($prodFaqs) ? 'display: none;' : '' ?> padding: 32px 20px; text-align: center; border: 1px dashed var(--border-color); border-radius: 8px; background: #fafbfc;">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#94a3b8" stroke-width="1.8" style="margin-bottom: 8px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <p style="font-weight: 600; color: #475569; margin: 0 0 4px 0; font-size: 14px;">No custom FAQs added</p>
+            <p style="font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;">If left empty, the FAQs tab will be completely hidden on the storefront. Click "+ Add FAQ" above to add custom questions.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10. Related Posts Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <h2 class="admin-card-title">Related Posts</h2>
+            <p class="form-help-text">Write custom related articles, guides, usage tips, or recommendations using the rich text editor. If left empty, the Related Posts tab will not appear on the website.</p>
+          </div>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-0">
+            <div class="rich-text-editor">
+              <div class="rte-toolbar">
+                <select class="rte-format-select" title="Heading Size / Paragraph">
+                  <option value="p">Paragraph</option>
+                  <option value="h1">Heading 1 (H1)</option>
+                  <option value="h2">Heading 2 (H2)</option>
+                  <option value="h3">Heading 3 (H3)</option>
+                  <option value="h4">Heading 4 (H4)</option>
+                  <option value="h5">Heading 5 (H5)</option>
+                  <option value="h6">Heading 6 (H6)</option>
+                </select>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="bold" title="Bold"><strong>B</strong></button>
+                <button type="button" data-command="italic" title="Italic"><em>I</em></button>
+                <button type="button" data-command="underline" title="Underline"><u>U</u></button>
+                <button type="button" data-command="highlight" title="Highlight Text" class="rte-btn-highlight"><span class="highlight-swatch"></span> Highlight</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="insertUnorderedList" title="Bullet List">• Bullets</button>
+                <button type="button" data-command="insertOrderedList" title="Numbered List">1. Numbers</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="createLink" title="Insert Link">🔗 Link</button>
+                <button type="button" data-command="unlink" title="Remove Link">Unlink</button>
+                <button type="button" data-command="removeFormat" title="Clear Formatting">Tx Clear</button>
+              </div>
+              <div class="rte-editor-content" contenteditable="true" data-placeholder="Write related articles, blog snippets, flavor guides, maintenance tips, or links..."><?php echo $product_data['related_posts_content']; ?></div>
+              <textarea name="related_posts_content" class="d-none"><?php echo htmlspecialchars($product_data['related_posts_content']); ?></textarea>
+            </div>
+            <p class="form-help-text mt-xs">Use the toolbar to choose Heading 1 to 6 or Paragraph, Bold, Italic, Underline, Highlight, Bullets, Numbers, and Links.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Promotional Deal Banner Card (Optional) -->
+      <div class="admin-card">
+        <div class="admin-card-header d-flex justify-between align-center">
+          <div>
+            <h2 class="admin-card-title">Promotional Deal Banner (Optional)</h2>
+            <p class="form-help-text">Attach an exclusive deal or bundle banner specifically for this product.</p>
+          </div>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-md">
+            <label class="d-flex align-center gap-sm" style="cursor: pointer; user-select: none;">
+              <input type="checkbox" name="bundle_banner_active" value="1" id="bundleBannerActiveCheckbox" <?= !empty($product_data['bundle_banner_active']) ? 'checked' : '' ?> style="width: 18px; height: 18px; accent-color: var(--color-accent-orange); cursor: pointer;">
+              <span style="font-weight: 600; font-size: 14px; color: var(--color-primary-navy);">Enable Promotional Deal Banner for this product</span>
+            </label>
+          </div>
+
+          <div id="bundleBannerConfigWrap" style="<?= empty($product_data['bundle_banner_active']) ? 'display: none;' : '' ?> padding-top: 8px;">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Banner Image</label>
+              
+              <?php $hasExistingBanner = !empty($product_data['bundle_banner_img']); ?>
+              <div id="bundleBannerPreviewBox" style="<?= !$hasExistingBanner ? 'display: none;' : '' ?> margin-bottom: 12px; position: relative; max-width: 600px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; background: #0b1528;">
+                <img id="bundleBannerPreviewImg" src="<?= $hasExistingBanner ? asset($product_data['bundle_banner_img']) : '' ?>" alt="Promotional Banner Preview" style="width: 100%; height: auto; display: block; max-height: 140px; object-fit: contain;">
+                <button type="button" id="btnRemoveBundleBanner" title="Remove banner" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: #fff; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1;">
+                  &times;
+                </button>
+              </div>
+
+              <input type="hidden" name="remove_bundle_banner" id="removeBundleBannerInput" value="0">
+              <input type="file" name="bundle_banner_img" id="bundleBannerFileInput" accept="image/*" class="admin-form-input">
+              <p class="form-help-text" style="margin-top: 6px;">Recommended format: WebP, PNG, or JPG (approx 1200 x 280 or 800 x 160 px). <?= $hasExistingBanner ? 'Upload a new file to replace the current banner.' : '' ?></p>
+            </div>
+
+            <div class="admin-form-group mb-0">
+              <label for="bundleBannerLinkInput" class="admin-form-label">Banner Target Link (Optional)</label>
+              <input type="text" id="bundleBannerLinkInput" name="bundle_banner_link" class="admin-form-input" placeholder="e.g. collection/starter-kits or /deals/special-offer" value="<?= htmlspecialchars($product_data['bundle_banner_link']) ?>">
+              <p class="form-help-text" style="margin-top: 6px;">Where customers are redirected when clicking the deal banner.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 8. Search Engine Listing (SEO) Card -->
       <div class="admin-card">
         <div class="admin-card-header">
           <div>
@@ -774,9 +760,9 @@ $product_data = [
           <div class="seo-preview-box">
             <div class="seo-preview-header">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-              <span>New Vape Official Store</span>
+              <span>Infinity Vape Shop</span>
             </div>
-            <div class="seo-preview-url" id="seoPreviewUrl">www.newvape.com/products/<?php echo $product_data['slug'] ?: 'product-handle'; ?></div>
+            <div class="seo-preview-url" id="seoPreviewUrl">www.infinityvapeshop.com/products/<?php echo $product_data['slug'] ?: 'product-handle'; ?></div>
             <div class="seo-preview-title" id="seoPreviewTitle"><?php echo htmlspecialchars($product_data['title']) ?: 'Product Title'; ?></div>
             <div class="seo-preview-desc" id="seoPreviewDesc"><?php echo htmlspecialchars($product_data['seo_desc']) ?: 'Product description will appear in search results...'; ?></div>
           </div>
@@ -901,6 +887,121 @@ $product_data = [
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const toggle = document.getElementById('bundleBannerActiveCheckbox');
+  const wrap = document.getElementById('bundleBannerConfigWrap');
+  const fileInput = document.getElementById('bundleBannerFileInput');
+  const previewBox = document.getElementById('bundleBannerPreviewBox');
+  const previewImg = document.getElementById('bundleBannerPreviewImg');
+  const removeBtn = document.getElementById('btnRemoveBundleBanner');
+  const removeInput = document.getElementById('removeBundleBannerInput');
+
+  if (toggle && wrap) {
+    toggle.addEventListener('change', function() {
+      wrap.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+
+  if (fileInput && previewBox && previewImg) {
+    fileInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewBox.style.display = 'block';
+          if (removeInput) removeInput.value = '0';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (fileInput) fileInput.value = '';
+      if (previewImg) previewImg.src = '';
+      if (previewBox) previewBox.style.display = 'none';
+      if (removeInput) removeInput.value = '1';
+    });
+  }
+
+  // --- Dynamic Product FAQs Manager ---
+  const faqContainer = document.getElementById('productFaqsContainer');
+  const addFaqBtn = document.getElementById('btnAddFaqRow');
+  const emptyFaqsNotice = document.getElementById('emptyFaqsNotice');
+  let faqCount = <?= !empty($prodFaqs) ? count($prodFaqs) : 0 ?>;
+
+  function updateFaqBadges() {
+    const items = faqContainer.querySelectorAll('.prod-faq-item-card');
+    if (items.length === 0) {
+      if (emptyFaqsNotice) emptyFaqsNotice.style.display = 'block';
+    } else {
+      if (emptyFaqsNotice) emptyFaqsNotice.style.display = 'none';
+      items.forEach((item, idx) => {
+        const badge = item.querySelector('.faq-row-badge');
+        if (badge) badge.textContent = 'FAQ #' + (idx + 1);
+      });
+    }
+  }
+
+  // Bind remove listener to existing pre-rendered cards
+  faqContainer.querySelectorAll('.prod-faq-item-card').forEach(function(card) {
+    const rmBtn = card.querySelector('.btn-remove-faq');
+    if (rmBtn) {
+      rmBtn.addEventListener('click', function() {
+        card.remove();
+        updateFaqBadges();
+      });
+    }
+  });
+
+  function addFaqRow(question = '', answer = '') {
+    const index = faqCount++;
+    const row = document.createElement('div');
+    row.className = 'prod-faq-item-card';
+    row.style.cssText = 'border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; background: #fff; margin-bottom: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.02);';
+    row.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span class="faq-row-badge" style="font-size: 12px; font-weight: 700; color: var(--color-primary-navy); background: #f1f5f9; padding: 3px 8px; border-radius: 4px;">FAQ #${faqContainer.children.length + 1}</span>
+        <button type="button" class="btn-remove-faq" title="Delete question" style="border: none; background: none; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Remove
+        </button>
+      </div>
+      <div class="admin-form-group" style="margin-bottom: 10px;">
+        <label class="admin-form-label" style="font-size: 13px;">Question</label>
+        <input type="text" name="faqs[${index}][question]" class="admin-form-input" placeholder="e.g. How many puffs does this device deliver?" value="${question.replace(/"/g, '&quot;')}" required>
+      </div>
+      <div class="admin-form-group" style="margin-bottom: 0;">
+        <label class="admin-form-label" style="font-size: 13px;">Answer</label>
+        <textarea name="faqs[${index}][answer]" class="admin-form-textarea" rows="2" placeholder="e.g. Up to 15,000 puffs depending on draw duration..." required>${answer}</textarea>
+      </div>
+    `;
+
+    row.querySelector('.btn-remove-faq').addEventListener('click', function() {
+      row.remove();
+      updateFaqBadges();
+    });
+
+    faqContainer.appendChild(row);
+    updateFaqBadges();
+  }
+
+  if (addFaqBtn) {
+    addFaqBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      addFaqRow('', '');
+    });
+  }
+
+  updateFaqBadges();
+});
+window.APP_BASE_URL = <?= json_encode(base_url()) ?>;
+</script>
 
 <?php
 include dirname(__DIR__) . '/includes/footer.php';

@@ -1,5 +1,5 @@
 <?php
-$page_title = '404 - Page Not Found | New Vape';
+$page_title = '404 - Page Not Found | Infinity Vape Shop';
 ?>
 <!DOCTYPE html>
 <html lang="en">

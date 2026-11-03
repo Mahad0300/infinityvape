@@ -87,6 +87,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   </svg>
                 </button>
                 <form action="<?= url('admin/blog-categories/delete') ?>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this category? Associated posts will be uncategorized.');">
+                  <?= csrf_field() ?>
                   <input type="hidden" name="id" value="<?= $cat['id'] ?>">
                   <button type="submit" class="btn-action-icon delete-btn" title="Delete Category">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -126,7 +127,8 @@ include dirname(__DIR__) . '/includes/header.php';
       </button>
     </div>
 
-    <form id="categoryForm" action="<?= url('admin/blog-categories/store') ?>" method="POST">
+    <form id="categoryForm" action="<?= url('admin/blog-categories/store') ?>" data-store-url="<?= url('admin/blog-categories/store') ?>" data-update-url="<?= url('admin/blog-categories/update') ?>" method="POST">
+      <?= csrf_field() ?>
       <input type="hidden" name="id" id="catId">
       
       <div style="padding: 24px;">
@@ -154,57 +156,5 @@ include dirname(__DIR__) . '/includes/header.php';
     </form>
   </div>
 </div>
-
-<script>
-function openCategoryModal(cat = null) {
-  const modal = document.getElementById('categoryModal');
-  const form = document.getElementById('categoryForm');
-  const title = document.getElementById('modalTitle');
-  const idInput = document.getElementById('catId');
-  const nameInput = document.getElementById('catName');
-  const slugInput = document.getElementById('catSlug');
-  const descInput = document.getElementById('catDesc');
-  const submitBtn = document.getElementById('catSubmitBtn');
-
-  if (cat) {
-    title.textContent = 'Edit Category: ' + cat.name;
-    form.action = '<?= url("admin/blog-categories/update") ?>';
-    idInput.value = cat.id;
-    nameInput.value = cat.name;
-    slugInput.value = cat.slug;
-    descInput.value = cat.description || '';
-    submitBtn.textContent = 'Update Category';
-  } else {
-    title.textContent = 'Add Category';
-    form.action = '<?= url("admin/blog-categories/store") ?>';
-    idInput.value = '';
-    nameInput.value = '';
-    slugInput.value = '';
-    descInput.value = '';
-    submitBtn.textContent = 'Save Category';
-  }
-
-  modal.style.display = 'flex';
-}
-
-function closeCategoryModal() {
-  document.getElementById('categoryModal').style.display = 'none';
-}
-
-// Auto slug on add
-document.getElementById('catName').addEventListener('input', function() {
-  const slugInput = document.getElementById('catSlug');
-  const idInput = document.getElementById('catId');
-  if (!idInput.value && !slugInput.dataset.manual) {
-    slugInput.value = this.value.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
-});
-
-document.getElementById('catSlug').addEventListener('input', function() {
-  this.dataset.manual = 'true';
-});
-</script>
 
 <?php include dirname(__DIR__) . '/includes/footer.php'; ?>

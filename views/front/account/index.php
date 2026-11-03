@@ -1,9 +1,9 @@
 <?php
 /**
- * NEW VAPE - MY ACCOUNT PAGE (my-account.php)
- * Clean, high-converting 2-column Login & Registration page.
+ * INFINITY VAPE SHOP - MY ACCOUNT PAGE (my-account.php)
+ * High-converting 2-column Login & Registration page with real database authentication.
  */
-$page_title   = 'My Account - New Vape';
+$page_title   = 'My Account | Login & Register | Infinity Vape Shop';
 $current_page = 'my-account';
 $page_js      = 'account';
 
@@ -11,12 +11,16 @@ include dirname(__DIR__) . '/includes/header.php';
 ?>
 
 <!-- Breadcrumb Navigation -->
-<nav class="breadcrumb-nav" aria-label="Breadcrumb">
+<nav class="category-breadcrumb-nav" aria-label="Breadcrumb">
   <div class="container">
     <ol class="breadcrumb-list">
-      <li class="breadcrumb-item"><a href="<?= url() ?>">HOME</a></li>
-      <li class="breadcrumb-separator">/</li>
-      <li class="breadcrumb-item active" aria-current="page">MY ACCOUNT</li>
+      <li class="breadcrumb-item"><a href="<?= url() ?>">Home</a></li>
+      <li class="breadcrumb-separator" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">My Account</li>
     </ol>
   </div>
 </nav>
@@ -25,18 +29,31 @@ include dirname(__DIR__) . '/includes/header.php';
 <section class="account-page-main">
   <div class="container">
     
+    <!-- Flash Messages (if any) -->
+    <?php if (!empty($success)): ?>
+      <div class="account-flash-alert success" style="margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; font-size: 14px;">
+        <?= htmlspecialchars($success) ?>
+      </div>
+    <?php endif; ?>
+    <?php if (!empty($error)): ?>
+      <div class="account-flash-alert error" style="margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 14px;">
+        <?= htmlspecialchars($error) ?>
+      </div>
+    <?php endif; ?>
+
     <div class="account-forms-grid">
       
       <!-- Login Column -->
       <div class="account-form-column" id="loginColumn">
         <h1 class="account-box-title">Login</h1>
         <div class="account-form-card">
-          <form class="account-form" id="loginForm" novalidate>
+          <form class="account-form" id="loginForm" method="POST" action="<?= url('account/login') ?>" novalidate>
+            <?= csrf_field() ?>
             
             <div class="account-form-group">
-              <label for="loginUsername" class="account-label">Username or email address <span class="required-star">*</span></label>
-              <input type="text" id="loginUsername" name="username" class="account-input" placeholder="you@example.com" required autocomplete="username">
-              <span class="field-error-msg" id="errLoginUsername">Please enter your username or email.</span>
+              <label for="loginUsername" class="account-label">Email address <span class="required-star">*</span></label>
+              <input type="email" id="loginUsername" name="email" class="account-input" placeholder="you@example.com" required autocomplete="username">
+              <span class="field-error-msg" id="errLoginUsername">Please enter your email address.</span>
             </div>
 
             <div class="account-form-group">
@@ -76,8 +93,22 @@ include dirname(__DIR__) . '/includes/header.php';
       <div class="account-form-column" id="registerColumn">
         <h2 class="account-box-title">Register</h2>
         <div class="account-form-card">
-          <form class="account-form" id="registerForm" novalidate>
+          <form class="account-form" id="registerForm" method="POST" action="<?= url('account/register') ?>" novalidate>
+            <?= csrf_field() ?>
             
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="account-form-group">
+                <label for="regFirstName" class="account-label">First Name <span class="required-star">*</span></label>
+                <input type="text" id="regFirstName" name="first_name" class="account-input" placeholder="First Name" required autocomplete="given-name">
+                <span class="field-error-msg" id="errRegFirstName">First name is required.</span>
+              </div>
+              <div class="account-form-group">
+                <label for="regLastName" class="account-label">Last Name <span class="required-star">*</span></label>
+                <input type="text" id="regLastName" name="last_name" class="account-input" placeholder="Last Name" required autocomplete="family-name">
+                <span class="field-error-msg" id="errRegLastName">Last name is required.</span>
+              </div>
+            </div>
+
             <div class="account-form-group">
               <label for="regEmail" class="account-label">Email address <span class="required-star">*</span></label>
               <input type="email" id="regEmail" name="email" class="account-input" placeholder="you@example.com" required autocomplete="email">
@@ -85,9 +116,14 @@ include dirname(__DIR__) . '/includes/header.php';
             </div>
 
             <div class="account-form-group">
+              <label for="regPhone" class="account-label">Phone Number (Optional)</label>
+              <input type="tel" id="regPhone" name="phone" class="account-input" placeholder="+1 (555) 000-0000" autocomplete="tel">
+            </div>
+
+            <div class="account-form-group">
               <label for="regPassword" class="account-label">Password <span class="required-star">*</span></label>
               <div class="password-input-wrap">
-                <input type="password" id="regPassword" name="password" class="account-input" placeholder="Create strong password" required autocomplete="new-password">
+                <input type="password" id="regPassword" name="password" class="account-input" placeholder="Create strong password (min 6 characters)" required autocomplete="new-password">
                 <button type="button" class="btn-password-toggle" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('regPassword', this)">
                   <svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
@@ -99,11 +135,11 @@ include dirname(__DIR__) . '/includes/header.php';
             </div>
 
             <p class="account-privacy-notice">
-              Your personal data will be used to support your experience throughout this website, to manage access to your account, and for other purposes described in our <a href="privacy.php" class="link-privacy-underline">privacy policy</a>.
+              Your personal data will be used to support your shopping experience, manage access to your account, and for orders as described in our <a href="<?= url('page/privacy-policy') ?>" target="_blank" style="color: #fa5a1e; text-decoration: underline;">privacy policy</a> and <a href="<?= url('page/terms-and-conditions') ?>" target="_blank" style="color: #fa5a1e; text-decoration: underline;">terms &amp; conditions</a>.
             </p>
 
             <div class="account-btn-row">
-              <button type="submit" class="btn-account-submit" id="btnRegisterSubmit">Register</button>
+              <button type="submit" class="btn-account-submit" id="btnRegisterSubmit">Create Account</button>
             </div>
 
             <div class="account-status-msg" id="regStatusMsg" style="display: none;"></div>
@@ -116,147 +152,6 @@ include dirname(__DIR__) . '/includes/header.php';
 
   </div>
 </section>
-
-<script>
-function togglePasswordVisibility(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.innerHTML = `<svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-      <circle cx="12" cy="12" r="3"></circle>
-    </svg>`;
-  } else {
-    input.type = 'password';
-    btn.innerHTML = `<svg class="eye-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-      <line x1="1" y1="1" x2="23" y2="23"></line>
-    </svg>`;
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const linkLostPassword = document.getElementById('linkLostPassword');
-
-  // Handle ?action=register URL query
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('action') === 'register') {
-    const regInput = document.getElementById('regEmail');
-    if (regInput) {
-      setTimeout(() => {
-        regInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        regInput.focus();
-      }, 200);
-    }
-  }
-
-  // Login form submission
-  if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const username = document.getElementById('loginUsername');
-      const pass = document.getElementById('loginPassword');
-      const statusMsg = document.getElementById('loginStatusMsg');
-      const btn = document.getElementById('btnLoginSubmit');
-      let valid = true;
-
-      if (!username.value.trim()) {
-        username.classList.add('has-error');
-        document.getElementById('errLoginUsername').style.display = 'block';
-        valid = false;
-      } else {
-        username.classList.remove('has-error');
-        document.getElementById('errLoginUsername').style.display = 'none';
-      }
-
-      if (!pass.value.trim()) {
-        pass.classList.add('has-error');
-        document.getElementById('errLoginPassword').style.display = 'block';
-        valid = false;
-      } else {
-        pass.classList.remove('has-error');
-        document.getElementById('errLoginPassword').style.display = 'none';
-      }
-
-      if (valid) {
-        btn.disabled = true;
-        btn.textContent = 'Logging in...';
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = 'Log in';
-          statusMsg.className = 'account-status-msg success';
-          statusMsg.textContent = 'Welcome back! Login successful. Redirecting...';
-          statusMsg.style.display = 'block';
-          setTimeout(() => {
-            window.location.href = 'index.php';
-          }, 1200);
-        }, 800);
-      }
-    });
-  }
-
-  // Register form submission
-  if (registerForm) {
-    registerForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const email = document.getElementById('regEmail');
-      const pass = document.getElementById('regPassword');
-      const statusMsg = document.getElementById('regStatusMsg');
-      const btn = document.getElementById('btnRegisterSubmit');
-      let valid = true;
-
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email.value.trim() || !emailPattern.test(email.value.trim())) {
-        email.classList.add('has-error');
-        document.getElementById('errRegEmail').style.display = 'block';
-        valid = false;
-      } else {
-        email.classList.remove('has-error');
-        document.getElementById('errRegEmail').style.display = 'none';
-      }
-
-      if (!pass.value.trim() || pass.value.length < 6) {
-        pass.classList.add('has-error');
-        document.getElementById('errRegPassword').style.display = 'block';
-        valid = false;
-      } else {
-        pass.classList.remove('has-error');
-        document.getElementById('errRegPassword').style.display = 'none';
-      }
-
-      if (valid) {
-        btn.disabled = true;
-        btn.textContent = 'Creating account...';
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = 'Register';
-          statusMsg.className = 'account-status-msg success';
-          statusMsg.textContent = 'Account created successfully! Welcome to New Vape.';
-          statusMsg.style.display = 'block';
-          setTimeout(() => {
-            window.location.href = 'index.php';
-          }, 1200);
-        }, 800);
-      }
-    });
-  }
-
-  // Lost password handler
-  if (linkLostPassword) {
-    linkLostPassword.addEventListener('click', function (e) {
-      e.preventDefault();
-      const email = prompt('Please enter your email address to reset password:');
-      if (email && email.trim()) {
-        alert('Password reset instructions have been sent to ' + email.trim());
-      }
-    });
-  }
-});
-</script>
 
 <?php
 include dirname(__DIR__) . '/includes/footer.php';

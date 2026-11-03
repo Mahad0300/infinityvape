@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo isset($page_title) ? $page_title . ' - New Vape Admin' : 'New Vape Admin Dashboard'; ?></title>
+  <title><?php echo isset($page_title) ? $page_title . ' - Infinity Vape Shop Admin' : 'Infinity Vape Shop Admin Dashboard'; ?></title>
   <base href="<?php echo function_exists('base_url') ? base_url('admin/') . '/' : ''; ?>">
   
   <!-- Google Fonts: Poppins -->
@@ -70,3 +70,13 @@
 
       <!-- Main Dynamic Content Region -->
       <main class="admin-page-content">
+        <?php if ($flashErr = get_flash('error')): ?>
+          <div class="admin-alert admin-alert-danger" style="margin-bottom: 20px; padding: 12px 18px; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 6px; color: #991b1b; font-size: 14px;">
+            <?= e($flashErr) ?>
+          </div>
+        <?php endif; ?>
+        <?php if ($flashSucc = get_flash('success')): ?>
+          <div class="admin-alert admin-alert-success" style="margin-bottom: 20px; padding: 12px 18px; background: #ecfdf5; border-left: 4px solid #10b981; border-radius: 6px; color: #065f46; font-size: 14px;">
+            <?= e($flashSucc) ?>
+          </div>
+        <?php endif; ?>

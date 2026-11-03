@@ -1,5 +1,5 @@
 /**
- * NEW VAPE - SECURE CHECKOUT PAGE JAVASCRIPT (assets/js/checkout.js)
+ * INFINITY VAPE SHOP - SECURE CHECKOUT PAGE JAVASCRIPT (assets/js/checkout.js)
  * High-converting checkout logic matching vaporhatch:
  * - Dynamic cart rendering from localStorage with default fallbacks
  * - Live shipping method calculation ($5.99, $14.99, FREE)
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 1. Load Cart Items from LocalStorage
   function loadCartItems() {
     try {
-      const stored = localStorage.getItem('newvape_cart_items');
+      const stored = localStorage.getItem('infinity_cart_items') || localStorage.getItem('newvape_cart_items');
       const cart = stored ? JSON.parse(stored) : [];
 
       if (Array.isArray(cart) && cart.length > 0) {
@@ -381,18 +381,22 @@ document.addEventListener('DOMContentLoaded', function () {
       // Generate Order confirmation number
       const randomId = Math.floor(100000 + Math.random() * 900000);
       if (modalOrderNumber) {
-        modalOrderNumber.textContent = `#NV-${randomId}`;
+        modalOrderNumber.textContent = `#INF-${randomId}`;
       }
 
       // Clear Cart from localStorage
       try {
+        localStorage.removeItem('infinity_cart_items');
         localStorage.removeItem('newvape_cart_items');
       } catch (e) {}
 
       // Update cart count badges in header
       const cartBadges = document.querySelectorAll('.cart-count-badge, .header-cart-badge, .cart-count, .cart-counter');
       cartBadges.forEach(badge => {
-        badge.textContent = '0';
+        badge.textContent = '';
+        badge.style.display = 'none';
+        badge.setAttribute('data-count', '0');
+        badge.classList.add('is-empty');
       });
 
       // Display Confirmation Modal

@@ -28,6 +28,12 @@ class BrandController extends AdminController
     public function create()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                set_flash('error', 'Security token expired or invalid request. Please try again.');
+                $this->redirect('admin/add-brand');
+                return;
+            }
+
             $name = trim($_POST['name'] ?? '');
             if (empty($name)) {
                 set_flash('error', 'Brand name is required.');
@@ -46,14 +52,16 @@ class BrandController extends AdminController
             $uploadedLogo = null;
             if (!empty($_FILES['brand_logo']['name']) && $_FILES['brand_logo']['error'] === UPLOAD_ERR_OK) {
                 $fileTmp = $_FILES['brand_logo']['tmp_name'];
-                $ext = pathinfo($_FILES['brand_logo']['name'], PATHINFO_EXTENSION);
-                $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext ?: 'png');
-                $targetDir = ROOT_PATH . '/public/assets/images/brands/';
-                if (!is_dir($targetDir)) {
-                    @mkdir($targetDir, 0777, true);
-                }
-                if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
-                    $uploadedLogo = 'assets/images/brands/' . $fileName;
+                $cleanExt = null;
+                if (is_valid_image_upload($fileTmp, $_FILES['brand_logo']['name'], $cleanExt)) {
+                    $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $targetDir = ROOT_PATH . '/public/assets/images/brands/';
+                    if (!is_dir($targetDir)) {
+                        @mkdir($targetDir, 0777, true);
+                    }
+                    if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
+                        $uploadedLogo = 'assets/images/brands/' . $fileName;
+                    }
                 }
             }
             $logoUrl = $uploadedLogo ?: (!empty($_POST['logo']) ? trim($_POST['logo']) : '');
@@ -102,6 +110,12 @@ class BrandController extends AdminController
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verify_csrf_token()) {
+                set_flash('error', 'Security token expired or invalid request. Please try again.');
+                $this->redirect("admin/edit-brand?id={$id}");
+                return;
+            }
+
             $name = trim($_POST['name'] ?? '');
             if (empty($name)) {
                 set_flash('error', 'Brand name cannot be empty.');
@@ -120,14 +134,16 @@ class BrandController extends AdminController
             $uploadedLogo = null;
             if (!empty($_FILES['brand_logo']['name']) && $_FILES['brand_logo']['error'] === UPLOAD_ERR_OK) {
                 $fileTmp = $_FILES['brand_logo']['tmp_name'];
-                $ext = pathinfo($_FILES['brand_logo']['name'], PATHINFO_EXTENSION);
-                $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($ext ?: 'png');
-                $targetDir = ROOT_PATH . '/public/assets/images/brands/';
-                if (!is_dir($targetDir)) {
-                    @mkdir($targetDir, 0777, true);
-                }
-                if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
-                    $uploadedLogo = 'assets/images/brands/' . $fileName;
+                $cleanExt = null;
+                if (is_valid_image_upload($fileTmp, $_FILES['brand_logo']['name'], $cleanExt)) {
+                    $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $targetDir = ROOT_PATH . '/public/assets/images/brands/';
+                    if (!is_dir($targetDir)) {
+                        @mkdir($targetDir, 0777, true);
+                    }
+                    if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
+                        $uploadedLogo = 'assets/images/brands/' . $fileName;
+                    }
                 }
             }
             $logoUrl = $uploadedLogo ?: (isset($_POST['logo']) ? trim($_POST['logo']) : $brand['logo_url']);
@@ -164,16 +180,24 @@ class BrandController extends AdminController
     }
 
     /**
-     * Delete brand
+     * Delete brand (Strictly via POST + CSRF)
      */
     public function delete()
     {
-        $id = isset($_REQUEST['id']) ? (int)$_REQUEST['id'] : 0;
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf_token()) {
+            set_flash('error', 'Security token expired or invalid request method.');
+            $this->redirect('admin/brands');
+            return;
+        }
+
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
         if ($id > 0) {
             $brand = Brand::find($id);
             $name = $brand['name'] ?? 'Brand #' . $id;
             Brand::delete($id);
             set_flash('success', "Brand '{$name}' was deleted successfully.");
+        } else {
+            set_flash('error', 'Invalid brand ID.');
         }
         $this->redirect('admin/brands');
     }

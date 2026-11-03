@@ -4,7 +4,8 @@ $current_admin_page = 'blogs';
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
-<form action="<?= url('admin/blogs/store') ?>" method="POST" id="blogPostForm">
+<form action="<?= url('admin/blogs/store') ?>" method="POST" enctype="multipart/form-data" id="blogPostForm">
+  <?= csrf_field() ?>
   <!-- Title & Action Bar -->
   <div class="page-title-bar">
     <div class="page-heading-group" style="display: flex; align-items: center; gap: 14px;">
@@ -159,26 +160,28 @@ include dirname(__DIR__) . '/includes/header.php';
       <div class="admin-card" style="padding: 20px;">
         <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Featured Image</h4>
         <div class="admin-form-group">
+          <label class="admin-form-label" style="font-size: 12px; margin-bottom: 6px; display: block;">Select Image File</label>
           <input 
-            type="text" 
-            name="featured_image_url" 
+            type="file" 
+            name="featured_image" 
             id="featuredImageInput" 
             class="admin-form-input" 
-            placeholder="assets/images/blog-1.jpg"
-            value="assets/images/blog-1.jpg"
+            accept="image/*"
+            style="padding: 8px 12px; cursor: pointer;"
           >
         </div>
         <!-- Live Preview Thumbnail -->
         <div style="width: 100%; height: 160px; border-radius: 8px; overflow: hidden; background: #f8fafc; border: 1px solid #e2e8f0; position: relative; margin-top: 10px;">
           <img 
             id="featuredImagePreview" 
-            src="<?= url('assets/images/blog-1.jpg') ?>" 
+            src="<?= url('assets/images/no-image.svg') ?>" 
+            data-default-src="<?= url('assets/images/no-image.svg') ?>"
             alt="Preview" 
             style="width: 100%; height: 100%; object-fit: cover;"
             onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
           >
         </div>
-        <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Image path relative to public directory or absolute URL.</small>
+        <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Supports JPG, PNG, WEBP, AVIF. Default placeholder will be used if left empty.</small>
       </div>
 
       <!-- Excerpt Card -->
@@ -194,25 +197,16 @@ include dirname(__DIR__) . '/includes/header.php';
         <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">This summary appears on the homepage blog cards.</small>
       </div>
 
-      <!-- Author & Read Time -->
+      <!-- Tags & Organization -->
       <div class="admin-card" style="padding: 20px;">
-        <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Author &amp; Meta</h4>
-        <div class="admin-form-group">
-          <label class="admin-form-label" style="font-size: 12px;">Author Name</label>
-          <input type="text" name="author_name" class="admin-form-input" value="New Vape Editorial" placeholder="Author name">
-        </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label" style="font-size: 12px;">Estimated Read Time</label>
-          <input type="text" name="read_time" class="admin-form-input" value="5 min read" placeholder="e.g. 6 min read">
-        </div>
+        <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Tags &amp; Organization</h4>
         <div class="admin-form-group" style="margin-bottom: 0;">
           <label class="admin-form-label" style="font-size: 12px;">Tags (comma separated)</label>
           <input type="text" name="tags" class="admin-form-input" placeholder="Disposables, Vaping Guides, News">
+          <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Author will automatically be published as <strong>New Vape</strong>.</small>
         </div>
       </div>
-
     </div>
-
   </div>
 
   <!-- Sticky Bottom Save Bar -->
@@ -221,66 +215,5 @@ include dirname(__DIR__) . '/includes/header.php';
     <button type="submit" class="btn-admin btn-admin-primary" style="padding: 0 24px;">Save Blog Post</button>
   </div>
 </form>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const titleInput = document.getElementById('blogTitleInput');
-  const slugInput = document.getElementById('blogSlugInput');
-  const seoTitleInput = document.getElementById('seoTitleInput');
-  const seoDescInput = document.getElementById('seoDescInput');
-  const excerptInput = document.getElementById('excerptInput');
-  const previewTitle = document.getElementById('previewTitle');
-  const previewDesc = document.getElementById('previewDesc');
-  const previewSlug = document.getElementById('previewSlug');
-  const seoTitleCount = document.getElementById('seoTitleCount');
-  const seoDescCount = document.getElementById('seoDescCount');
-  const imgInput = document.getElementById('featuredImageInput');
-  const imgPreview = document.getElementById('featuredImagePreview');
-
-  // Slug generator
-  titleInput.addEventListener('input', () => {
-    if (!slugInput.dataset.manual) {
-      const generated = titleInput.value.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      slugInput.value = generated;
-      previewSlug.textContent = generated || 'post-handle';
-    }
-    if (!seoTitleInput.value) {
-      previewTitle.textContent = titleInput.value || 'Article Title';
-    }
-  });
-
-  slugInput.addEventListener('input', () => {
-    slugInput.dataset.manual = 'true';
-    previewSlug.textContent = slugInput.value || 'post-handle';
-  });
-
-  seoTitleInput.addEventListener('input', () => {
-    seoTitleCount.textContent = `${seoTitleInput.value.length} / 70`;
-    previewTitle.textContent = seoTitleInput.value || titleInput.value || 'Article Title';
-  });
-
-  seoDescInput.addEventListener('input', () => {
-    seoDescCount.textContent = `${seoDescInput.value.length} / 320`;
-    previewDesc.textContent = seoDescInput.value || excerptInput.value || 'Write a concise meta description...';
-  });
-
-  excerptInput.addEventListener('input', () => {
-    if (!seoDescInput.value) {
-      previewDesc.textContent = excerptInput.value || 'Write a concise meta description...';
-    }
-  });
-
-  // Featured image preview
-  imgInput.addEventListener('input', () => {
-    let val = imgInput.value.trim();
-    if (val && !val.startsWith('http') && !val.startsWith('/')) {
-      val = '<?= url() ?>/' + val;
-    }
-    imgPreview.src = val || '<?= url("assets/images/no-image.svg") ?>';
-  });
-});
-</script>
 
 <?php include dirname(__DIR__) . '/includes/footer.php'; ?>

@@ -24,9 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
+        const tokenInput = noteForm.querySelector('input[name="_token"]');
         const formData = new FormData();
         formData.append('customer_id', customerId);
         formData.append('admin_notes', notes);
+        if (tokenInput && tokenInput.value) {
+          formData.append('_token', tokenInput.value);
+        }
 
         const targetUrl = window.location.pathname.replace(/\/admin\/customer-detail.*$/, '/admin/customer/update-note');
 

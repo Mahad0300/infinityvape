@@ -8,7 +8,7 @@ class CheckoutController extends Controller
     public function index()
     {
         $this->render('front.checkout.index', [
-            'page_title' => 'Secure Checkout | New Vape',
+            'page_title' => 'Secure Checkout | Infinity Vape Shop',
             'page_js' => 'checkout'
         ]);
     }

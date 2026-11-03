@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pageSelect.addEventListener('change', () => {
       const selected = pageSelect.options[pageSelect.selectedIndex];
       if (selected && selected.value) {
-        if (!nameInput.value.trim()) nameInput.value = selected.dataset.title || selected.text;
+        nameInput.value = selected.dataset.title || selected.text.trim();
       }
     });
   }
@@ -441,7 +441,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (item.link_type === 'brand' && brandSelect) {
       brandSelect.value = item.entity_id || '';
     } else if (item.link_type === 'page' && pageSelect) {
-      pageSelect.value = item.entity_id || '';
+      if (item.entity_id) {
+        pageSelect.value = item.entity_id;
+      } else if (item.link_value) {
+        const slug = item.link_value.replace(/^pages?\//, '').replace(/^\//, '');
+        for (let i = 0; i < pageSelect.options.length; i++) {
+          if (pageSelect.options[i].dataset.slug === slug) {
+            pageSelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
     }
 
     if (saveItemBtn) saveItemBtn.textContent = 'Update Item';
@@ -495,19 +505,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const opt = collectionSelect.options[collectionSelect.selectedIndex];
         if (opt && opt.value) {
           entityId = opt.value;
-          linkValue = `/category?c=${opt.dataset.slug || ''}`;
+          linkValue = `/collection/${opt.dataset.slug || ''}`;
         }
       } else if (linkType === 'brand') {
         const opt = brandSelect.options[brandSelect.selectedIndex];
         if (opt && opt.value) {
           entityId = opt.value;
-          linkValue = `/category?b=${opt.dataset.slug || ''}`;
+          linkValue = `/collection/all?brand=${opt.dataset.slug || ''}`;
         }
       } else if (linkType === 'page') {
         const opt = pageSelect.options[pageSelect.selectedIndex];
         if (opt && opt.value) {
           entityId = opt.value;
-          linkValue = `/${opt.dataset.slug || ''}`;
+          const cleanSlug = (opt.dataset.slug || '').replace(/^pages?\//, '').replace(/^\//, '');
+          linkValue = `page/${cleanSlug}`;
         }
       }
 
@@ -569,10 +580,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Delete Item
-  function deleteItem(id) {
-    if (confirm('Are you sure you want to delete this menu item?')) {
+  async function deleteItem(id) {
+    if (!confirm('Are you sure you want to delete this menu item?')) {
+      return;
+    }
+
+    const isTemp = String(id).startsWith('temp_') || isNaN(Number(id));
+    if (isTemp) {
       findItemAndRemove(menuTree, id);
       renderTree();
+      showToast('✓ Item removed');
+      return;
+    }
+
+    try {
+      const res = await fetch(window.deleteItemEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ item_id: parseInt(id, 10) })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        findItemAndRemove(menuTree, id);
+        renderTree();
+        showToast('✓ Menu item deleted successfully!');
+      } else {
+        alert(data.message || 'Failed to delete menu item.');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      // Fallback: remove from local tree anyway
+      findItemAndRemove(menuTree, id);
+      renderTree();
+      showToast('Item removed locally. Click "Save Menu" to apply.');
     }
   }
 

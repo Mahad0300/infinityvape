@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= e($page_title ?? 'Admin Login - New Vape') ?></title>
+  <title><?= e($page_title ?? 'Admin Login - Infinity Vape Shop') ?></title>
   
   <!-- Google Fonts: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -331,7 +331,7 @@
     <div class="login-header-branding">
       <div class="brand-badge">
         <span class="brand-dot"></span>
-        <span class="brand-name">New Vape Admin</span>
+        <span class="brand-name">Infinity Vape Shop Admin</span>
       </div>
       <h1 class="portal-title">Store Management</h1>
       <p class="portal-subtitle">Secure administrative staff authentication</p>
@@ -380,8 +380,8 @@
               name="email" 
               id="adminEmail" 
               class="form-control" 
-              placeholder="admin@newvape.com" 
-              value="<?= e($_POST['email'] ?? 'admin@newvape.com') ?>" 
+              placeholder="admin@yourdomain.com" 
+              value="<?= e($_POST['email'] ?? '') ?>" 
               required 
               autofocus 
               autocomplete="email"
@@ -434,21 +434,7 @@
           </svg>
         </button>
 
-        <!-- Quick Credentials Hint -->
-        <div class="demo-credentials-card">
-          <div class="demo-title">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <span>Default Superadmin Credentials</span>
-          </div>
-          <div class="demo-creds-row">
-            <span>Email: <code class="demo-code">admin@newvape.com</code></span>
-            <span>Password: <code class="demo-code">admin123</code></span>
-          </div>
-        </div>
+
 
       </form>
     </div>

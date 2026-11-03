@@ -1,5 +1,5 @@
 /**
- * NEW VAPE - CART DRAWER JAVASCRIPT
+ * INFINITY VAPE SHOP - CART DRAWER JAVASCRIPT
  * Full-featured slide-out mini-cart drawer with localStorage persistence,
  * dynamic free shipping progress meter, live quantity counters, and smooth animations.
  */
@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'newvape_cart_items';
+  const STORAGE_KEY = 'infinity_cart_items';
 
   // DOM Elements Cache
   let backdrop, drawer, closeBtn, countBadge, bodyEl, emptyState, itemsList, subtotalVal;
@@ -17,7 +17,7 @@
    */
   function getCart() {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('newvape_cart_items');
       return data ? JSON.parse(data) : [];
     } catch (e) {
       console.error('Error reading cart from localStorage', e);
@@ -131,11 +131,20 @@
     // 2. Header Badges Update
     const headerBadges = document.querySelectorAll('.header-cart-badge');
     headerBadges.forEach((badge) => {
-      badge.textContent = totalCount;
-      badge.style.display = totalCount > 0 ? 'inline-flex' : 'inline-flex';
-      badge.classList.remove('cart-badge-bounce');
-      void badge.offsetWidth; // trigger reflow
-      badge.classList.add('cart-badge-bounce');
+      badge.setAttribute('data-count', totalCount);
+      if (totalCount > 0) {
+        badge.textContent = totalCount;
+        badge.style.display = 'inline-flex';
+        badge.classList.remove('is-empty');
+        badge.classList.remove('cart-badge-bounce');
+        void badge.offsetWidth; // trigger reflow
+        badge.classList.add('cart-badge-bounce');
+      } else {
+        badge.textContent = '';
+        badge.style.display = 'none';
+        badge.classList.add('is-empty');
+        badge.classList.remove('cart-badge-bounce');
+      }
     });
 
     // 3. Drawer Header Count Badge
@@ -326,10 +335,15 @@
         const priceEl = card.querySelector('.current-price, .card-current-price');
         const imgEl = card.querySelector('.product-img, .card-product-img');
 
-        const title = titleEl ? titleEl.textContent.trim() : 'Vape Device';
-        const price = parsePrice(priceEl ? priceEl.textContent : '19.99');
-        const image = imgEl ? imgEl.getAttribute('src') : 'assets/images/vape-image.webp';
-        const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const btnTitle = cardAddBtn.getAttribute('data-title');
+        const btnPrice = cardAddBtn.getAttribute('data-price');
+        const btnImage = cardAddBtn.getAttribute('data-image');
+        const btnId = cardAddBtn.getAttribute('data-id');
+
+        const title = btnTitle || (titleEl ? titleEl.textContent.trim() : 'Vape Device');
+        const price = btnPrice ? parseFloat(btnPrice) : parsePrice(priceEl ? priceEl.textContent : '19.99');
+        const image = btnImage || (imgEl ? imgEl.getAttribute('src') : 'assets/images/vape-image.webp');
+        const id = btnId ? String(btnId) : title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         // Button interactive pulse
         const originalText = cardAddBtn.textContent;
@@ -363,7 +377,7 @@
   }
 
   // Expose global controller for optional programmatic access
-  window.NewVapeCart = {
+  window.InfinityCart = window.NewVapeCart = {
     open: openDrawer,
     close: closeDrawer,
     get: getCart,
