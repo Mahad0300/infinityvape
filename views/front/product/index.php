@@ -127,10 +127,15 @@ include dirname(__DIR__) . '/includes/header.php';
   width: 100% !important;
   max-width: 100% !important;
   margin: 16px auto 0 !important;
-  padding: 0 38px !important; /* Space for always-visible arrow buttons */
+  padding: 0 !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
+  transition: padding 0.15s ease !important;
+}
+
+.product-thumbnails-wrap.has-scroll {
+  padding: 0 38px !important; /* Space for arrow buttons ONLY when scroll is needed */
 }
 
 .product-thumbnails-track {
@@ -189,8 +194,9 @@ include dirname(__DIR__) . '/includes/header.php';
   background-color: #ffffff !important;
 }
 
-/* Thumbnail Navigation Arrows (ALWAYS VISIBLE - BINA HOVER KE BHI) */
+/* Thumbnail Navigation Arrows (Visible ONLY when thumbnails exceed container width) */
 .thumb-scroll-btn {
+  display: none !important;
   position: absolute !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
@@ -201,14 +207,16 @@ include dirname(__DIR__) . '/includes/header.php';
   border: 1px solid #cbd5e1 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
   color: #0f172a !important;
-  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
   z-index: 5 !important;
-  opacity: 1 !important; /* Always visible */
   pointer-events: auto !important;
   transition: all 0.2s ease !important;
+}
+
+.product-thumbnails-wrap.has-scroll .thumb-scroll-btn {
+  display: flex !important;
 }
 
 .thumb-scroll-btn:hover {
@@ -455,9 +463,10 @@ include dirname(__DIR__) . '/includes/header.php';
             <?php endif; ?>
           </div>
 
-          <!-- Thumbnails Row (Scrollable Gallery with Always-Visible Buttons) -->
+          <!-- Thumbnails Row (Scrollable Gallery with Responsive Dynamic Buttons) -->
           <?php if (count($galleryList) > 1): ?>
-          <div class="product-thumbnails-wrap" id="productThumbnailsWrap">
+          <?php $hasInitialScroll = count($galleryList) > 5; ?>
+          <div class="product-thumbnails-wrap <?= $hasInitialScroll ? 'has-scroll' : '' ?>" id="productThumbnailsWrap">
             <button type="button" class="thumb-scroll-btn thumb-scroll-prev" id="thumbScrollPrev" aria-label="Previous thumbnails">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>

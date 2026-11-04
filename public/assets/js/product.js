@@ -73,8 +73,34 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Horizontal Scroll with Left / Right Buttons (Always Visible)
+    // Horizontal Scroll with Left / Right Buttons (Visible ONLY when thumbnails overflow)
     if (thumbTrack && thumbPrevBtn && thumbNextBtn) {
+      const thumbWrap = thumbTrack.closest('.product-thumbnails-wrap');
+
+      function updateThumbScrollButtons() {
+        const hasOverflow = (thumbTrack.scrollWidth - thumbTrack.clientWidth) > 4;
+        if (thumbWrap) {
+          thumbWrap.classList.toggle('has-scroll', hasOverflow);
+        }
+
+        if (!hasOverflow) {
+          thumbPrevBtn.style.display = 'none';
+          thumbNextBtn.style.display = 'none';
+        } else {
+          thumbPrevBtn.style.display = 'flex';
+          thumbNextBtn.style.display = 'flex';
+
+          const atStart = thumbTrack.scrollLeft <= 4;
+          const atEnd = (thumbTrack.scrollLeft + thumbTrack.clientWidth) >= (thumbTrack.scrollWidth - 6);
+
+          thumbPrevBtn.disabled = atStart;
+          thumbPrevBtn.classList.toggle('is-disabled', atStart);
+
+          thumbNextBtn.disabled = atEnd;
+          thumbNextBtn.classList.toggle('is-disabled', atEnd);
+        }
+      }
+
       thumbPrevBtn.addEventListener('click', (e) => {
         e.preventDefault();
         thumbTrack.scrollBy({ left: -220, behavior: 'smooth' });
@@ -85,11 +111,20 @@ document.addEventListener('DOMContentLoaded', () => {
         thumbTrack.scrollBy({ left: 220, behavior: 'smooth' });
       });
 
+      thumbTrack.addEventListener('scroll', updateThumbScrollButtons, { passive: true });
+      window.addEventListener('resize', updateThumbScrollButtons, { passive: true });
+
+      // Run on page load and after layout stabilizes
+      updateThumbScrollButtons();
+      setTimeout(updateThumbScrollButtons, 100);
+      setTimeout(updateThumbScrollButtons, 350);
+
       // Mouse Wheel horizontal scroll over thumbnail track
       thumbTrack.addEventListener('wheel', (e) => {
         if (e.deltaY !== 0) {
           e.preventDefault();
           thumbTrack.scrollLeft += e.deltaY;
+          updateThumbScrollButtons();
         }
       }, { passive: false });
     }
