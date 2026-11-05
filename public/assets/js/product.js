@@ -78,10 +78,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const thumbWrap = thumbTrack.closest('.product-thumbnails-wrap');
 
       function updateThumbScrollButtons() {
-        const hasOverflow = (thumbTrack.scrollWidth - thumbTrack.clientWidth) > 4;
-        if (thumbWrap) {
-          thumbWrap.classList.toggle('has-scroll', hasOverflow);
-        }
+        if (!thumbTrack || !thumbWrap) return;
+
+        // Accurate overflow detection: check actual button widths vs available container
+        let totalThumbsWidth = 0;
+        thumbButtons.forEach((btn, i) => {
+          totalThumbsWidth += (btn.offsetWidth || 76);
+          if (i > 0) totalThumbsWidth += 10;
+        });
+
+        // Add small padding buffer
+        totalThumbsWidth += 8;
+
+        // Available width inside gallery column without scroll buttons
+        const availableWidth = thumbWrap.clientWidth || thumbTrack.clientWidth || 0;
+        
+        // Overflow ONLY if thumbnails genuinely exceed available container width
+        const hasOverflow = (thumbButtons.length > 1) && (availableWidth > 0 ? (totalThumbsWidth > (availableWidth - 10)) : (thumbButtons.length > 5));
+
+        thumbWrap.classList.toggle('has-scroll', hasOverflow);
 
         if (!hasOverflow) {
           thumbPrevBtn.style.display = 'none';
@@ -118,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateThumbScrollButtons();
       setTimeout(updateThumbScrollButtons, 100);
       setTimeout(updateThumbScrollButtons, 350);
+      window.addEventListener('load', updateThumbScrollButtons, { passive: true });
 
       // Mouse Wheel horizontal scroll over thumbnail track
       thumbTrack.addEventListener('wheel', (e) => {
@@ -382,8 +398,14 @@ document.addEventListener('DOMContentLoaded', () => {
       flavorSelect.value = variant.variant_name;
     }
 
-    const vPrice = variant.price !== undefined ? parseFloat(variant.price) : null;
-    const vCompare = variant.compare_price !== undefined && variant.compare_price !== null && variant.compare_price !== '' ? parseFloat(variant.compare_price) : null;
+    const priceSection = document.querySelector('.product-price-section');
+    const baseCompareAttr = priceSection && priceSection.dataset.baseCompare ? parseFloat(priceSection.dataset.baseCompare) : null;
+    const basePriceAttr = priceSection && priceSection.dataset.basePrice ? parseFloat(priceSection.dataset.basePrice) : null;
+
+    const vPrice = (variant.price !== undefined && variant.price !== null && variant.price !== '') ? parseFloat(variant.price) : basePriceAttr;
+    let vCompare = (variant.compare_price !== undefined && variant.compare_price !== null && variant.compare_price !== '') 
+      ? parseFloat(variant.compare_price) 
+      : (baseCompareAttr && !isNaN(baseCompareAttr) && baseCompareAttr > 0 ? baseCompareAttr : null);
     const vSku = variant.sku;
     const vStock = variant.stock_quantity !== undefined ? parseInt(variant.stock_quantity, 10) : 0;
     const vImage = variant.image_url ? variant.image_url : null;
@@ -397,14 +419,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Update Compare Price & Discount Pill
     let priceOldEl = document.querySelector('.product-price-old');
     let discountPill = document.querySelector('.product-discount-pill');
-    const priceSection = document.querySelector('.product-price-section');
 
     if (vCompare && !isNaN(vCompare) && vPrice && vCompare > vPrice) {
       const pct = Math.round(((vCompare - vPrice) / vCompare) * 100);
       if (!priceOldEl && priceSection) {
         priceOldEl = document.createElement('span');
         priceOldEl.className = 'product-price-old';
-        priceSection.insertBefore(priceOldEl, priceCurrentEl);
+        if (priceCurrentEl && priceCurrentEl.nextSibling) {
+          priceSection.insertBefore(priceOldEl, priceCurrentEl.nextSibling);
+        } else {
+          priceSection.appendChild(priceOldEl);
+        }
       }
       if (priceOldEl) {
         priceOldEl.textContent = `$${vCompare.toFixed(2)}`;
@@ -469,22 +494,69 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 6. Switch Main Image if Variant has a custom photo (instant, no flash/blink)
-    if (vImage && mainImage) {
-      const resolvedImg = (vImage.startsWith('http') || vImage.startsWith('assets/')) ? vImage : ('assets/' + vImage.replace(/^\/+/, ''));
-      const currentSrc = mainImage.getAttribute('src') || '';
-      if (currentSrc !== resolvedImg && !currentSrc.endsWith(resolvedImg)) {
-        mainImage.src = resolvedImg;
+    // 6. Switch Main Image & Alt Text if Variant has a custom photo (instant, no flash/blink)
+    if (mainImage) {
+      if (!mainImage.dataset.defaultSrc) {
+        mainImage.dataset.defaultSrc = mainImage.getAttribute('src') || '';
+      }
+      if (!mainImage.dataset.baseAlt) {
+        mainImage.dataset.baseAlt = mainImage.getAttribute('alt') || '';
       }
 
-      if (thumbButtons && thumbButtons.length > 0) {
+      const rawImg = variant.full_image_url || variant.image_url || vImage || '';
+      let targetImg = '';
+
+      if (rawImg) {
+        if (rawImg.startsWith('http://') || rawImg.startsWith('https://') || rawImg.startsWith('data:')) {
+          targetImg = rawImg;
+        } else {
+          const baseUrl = (window.APP_BASE_URL || '').replace(/\/+$/, '');
+          const cleanPath = rawImg.replace(/^\/+/, '');
+          if (baseUrl) {
+            targetImg = `${baseUrl}/${cleanPath}`;
+          } else {
+            const baseEl = document.querySelector('base');
+            if (baseEl && baseEl.href) {
+              const bHref = baseEl.href.replace(/\/+$/, '');
+              targetImg = `${bHref}/${cleanPath}`;
+            } else {
+              const pathParts = window.location.pathname.split('/');
+              const rootFolder = pathParts[1] ? '/' + pathParts[1] : '';
+              targetImg = window.location.origin + rootFolder + '/' + cleanPath;
+            }
+          }
+        }
+      } else {
+        targetImg = mainImage.dataset.defaultSrc || '';
+      }
+
+      if (targetImg) {
+        const currentSrc = mainImage.getAttribute('src') || '';
+        if (currentSrc !== targetImg && !currentSrc.endsWith(targetImg)) {
+          mainImage.src = targetImg;
+        }
+      }
+
+      if (mainImage.dataset.baseAlt) {
+        mainImage.alt = (variant.variant_name && targetImg !== mainImage.dataset.defaultSrc)
+          ? `${mainImage.dataset.baseAlt} - ${variant.variant_name}`
+          : mainImage.dataset.baseAlt;
+      }
+
+      if (thumbButtons && thumbButtons.length > 0 && targetImg) {
+        let matchedThumb = false;
         thumbButtons.forEach((b) => {
           const bSrc = b.getAttribute('data-img') || '';
-          if (bSrc === resolvedImg || bSrc.endsWith(resolvedImg) || resolvedImg.endsWith(bSrc)) {
+          if (bSrc === targetImg || bSrc.endsWith(targetImg) || targetImg.endsWith(bSrc)) {
             thumbButtons.forEach(btn => btn.classList.remove('active'));
             b.classList.add('active');
+            matchedThumb = true;
           }
         });
+        if (!matchedThumb && targetImg === mainImage.dataset.defaultSrc) {
+          thumbButtons.forEach(btn => btn.classList.remove('active'));
+          if (thumbButtons[0]) thumbButtons[0].classList.add('active');
+        }
       }
     }
   }

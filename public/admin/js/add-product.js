@@ -20,7 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const seoPreviewUrl = document.getElementById('seoPreviewUrl');
 
   const mainTitleInput = document.querySelector('input[name="title"]') || document.getElementById('productTitle');
+  const shortDescInput = document.querySelector('textarea[name="short_desc"]') || document.getElementById('productShortDesc');
   const mainDescInput = document.querySelector('textarea[name="description"]') || document.getElementById('productDescription');
+
+  function stripHtml(html) {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    const text = tmp.textContent || tmp.innerText || '';
+    return text.replace(/\s+/g, ' ').trim();
+  }
 
   if (toggleSeoBtn && seoFieldsContainer) {
     if (seoFieldsContainer.classList.contains('active')) {
@@ -41,16 +50,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateSeoPreview() {
     const mainTitle = mainTitleInput ? mainTitleInput.value.trim() : '';
-    const mainDesc = mainDescInput ? mainDescInput.value.trim() : '';
     const customTitle = seoTitleInput ? seoTitleInput.value.trim() : '';
     const customDesc = seoDescInput ? seoDescInput.value.trim() : '';
+    const shortDesc = shortDescInput ? shortDescInput.value.trim() : '';
+    const mainDescClean = mainDescInput ? stripHtml(mainDescInput.value) : '';
 
     if (seoPreviewTitle) {
       seoPreviewTitle.textContent = customTitle || mainTitle || 'Title Preview';
     }
 
     if (seoPreviewDesc) {
-      seoPreviewDesc.textContent = customDesc || mainDesc || 'Description will appear in search engine results...';
+      let finalDesc = customDesc || shortDesc || mainDescClean;
+      if (finalDesc) {
+        if (finalDesc.length > 160) {
+          finalDesc = finalDesc.substring(0, 157).trim() + '...';
+        }
+        seoPreviewDesc.textContent = finalDesc;
+      } else {
+        seoPreviewDesc.textContent = 'Description will appear in search engine results...';
+      }
     }
 
     if (seoTitleCount && seoTitleInput) {
@@ -73,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (mainTitleInput) mainTitleInput.addEventListener('input', updateSeoPreview);
+  if (shortDescInput) shortDescInput.addEventListener('input', updateSeoPreview);
   if (mainDescInput) mainDescInput.addEventListener('input', updateSeoPreview);
   if (seoTitleInput) seoTitleInput.addEventListener('input', updateSeoPreview);
   if (seoDescInput) seoDescInput.addEventListener('input', updateSeoPreview);
@@ -83,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
       updateSeoPreview();
     });
   }
+
+  // Initial calculation of SEO snippet & character counters
+  updateSeoPreview();
 
   // ==========================================================================
   // 2. Rich Text Editor (RTE) Toolbar Execution & Form Sync
@@ -199,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (textarea && content) {
           const textOnly = content.innerText.trim();
           textarea.value = (textOnly === '' && !content.querySelector('img')) ? '' : content.innerHTML.trim();
+          updateSeoPreview();
         }
       }
 
@@ -403,6 +426,44 @@ document.addEventListener('DOMContentLoaded', () => {
     return span;
   }
 
+  // Validate duplicate Option Names
+  function validateOptionNames() {
+    if (!optionsListContainer) return true;
+    const allNames = optionsListContainer.querySelectorAll('.custom-option-name-input');
+    const seen = new Map();
+    let hasDup = false;
+
+    allNames.forEach(inp => {
+      const val = inp.value.trim().toLowerCase();
+      const wrap = inp.closest('.variant-option-header-wrap');
+      let errEl = wrap ? wrap.querySelector('.option-name-error-msg') : null;
+
+      if (val && seen.has(val)) {
+        hasDup = true;
+        inp.classList.add('has-error');
+        if (!errEl && wrap) {
+          errEl = document.createElement('div');
+          errEl.className = 'option-name-error-msg';
+          errEl.innerHTML = `
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span>Option name has already been used.</span>
+          `;
+          wrap.appendChild(errEl);
+        }
+        if (errEl) errEl.style.display = 'flex';
+      } else {
+        if (val) seen.set(val, inp);
+        inp.classList.remove('has-error');
+        if (errEl) errEl.style.display = 'none';
+      }
+    });
+    return !hasDup;
+  }
+
   // Add Option Row Dynamically
   function addOptionRow(suggestedName = '') {
     if (!optionsListContainer) return;
@@ -424,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </svg>
       </div>
       <div class="variant-option-content" style="flex:1;">
-        <div class="variant-option-header-wrap" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="variant-option-header-wrap" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
           <input type="text" name="option_names[]" class="custom-option-name-input" value="${suggestedName}" placeholder="Option name (e.g. Size, Color, Flavor)">
           <button type="button" class="btn-remove-custom-option" title="Delete Option">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -434,6 +495,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="pills-holder" style="display:inline-flex; flex-wrap:wrap; gap:8px;"></div>
           <div class="inline-tag-input-wrap">
             <input type="text" class="inline-tag-input inline-option-value-input" placeholder="+ Add value (press Enter)">
+          </div>
+          <div class="option-val-error-msg" style="display:none;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="error-text">You've already used this option value.</span>
           </div>
         </div>
       </div>
@@ -445,38 +514,88 @@ document.addEventListener('DOMContentLoaded', () => {
     const valInput = row.querySelector('.inline-option-value-input');
     const pillsHolder = row.querySelector('.pills-holder');
     const removeBtn = row.querySelector('.btn-remove-custom-option');
+    const inputWrap = row.querySelector('.inline-tag-input-wrap');
+    const errorMsgEl = row.querySelector('.option-val-error-msg');
+    const errorTextSpan = errorMsgEl ? errorMsgEl.querySelector('.error-text') : null;
+
+    function showValError(msg, matchingPill = null) {
+      if (errorTextSpan) errorTextSpan.textContent = msg;
+      if (errorMsgEl) errorMsgEl.style.display = 'flex';
+      if (inputWrap) {
+        inputWrap.classList.remove('has-error');
+        void inputWrap.offsetWidth;
+        inputWrap.classList.add('has-error');
+      }
+      if (matchingPill) {
+        matchingPill.classList.remove('pill-duplicate-match');
+        void matchingPill.offsetWidth;
+        matchingPill.classList.add('pill-duplicate-match');
+        setTimeout(() => {
+          matchingPill.classList.remove('pill-duplicate-match');
+        }, 1500);
+      }
+    }
+
+    function clearValError() {
+      if (errorMsgEl) errorMsgEl.style.display = 'none';
+      if (inputWrap) inputWrap.classList.remove('has-error');
+    }
+
+    function findMatchingPill(val) {
+      const cleanVal = (val || '').trim().toLowerCase();
+      if (!cleanVal) return null;
+      return Array.from(pillsHolder.querySelectorAll('.variant-pill-tag')).find(
+        p => (p.getAttribute('data-val') || p.textContent.replace('×', '')).trim().toLowerCase() === cleanVal
+      );
+    }
 
     // Remove option
     removeBtn.addEventListener('click', () => {
       row.remove();
+      validateOptionNames();
       rebuildVariantsMatrix();
     });
 
-    // Update table on option name change
+    // Update table & validate option name on change
     nameInput.addEventListener('input', () => {
+      validateOptionNames();
       rebuildVariantsMatrix();
     });
 
     // Helper to commit typed value into pills
     function commitOptionValues() {
       const raw = valInput.value;
-      if (!raw || !raw.trim()) return;
+      if (!raw || !raw.trim()) {
+        clearValError();
+        return;
+      }
 
       const parts = raw.split(',').map(s => s.trim().replace(/^,|,$/g, '')).filter(Boolean);
       let added = false;
+      let duplicateVal = null;
+      let duplicatePill = null;
 
       parts.forEach(trimmed => {
-        const existing = Array.from(pillsHolder.querySelectorAll('.variant-pill-tag')).some(
-          p => (p.getAttribute('data-val') || '').toLowerCase() === trimmed.toLowerCase()
-        );
+        const existing = findMatchingPill(trimmed);
         if (!existing) {
           const pill = createPill(trimmed);
           pillsHolder.appendChild(pill);
           added = true;
+        } else {
+          duplicateVal = trimmed;
+          duplicatePill = existing;
         }
       });
 
-      valInput.value = '';
+      if (duplicateVal) {
+        valInput.value = duplicateVal;
+        valInput.focus();
+        showValError(`You've already used the option value "${duplicateVal}".`, duplicatePill);
+      } else {
+        valInput.value = '';
+        clearValError();
+      }
+
       if (added) {
         rebuildVariantsMatrix();
       }
@@ -488,21 +607,52 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         commitOptionValues();
       } else if (e.key === 'Tab' && valInput.value.trim()) {
+        const existing = findMatchingPill(valInput.value.trim());
+        if (existing) {
+          e.preventDefault();
+          commitOptionValues();
+        } else {
+          commitOptionValues();
+        }
+      }
+    });
+
+    // Auto-commit on blur
+    valInput.addEventListener('blur', () => {
+      const raw = valInput.value.trim();
+      if (!raw) {
+        clearValError();
+        return;
+      }
+      const existing = findMatchingPill(raw);
+      if (existing) {
+        showValError(`You've already used the option value "${raw}".`, existing);
+      } else {
         commitOptionValues();
       }
     });
 
-    // Auto-commit on blur (when clicking outside, clicking another option, clicking into table)
-    valInput.addEventListener('blur', () => {
-      commitOptionValues();
-    });
-
-    // Auto-commit if comma typed or pasted
+    // Real-time check while typing (Shopify style)
     valInput.addEventListener('input', () => {
       if (valInput.value.includes(',')) {
         commitOptionValues();
+        return;
+      }
+      const typed = valInput.value.trim();
+      if (!typed) {
+        clearValError();
+        return;
+      }
+      const existing = findMatchingPill(typed);
+      if (existing) {
+        const origVal = existing.getAttribute('data-val') || typed;
+        showValError(`You've already used the option value "${origVal}".`, existing);
+      } else {
+        clearValError();
       }
     });
+
+    validateOptionNames();
 
     // Focus input
     if (!suggestedName) {
@@ -539,13 +689,192 @@ document.addEventListener('DOMContentLoaded', () => {
     if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
       return path;
     }
-    const baseUrl = (window.APP_BASE_URL || '').replace(/\/+$/, '');
+    let baseUrl = (window.APP_BASE_URL || '').replace(/\/+$/, '');
+    if (!baseUrl) {
+      const baseEl = document.querySelector('base');
+      if (baseEl && baseEl.href) {
+        baseUrl = baseEl.href.replace(/\/admin\/?$/i, '').replace(/\/+$/, '');
+      } else {
+        const pathParts = window.location.pathname.split('/');
+        baseUrl = window.location.origin + (pathParts[1] ? '/' + pathParts[1] : '');
+      }
+    }
     const cleanPath = path.replace(/^\/+/, '');
     return baseUrl ? `${baseUrl}/${cleanPath}` : `/${cleanPath}`;
   }
 
   // Persistent cache for variant row values
   let cachedVariantsMap = {};
+  let groupImageMap = {};
+  let customImageMap = {};
+
+  // Helper to sync an uploaded variant image to the "Media Assets & Product Images" box
+  function syncVariantImageToMediaGallery(imageUrl, assetUrl) {
+    if (!imageUrl || !mediaPreviewGrid) return;
+    const cleanImg = imageUrl.replace(/^\/+/, '');
+    const existingInput = mediaPreviewGrid.querySelector(`input[name="existing_images[]"][value="${cleanImg}"], input[name="existing_images[]"][value="${imageUrl}"]`);
+    if (existingInput) return;
+
+    mediaPreviewGrid.classList.remove('d-none');
+    mediaPreviewGrid.style.display = 'grid';
+
+    const isFirstEver = mediaPreviewGrid.querySelectorAll('.media-preview-item').length === 0;
+    const item = document.createElement('div');
+    item.className = 'media-preview-item' + (isFirstEver ? ' is-featured' : '');
+    item.setAttribute('data-existing', '1');
+    item.innerHTML = `
+      <img src="${assetUrl || getAssetUrl(imageUrl)}" alt="Product variant asset">
+      <input type="hidden" name="existing_images[]" value="${cleanImg}">
+      <button type="button" class="media-preview-remove btn-remove-existing-img" title="Remove">&times;</button>
+      ${isFirstEver ? '<span class="media-preview-badge">★ Featured</span>' : '<button type="button" class="media-set-featured-btn" title="Set as featured image">Set as Featured</button>'}
+    `;
+
+    bindMediaItemEvents(item);
+    mediaPreviewGrid.appendChild(item);
+
+    if (isFirstEver) {
+      const pImg = document.getElementById('productImageUrl');
+      if (pImg) pImg.value = cleanImg;
+    }
+  }
+
+  function handleMediaItemRemoval(item) {
+    if (!item) return;
+    const input = item.querySelector('input[name="existing_images[]"]');
+    const removedVal = input ? input.value.trim() : '';
+    const cleanRemoved = removedVal ? removedVal.replace(/^\/+/, '') : '';
+    const wasFeatured = item.classList.contains('is-featured');
+
+    item.remove();
+
+    const remaining = mediaPreviewGrid.querySelectorAll('.media-preview-item');
+    if (wasFeatured && remaining.length > 0) {
+      setFeaturedMediaItem(remaining[0]);
+    } else if (remaining.length === 0) {
+      const pImg = document.getElementById('productImageUrl');
+      if (pImg) pImg.value = '';
+      mediaPreviewGrid.style.display = 'none';
+    }
+
+    if (cleanRemoved) {
+      Object.keys(groupImageMap).forEach(gVal => {
+        const gImg = (groupImageMap[gVal] || '').replace(/^\/+/, '');
+        if (gImg === cleanRemoved) {
+          groupImageMap[gVal] = '';
+          const pTr = variantsTableBody.querySelector(`.variant-parent-row[data-group-name="${gVal}"]`);
+          if (pTr) {
+            const pImg = pTr.querySelector('.group-thumb-img');
+            const pPh = pTr.querySelector('.variant-thumb-placeholder');
+            const pThumb = pTr.querySelector('.group-thumb');
+            const pClr = pTr.querySelector('.group-thumb-clear-btn');
+            if (pImg) { pImg.src = ''; pImg.style.display = 'none'; }
+            if (pPh) pPh.style.display = 'flex';
+            if (pThumb) pThumb.style.border = '1px dashed #cbd5e1';
+            if (pClr) pClr.style.display = 'none';
+          }
+        }
+      });
+
+      Object.keys(customImageMap).forEach(combo => {
+        const cImg = (customImageMap[combo] || '').replace(/^\/+/, '');
+        if (cImg === cleanRemoved) {
+          delete customImageMap[combo];
+        }
+      });
+
+      Object.keys(cachedVariantsMap).forEach(combo => {
+        if (cachedVariantsMap[combo] && cachedVariantsMap[combo].image) {
+          const cImg = cachedVariantsMap[combo].image.replace(/^\/+/, '');
+          if (cImg === cleanRemoved) {
+            cachedVariantsMap[combo].image = '';
+            cachedVariantsMap[combo].imgPreview = '';
+          }
+        }
+      });
+
+      const allRows = variantsTableBody.querySelectorAll('.variant-matrix-row');
+      allRows.forEach(tr => {
+        const hiddenInput = tr.querySelector('.variant-img-url');
+        const rowVal = hiddenInput ? (hiddenInput.value || '').replace(/^\/+/, '') : '';
+        if (rowVal === cleanRemoved) {
+          if (hiddenInput) hiddenInput.value = '';
+          const cImg = tr.querySelector('.variant-thumb-img');
+          const cPh = tr.querySelector('.variant-thumb-placeholder');
+          const cThumb = tr.querySelector('.shopify-variant-thumb');
+          const cClr = tr.querySelector('.variant-thumb-clear-btn');
+          if (cImg) { cImg.src = ''; cImg.style.display = 'none'; }
+          if (cPh) cPh.style.display = 'flex';
+          if (cThumb) cThumb.style.border = '1px dashed #cbd5e1';
+          if (cClr) cClr.style.display = 'none';
+          tr.removeAttribute('data-has-custom-img');
+        }
+      });
+    }
+  }
+
+  function setFeaturedMediaItem(item) {
+    if (!item || !mediaPreviewGrid) return;
+    mediaPreviewGrid.querySelectorAll('.media-preview-item').forEach(it => {
+      it.classList.remove('is-featured');
+      const b = it.querySelector('.media-preview-badge');
+      if (b) b.remove();
+      if (!it.querySelector('.media-set-featured-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'media-set-featured-btn';
+        btn.title = 'Set as featured image';
+        btn.textContent = 'Set as Featured';
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          setFeaturedMediaItem(it);
+        });
+        it.appendChild(btn);
+      }
+    });
+
+    item.classList.add('is-featured');
+    const existingBtn = item.querySelector('.media-set-featured-btn');
+    if (existingBtn) existingBtn.remove();
+
+    const badge = document.createElement('span');
+    badge.className = 'media-preview-badge';
+    badge.innerHTML = '★ Featured';
+    item.appendChild(badge);
+
+    mediaPreviewGrid.prepend(item);
+
+    const input = item.querySelector('input[name="existing_images[]"], input[name="new_images[]"]');
+    const val = input ? input.value.trim() : '';
+    const productImageUrlInput = document.getElementById('productImageUrl');
+    if (productImageUrlInput && val) {
+      productImageUrlInput.value = val;
+    }
+    const featuredIndexInput = document.getElementById('featuredImageIndex');
+    if (featuredIndexInput) {
+      featuredIndexInput.value = '0';
+    }
+  }
+
+  function bindMediaItemEvents(item) {
+    if (!item) return;
+    const removeBtn = item.querySelector('.media-preview-remove');
+    if (removeBtn && !removeBtn.dataset.bound) {
+      removeBtn.dataset.bound = '1';
+      removeBtn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        handleMediaItemRemoval(item);
+      });
+    }
+
+    const setFeaturedBtn = item.querySelector('.media-set-featured-btn');
+    if (setFeaturedBtn && !setFeaturedBtn.dataset.bound) {
+      setFeaturedBtn.dataset.bound = '1';
+      setFeaturedBtn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        setFeaturedMediaItem(item);
+      });
+    }
+  }
 
   // Rebuild the Variant Matrix Table from Options (Authentic Shopify Style)
   function rebuildVariantsMatrix() {
@@ -577,15 +906,38 @@ document.addEventListener('DOMContentLoaded', () => {
       if (valInput && valInput.value.trim() && pillsHolder) {
         const raw = valInput.value;
         const parts = raw.split(',').map(s => s.trim().replace(/^,|,$/g, '')).filter(Boolean);
+        let dupVal = null;
+        let dupPill = null;
         parts.forEach(trimmed => {
-          const existing = Array.from(pillsHolder.querySelectorAll('.variant-pill-tag')).some(
-            p => (p.getAttribute('data-val') || '').toLowerCase() === trimmed.toLowerCase()
+          const existing = Array.from(pillsHolder.querySelectorAll('.variant-pill-tag')).find(
+            p => (p.getAttribute('data-val') || p.textContent.replace('×', '')).trim().toLowerCase() === trimmed.toLowerCase()
           );
           if (!existing) {
             pillsHolder.appendChild(createPill(trimmed));
+          } else {
+            dupVal = trimmed;
+            dupPill = existing;
           }
         });
-        valInput.value = '';
+        if (dupVal) {
+          valInput.value = dupVal;
+          const inputWrap = row.querySelector('.inline-tag-input-wrap');
+          const errorMsgEl = row.querySelector('.option-val-error-msg');
+          const errorTextSpan = errorMsgEl ? errorMsgEl.querySelector('.error-text') : null;
+          if (errorTextSpan) errorTextSpan.textContent = `You've already used the option value "${dupVal}".`;
+          if (errorMsgEl) errorMsgEl.style.display = 'flex';
+          if (inputWrap) inputWrap.classList.add('has-error');
+          if (dupPill) {
+            dupPill.classList.add('pill-duplicate-match');
+            setTimeout(() => dupPill.classList.remove('pill-duplicate-match'), 1500);
+          }
+        } else {
+          valInput.value = '';
+          const inputWrap = row.querySelector('.inline-tag-input-wrap');
+          const errorMsgEl = row.querySelector('.option-val-error-msg');
+          if (errorMsgEl) errorMsgEl.style.display = 'none';
+          if (inputWrap) inputWrap.classList.remove('has-error');
+        }
       }
 
       const nameInput = row.querySelector('.custom-option-name-input');
@@ -605,7 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (optionsData.length === 0) {
       variantsTableBody.innerHTML = `
         <tr id="emptyVariantsRow">
-          <td colspan="6" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
+          <td colspan="5" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
             <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="margin: 0 auto 8px; display: block; stroke: #94a3b8;">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -728,7 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </svg>
               </button>
               <div class="group-toggle-area" style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
-                <div class="shopify-variant-thumb group-thumb" style="width: 36px; height: 36px; border-radius: 6px; border: ${firstGroupImg ? '1px solid #e2e8f0' : '1px dashed #cbd5e1'}; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                <div class="shopify-variant-thumb group-thumb" data-group-id="${groupId}" title="Click to upload photo for all ${groupVal} variants" style="width: 36px; height: 36px; border-radius: 6px; border: ${firstGroupImg ? '1px solid #e2e8f0' : '1px dashed #cbd5e1'}; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer; position: relative;">
                   <img class="variant-thumb-img group-thumb-img" src="${getAssetUrl(firstGroupImg)}" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" style="${firstGroupImg ? 'width: 100%; height: 100%; object-fit: cover; display: block;' : 'display: none;'}">
                   <div class="variant-thumb-placeholder" style="${firstGroupImg ? 'display: none;' : 'display: flex; align-items: center; justify-content: center;'}">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.8">
@@ -737,6 +1089,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       <polyline points="21 15 16 10 5 21"></polyline>
                     </svg>
                   </div>
+                  <button type="button" class="group-thumb-clear-btn" title="Remove image from group" style="${firstGroupImg ? 'display: flex;' : 'display: none;'}">&times;</button>
+                  <input type="file" class="group-img-file" accept="image/*" style="display: none;">
                 </div>
                 <div>
                   <span class="variant-group-title" style="font-size: 13.5px; font-weight: 700; color: #0f172a;">${groupVal}</span>
@@ -755,42 +1109,190 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="padding: 12px 14px;">
             <span style="font-size: 12px; color: #94a3b8;">—</span>
           </td>
-          <td style="text-align: right; padding: 12px 14px;">
-            <button type="button" class="btn-remove-group" data-group-id="${groupId}" title="Delete all variants in this group" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 6px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-          </td>
         `;
 
         // Expand/collapse logic function
         function toggleGroup() {
           const btn = parentTr.querySelector('.variant-toggle-btn');
           const chevron = parentTr.querySelector('.chevron-icon');
-          const isCurrentlyOpen = btn.classList.contains('open');
+          const isCurrentlyOpen = btn ? btn.classList.contains('open') : true;
           const subrows = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
           
           if (isCurrentlyOpen) {
-            btn.classList.remove('open');
+            if (btn) btn.classList.remove('open');
             if (chevron) chevron.style.transform = 'rotate(-90deg)';
-            subrows.forEach(r => r.classList.add('is-collapsed'));
+            subrows.forEach(r => {
+              r.classList.add('is-collapsed');
+              r.style.display = 'none';
+            });
           } else {
-            btn.classList.add('open');
+            if (btn) btn.classList.add('open');
             if (chevron) chevron.style.transform = 'rotate(0deg)';
-            subrows.forEach(r => r.classList.remove('is-collapsed'));
+            subrows.forEach(r => {
+              r.classList.remove('is-collapsed');
+              r.style.display = '';
+            });
           }
         }
 
-        // Toggle on chevron click
-        parentTr.querySelector('.variant-toggle-btn').addEventListener('click', function(e) {
-          e.stopPropagation();
+        // Toggle on parent row click (ignore clicks on checkboxes, inputs, or group-thumb)
+        parentTr.addEventListener('click', function(e) {
+          if (e.target.closest('.variant-group-cb') || e.target.closest('input') || e.target.closest('.group-thumb')) {
+            return;
+          }
           toggleGroup();
         });
 
-        // Also toggle on title/thumbnail click
+        // Toggle on chevron click
+        const toggleBtn = parentTr.querySelector('.variant-toggle-btn');
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleGroup();
+          });
+        }
+
+        // Also toggle on title click (excluding thumbnail)
         const toggleArea = parentTr.querySelector('.group-toggle-area');
         if (toggleArea) {
-          toggleArea.addEventListener('click', function() {
+          toggleArea.addEventListener('click', function(e) {
+            if (e.target.closest('.group-thumb')) return;
+            e.stopPropagation();
             toggleGroup();
+          });
+        }
+
+        // Parent Flavor Row Image Upload (Applies to all variants under this flavor)
+        const groupThumb = parentTr.querySelector('.group-thumb');
+        const groupFileInput = parentTr.querySelector('.group-img-file');
+        const groupThumbImg = parentTr.querySelector('.group-thumb-img');
+        const groupPlaceholder = parentTr.querySelector('.variant-thumb-placeholder');
+        const groupClrBtn = parentTr.querySelector('.group-thumb-clear-btn');
+
+        if (groupClrBtn) {
+          groupClrBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            groupImageMap[groupVal] = '';
+            if (groupThumbImg) {
+              groupThumbImg.src = '';
+              groupThumbImg.style.display = 'none';
+            }
+            if (groupPlaceholder) groupPlaceholder.style.display = 'flex';
+            groupThumb.style.border = '1px dashed #cbd5e1';
+            groupClrBtn.style.display = 'none';
+            if (groupFileInput) groupFileInput.value = '';
+
+            const childRows = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
+            childRows.forEach(cRow => {
+              const combo = cRow.getAttribute('data-combo-name');
+              if (combo && !customImageMap[combo]) {
+                if (cachedVariantsMap[combo]) {
+                  cachedVariantsMap[combo].image = '';
+                  cachedVariantsMap[combo].imgPreview = '';
+                }
+                const cImg = cRow.querySelector('.variant-thumb-img');
+                const cPh = cRow.querySelector('.variant-thumb-placeholder');
+                const cThumb = cRow.querySelector('.child-thumb');
+                const cHidden = cRow.querySelector('.variant-img-url');
+                const cClr = cRow.querySelector('.variant-thumb-clear-btn');
+                if (cImg) { cImg.src = ''; cImg.style.display = 'none'; }
+                if (cPh) cPh.style.display = 'flex';
+                if (cThumb) cThumb.style.border = '1px dashed #cbd5e1';
+                if (cHidden) cHidden.value = '';
+                if (cClr) cClr.style.display = 'none';
+              }
+            });
+          });
+        }
+
+        if (groupThumb && groupFileInput) {
+          groupThumb.addEventListener('click', (e) => {
+            if (e.target.closest('.group-thumb-clear-btn')) return;
+            e.stopPropagation();
+            groupFileInput.click();
+          });
+
+          groupFileInput.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            const file = this.files[0];
+
+            // 1. Immediate local preview on parent and all child rows
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const dataUrl = e.target.result;
+
+              if (groupThumbImg) {
+                groupThumbImg.src = dataUrl;
+                groupThumbImg.style.display = 'block';
+              }
+              if (groupPlaceholder) groupPlaceholder.style.display = 'none';
+              groupThumb.style.border = '1px solid #e2e8f0';
+              if (groupClrBtn) groupClrBtn.style.display = 'flex';
+
+              const childRows = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
+              childRows.forEach(cRow => {
+                const combo = cRow.getAttribute('data-combo-name');
+                if (combo && !customImageMap[combo]) {
+                  const cImg = cRow.querySelector('.variant-thumb-img');
+                  const cPh = cRow.querySelector('.variant-thumb-placeholder');
+                  const cThumb = cRow.querySelector('.child-thumb');
+                  const cClr = cRow.querySelector('.variant-thumb-clear-btn');
+                  if (cImg) {
+                    cImg.src = dataUrl;
+                    cImg.style.display = 'block';
+                  }
+                  if (cPh) cPh.style.display = 'none';
+                  if (cThumb) cThumb.style.border = '1px solid #e2e8f0';
+                  if (cClr) cClr.style.display = 'flex';
+                }
+              });
+            };
+            reader.readAsDataURL(file);
+
+            // 2. Upload to server asynchronously and set image_url on all children
+            const uploadUrl = new URL('upload-variant-image', document.baseURI).href;
+            const fd = new FormData();
+            fd.append('image', file);
+
+            fetch(uploadUrl, { method: 'POST', body: fd })
+              .then(r => r.json())
+              .then(data => {
+                if (data && data.success && data.image_url) {
+                  const resolvedAssetUrl = data.asset_url || getAssetUrl(data.image_url);
+                  groupImageMap[groupVal] = data.image_url;
+
+                  if (groupThumbImg) {
+                    groupThumbImg.src = resolvedAssetUrl;
+                    groupThumbImg.style.display = 'block';
+                  }
+                  if (groupPlaceholder) groupPlaceholder.style.display = 'none';
+
+                  // Sync into Media Assets card immediately
+                  syncVariantImageToMediaGallery(data.image_url, resolvedAssetUrl);
+
+                  const childRows = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
+                  childRows.forEach(cRow => {
+                    const combo = cRow.getAttribute('data-combo-name');
+                    if (combo && !customImageMap[combo]) {
+                      cachedVariantsMap[combo] = cachedVariantsMap[combo] || {};
+                      cachedVariantsMap[combo].image = data.image_url;
+                      cachedVariantsMap[combo].imgPreview = resolvedAssetUrl;
+
+                      const cImg = cRow.querySelector('.variant-thumb-img');
+                      const cPh = cRow.querySelector('.variant-thumb-placeholder');
+                      if (cImg) {
+                        cImg.src = resolvedAssetUrl;
+                        cImg.style.display = 'block';
+                      }
+                      if (cPh) cPh.style.display = 'none';
+
+                      const hiddenInput = cRow.querySelector('.variant-img-url');
+                      if (hiddenInput) hiddenInput.value = data.image_url;
+                    }
+                  });
+                }
+              })
+              .catch(err => console.warn('Group image upload error:', err));
           });
         }
 
@@ -804,16 +1306,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (row) row.style.background = isChecked ? '#f1f5f9' : '';
           });
           updateVariantsSelectionBar();
-        });
-
-        // Parent delete removes group and all its child combinations
-        parentTr.querySelector('.btn-remove-group').addEventListener('click', function(e) {
-          e.stopPropagation();
-          parentTr.remove();
-          const subrows = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
-          subrows.forEach(r => r.remove());
-          updateVariantsSelectionBar();
-          checkIfTableEmpty();
         });
 
         variantsTableBody.appendChild(parentTr);
@@ -863,7 +1355,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       <polyline points="21 15 16 10 5 21"></polyline>
                     </svg>
                   </div>
-                  <input type="file" name="variant_images[${globalVariantIndex}]" class="variant-img-file" accept="image/*" style="display: none;">
+                  <button type="button" class="variant-thumb-clear-btn" title="Remove image" style="${rowImgPreview ? 'display: flex;' : 'display: none;'}">&times;</button>
+                <input type="file" name="variant_images[${globalVariantIndex}]" class="variant-img-file" accept="image/*" style="display: none;">
                   <input type="hidden" name="variants[${globalVariantIndex}][image_url]" class="variant-img-url" value="${rowImage}">
                 </div>
                 <div style="min-width: 0;">
@@ -884,14 +1377,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <td style="padding: 10px 14px;">
               <input type="text" name="variants[${globalVariantIndex}][sku]" class="admin-form-input variant-sku-input" style="height: 34px; font-size: 12.5px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; width: 100%; max-width: 170px;" value="${rowSku}">
             </td>
-            <td style="text-align: right; padding: 10px 14px;">
-              <button type="button" class="btn-remove-variant-row" title="Delete variant combination" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 6px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </td>
           `;
 
-          attachRowEvents(tr, groupId, parentTr);
+          attachRowEvents(tr, groupId, parentTr, groupVal);
           variantsTableBody.appendChild(tr);
           globalVariantIndex++;
         });
@@ -942,6 +1430,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <polyline points="21 15 16 10 5 21"></polyline>
                   </svg>
                 </div>
+                <button type="button" class="variant-thumb-clear-btn" title="Remove image" style="${rowImgPreview ? 'display: flex;' : 'display: none;'}">&times;</button>
                 <input type="file" name="variant_images[${globalVariantIndex}]" class="variant-img-file" accept="image/*" style="display: none;">
                 <input type="hidden" name="variants[${globalVariantIndex}][image_url]" class="variant-img-url" value="${rowImage}">
               </div>
@@ -963,11 +1452,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="padding: 10px 14px;">
             <input type="text" name="variants[${globalVariantIndex}][sku]" class="admin-form-input variant-sku-input" style="height: 34px; font-size: 12.5px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; width: 100%; max-width: 170px;" value="${rowSku}">
           </td>
-          <td style="text-align: right; padding: 10px 14px;">
-            <button type="button" class="btn-remove-variant-row" title="Delete variant combination" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 6px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-          </td>
         `;
 
         attachRowEvents(tr, null, null);
@@ -980,14 +1464,51 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Attach interactive events to a variant row
-  function attachRowEvents(tr, groupId, parentTr) {
+  function attachRowEvents(tr, groupId, parentTr, groupVal) {
     const thumb = tr.querySelector('.shopify-variant-thumb');
     const fileInput = tr.querySelector('.variant-img-file');
     const thumbImg = tr.querySelector('.variant-thumb-img');
     const placeholder = tr.querySelector('.variant-thumb-placeholder');
+    const clrBtn = tr.querySelector('.variant-thumb-clear-btn');
+
+    if (clrBtn) {
+      clrBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const combo = tr.getAttribute('data-combo-name');
+        if (combo) {
+          delete customImageMap[combo];
+          if (cachedVariantsMap[combo]) {
+            cachedVariantsMap[combo].image = '';
+            cachedVariantsMap[combo].imgPreview = '';
+          }
+        }
+        tr.removeAttribute('data-has-custom-img');
+
+        // Check if parent group image fallback exists
+        const groupFallback = (groupVal && groupImageMap[groupVal]) ? groupImageMap[groupVal] : '';
+        if (groupFallback) {
+          thumbImg.src = getAssetUrl(groupFallback);
+          thumbImg.style.display = 'block';
+          if (placeholder) placeholder.style.display = 'none';
+          thumb.style.border = '1px solid #e2e8f0';
+          const hiddenInput = tr.querySelector('.variant-img-url');
+          if (hiddenInput) hiddenInput.value = groupFallback;
+        } else {
+          thumbImg.src = '';
+          thumbImg.style.display = 'none';
+          if (placeholder) placeholder.style.display = 'flex';
+          thumb.style.border = '1px dashed #cbd5e1';
+          const hiddenInput = tr.querySelector('.variant-img-url');
+          if (hiddenInput) hiddenInput.value = '';
+          clrBtn.style.display = 'none';
+        }
+        if (fileInput) fileInput.value = '';
+      });
+    }
 
     if (thumb && fileInput) {
       thumb.addEventListener('click', (e) => {
+        if (e.target.closest('.variant-thumb-clear-btn')) return;
         if (e.target !== fileInput) {
           fileInput.click();
         }
@@ -995,27 +1516,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
       fileInput.addEventListener('change', function () {
         if (this.files && this.files[0]) {
+          const file = this.files[0];
+          const combo = tr.getAttribute('data-combo-name');
+
           const reader = new FileReader();
           reader.onload = (e) => {
-            thumbImg.src = e.target.result;
+            const dataUrl = e.target.result;
+            tr.setAttribute('data-has-custom-img', 'true');
+
+            thumbImg.src = dataUrl;
             thumbImg.style.display = 'block';
             if (placeholder) placeholder.style.display = 'none';
             thumb.style.border = '1px solid #e2e8f0';
+            if (clrBtn) clrBtn.style.display = 'flex';
 
             // Also mirror to parent thumbnail if parent is empty
-            if (parentTr) {
+            if (parentTr && groupVal) {
               const pImg = parentTr.querySelector('.group-thumb-img');
               const pPh = parentTr.querySelector('.variant-thumb-placeholder');
               const pThumb = parentTr.querySelector('.group-thumb');
-              if (pImg) {
-                pImg.src = e.target.result;
+              const pClr = parentTr.querySelector('.group-thumb-clear-btn');
+              const parentHasGroupImg = !!groupImageMap[groupVal] || 
+                                       (pImg && pImg.src && pImg.style.display !== 'none' && !pImg.src.includes('no-image') && !pImg.src.endsWith('/'));
+              if (!parentHasGroupImg && pImg) {
+                pImg.src = dataUrl;
                 pImg.style.display = 'block';
                 if (pPh) pPh.style.display = 'none';
                 if (pThumb) pThumb.style.border = '1px solid #e2e8f0';
+                if (pClr) pClr.style.display = 'flex';
               }
             }
           };
-          reader.readAsDataURL(this.files[0]);
+          reader.readAsDataURL(file);
+
+          // Upload to server asynchronously and set variant image_url
+          const uploadUrl = new URL('upload-variant-image', document.baseURI).href;
+          const fd = new FormData();
+          fd.append('image', file);
+
+          fetch(uploadUrl, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+              if (data && data.success && data.image_url) {
+                const resolvedAssetUrl = data.asset_url || getAssetUrl(data.image_url);
+                if (combo) {
+                  customImageMap[combo] = data.image_url;
+                  cachedVariantsMap[combo] = cachedVariantsMap[combo] || {};
+                  cachedVariantsMap[combo].image = data.image_url;
+                  cachedVariantsMap[combo].imgPreview = resolvedAssetUrl;
+                }
+                const hiddenInput = tr.querySelector('.variant-img-url');
+                if (hiddenInput) hiddenInput.value = data.image_url;
+
+                if (thumbImg) {
+                  thumbImg.src = resolvedAssetUrl;
+                  thumbImg.style.display = 'block';
+                }
+                if (placeholder) placeholder.style.display = 'none';
+
+                // Sync into Media Assets card immediately
+                syncVariantImageToMediaGallery(data.image_url, resolvedAssetUrl);
+              }
+            })
+            .catch(err => console.warn('Child variant upload error:', err));
         }
       });
     }
@@ -1049,22 +1612,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-
-    // Row Removal
-    tr.querySelector('.btn-remove-variant-row').addEventListener('click', () => {
-      tr.remove();
-      if (groupId && parentTr) {
-        const remainingInGroup = variantsTableBody.querySelectorAll(`.variant-subrow[data-group-id="${groupId}"]`);
-        if (remainingInGroup.length === 0) {
-          parentTr.remove();
-        } else {
-          syncGroupTotalStock(groupId, parentTr);
-          syncGroupPriceSummary(groupId, parentTr);
-        }
-      }
-      updateVariantsSelectionBar();
-      checkIfTableEmpty();
-    });
   }
 
   // Live Sync helpers for parent groups
@@ -1102,7 +1649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (variantsTableBody.querySelectorAll('.variant-matrix-row').length === 0) {
       variantsTableBody.innerHTML = `
         <tr id="emptyVariantsRow">
-          <td colspan="6" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
+          <td colspan="5" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
             All variant combinations removed.
           </td>
         </tr>
@@ -1416,10 +1963,43 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   const productForm = document.getElementById('productMainForm');
   if (productForm) {
-    productForm.addEventListener('submit', () => {
+    productForm.addEventListener('submit', (e) => {
       // Auto-commit any pending variant option input before submission
-      if (typeof rebuildVariantsMatrix === 'function' && hasVariantsToggle && hasVariantsToggle.checked) {
+      let hasUncommittedOption = false;
+      if (optionsListContainer) {
+        optionsListContainer.querySelectorAll('.inline-option-value-input').forEach(inp => {
+          if (inp.value && inp.value.trim()) hasUncommittedOption = true;
+        });
+      }
+      if (hasUncommittedOption && typeof rebuildVariantsMatrix === 'function' && hasVariantsToggle && hasVariantsToggle.checked) {
         rebuildVariantsMatrix();
+      }
+
+      // Check for active variant duplicate errors
+      if (hasVariantsToggle && hasVariantsToggle.checked && optionsListContainer) {
+        const errorInput = optionsListContainer.querySelector('.inline-tag-input-wrap.has-error input, .custom-option-name-input.has-error');
+        if (errorInput) {
+          e.preventDefault();
+          e.stopPropagation();
+          errorInput.focus();
+          return false;
+        }
+      }
+
+      // Ensure all variant hidden inputs are populated with their resolved image before submit
+      if (variantsTableBody) {
+        variantsTableBody.querySelectorAll('.variant-matrix-row').forEach(r => {
+          const combo = r.getAttribute('data-combo-name');
+          const hiddenInp = r.querySelector('.variant-img-url');
+          if (combo && hiddenInp) {
+            const parts = combo.split(' / ').map(s => s.trim());
+            const gVal = parts[0] || combo;
+            let resolvedImg = customImageMap[combo] || hiddenInp.value || cachedVariantsMap[combo]?.image || groupImageMap[gVal] || '';
+            if (resolvedImg && !resolvedImg.startsWith('data:')) {
+              hiddenInp.value = resolvedImg;
+            }
+          }
+        });
       }
 
       document.querySelectorAll('.rich-text-editor').forEach(rte => {

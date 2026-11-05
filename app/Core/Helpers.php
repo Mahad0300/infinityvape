@@ -47,15 +47,16 @@ if (!function_exists('config')) {
 
 if (!function_exists('base_url')) {
     function base_url($path = '') {
-        $baseUrl = config('app.url', '');
-        if (empty($baseUrl)) {
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        if (!empty($host)) {
             $script = $_SERVER['SCRIPT_NAME'] ?? '';
             $dir = trim(dirname($script), '/\\');
             $dir = str_replace(['public'], '', $dir);
             $dir = trim($dir, '/\\');
             $baseUrl = $protocol . $host . ($dir ? '/' . $dir : '');
+        } else {
+            $baseUrl = config('app.url', 'http://localhost/vapefinalwebsite');
         }
         $baseUrl = rtrim($baseUrl, '/');
         $path = ltrim($path, '/');

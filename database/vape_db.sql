@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 04, 2026 at 12:25 AM
+-- Generation Time: Nov 05, 2026 at 12:58 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -801,9 +801,7 @@ INSERT INTO `products` (`id`, `brand_id`, `name`, `title`, `sku`, `slug`, `custo
 (46, 5, 'Cookies Twist 510 Thread Battery - 900mAh Adjustable Voltage', 'Cookies Twist 510 Thread Battery - 900mAh Adjustable Voltage', 'VH-HEMP-8896-9BA1', 'cookies-twist-510-battery', 'cookies-twist-510-battery', 'Cookies Twist 510 Thread Battery - 900mAh Adjustable Voltage legal hemp and THC product compliant with 2018 Farm Bill.', 'Cookies Twist 510 Thread Battery - 900mAh Adjustable Voltage laboratory tested for potency and purity.', NULL, 14.99, 17.99, 45, 'In Stock', 'assets/images/product-5.webp', 0.00, 0, 0, 'assets/images/limited-time.webp', NULL, 'published', 0, 0, 0, '510 Battery, 900mAh, Adjustable Voltage, Cookies Twist, Hemp Hardware', '[\"Flavor\"]', NULL, NULL, '2026-10-17 00:07:48', '2026-11-03 20:57:58'),
 (47, 1, 'Lost THC V4 - CB9A + THC-P Disposable 3G Live Resin Vape', 'Lost THC V4 - CB9A + THC-P Disposable 3G Live Resin Vape', 'VH-HEMP-2059-EA10', 'lost-thc-v4-disposable', 'lost-thc-v4-disposable', 'Lost THC V4 - CB9A + THC-P Disposable 3G Live Resin Vape legal hemp and THC product compliant with 2018 Farm Bill.', 'Lost THC V4 - CB9A + THC-P Disposable 3G Live Resin Vape laboratory tested for potency and purity.', NULL, 22.99, 31.99, 30, 'In Stock', 'assets/images/product-4.webp', 0.00, 0, 0, 'assets/images/limited-time.webp', NULL, 'published', 0, 0, 0, 'THC-P, CB9A, Live Resin, 3G Disposable, Lost THC', '[\"Flavor\"]', NULL, NULL, '2026-10-17 00:07:48', '2026-11-03 20:57:58'),
 (48, 9, 'EBDesign BC5000 Disposable Vape', 'EBDesign BC5000 Disposable Vape - 5,000 Puffs, 13mL', '', 'ebdesign-bc5000-disposable-vape', '', 'The iconic BC5000 delivers 5,000 puffs of pure flavor with a 650mAh rechargeable battery and dual mesh coils.', 'Full description for EBDesign BC5000.', NULL, 13.99, 17.99, 150, 'In Stock', 'assets/images/product-2.webp', 0.00, 0, 0, 'assets/images/limited-time.webp', NULL, 'published', 0, 1, 1, NULL, '[\"Flavor\"]', NULL, NULL, '2026-10-19 21:34:51', '2026-11-03 20:57:58'),
-(51, 1, 'Lost Mary OS5000 Disposable Vape', 'Lost Mary OS5000 Disposable Vape - 5,000 Puffs, 13mL', 'LM-OS5000', 'lost-mary-os5000-disposable-vape', 'lost-mary-os5000-disposable-vape', 'Lost Mary OS5000 features planet surface textured grip, 5,000 puffs, and premium mesh coil technology.', 'Full description for OS5000.', NULL, 14.49, 18.99, 120, 'In Stock', 'assets/images/vape-image.webp', 3.00, 1, 0, 'assets/images/limited-time.webp', NULL, 'published', 0, 1, 1, NULL, '[\"Flavor\"]', NULL, NULL, '2026-10-19 21:35:52', '2026-10-30 18:11:09'),
-(56, 1, 'Test Product Title', 'Test Product Title', 'TEST-1199-2E16', 'test-product-title', 'test-product-title', 'Test Product Short Description', '<span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span><span>Comprehensive rich text product description, features, flavor profiles, and guidelines displayed on the storefront. If left empty, the Description tab will not appear on the website.&nbsp;</span>', '<p style=\"margin: 0px 0px 10px;\"><a href=\"http://localhost/vapefinalwebsite/product/ebdesign-bc5000-disposable-vape\">EBDesign BC5000 Disposable Vape - 5,000 Puffs, 13mL</a><br><a href=\"Adjust MyFlavor 40K Disposable Vape - 6-Level Flavor Control\">Adjust MyFlavor 40K Disposable Vape - 6-Level Flavor Control</a></p>', 15.89, NULL, 300, 'In Stock', 'assets/images/products/prod_1793746052_851d96fa_1.png', 0.00, 0, 1, 'assets/images/banners/deal_1793746481_446e1f.webp', '', 'published', 0, 0, 0, '', '[\"Flavor\",\"Strengh\"]', '', '', '2026-11-03 22:47:32', '2026-11-03 23:24:17'),
-(57, 1, 'Testing 1', 'Testing 1', 'TEST-3539-47E3', 'testing-1', 'testing-1', 'Testing 1 Short Description', '', '', 20.75, NULL, 20, 'In Stock', 'assets/images/products/prod_1793747537_17219329_1.webp', 0.00, 0, 0, NULL, '', 'published', 0, 0, 0, '', '[\"Flavor\"]', '', '', '2026-11-03 23:12:17', '2026-11-03 23:22:49');
+(59, 1, 'Test Product Title', 'Test Product Title', 'TEST-2454-29CB', 'test-product-title', 'test-product-title', 'Test Short Description', '<h2 style=\"margin: 0px 0px 8px !important;\"><span>Custom Oversize Boxes</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Big products need packaging that can keep up. When a standard box leaves your product cramped, exposed, or difficult to handle, </span><span style=\"font-weight: 700;\">custom oversize boxes</span><span> give you the space and flexibility to package it properly. From furniture and equipment to large retail products and storage items, you can choose dimensions that work around what you actually need to pack.</span></p><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Choose the size, material, printing, and finishing options to create packaging that</span></p><h2 style=\"margin: 20px 0px 8px !important;\"><span>Custom Boxes for Large and Heavy Items</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Large or bulky products need packaging that provides enough space without leaving too much room around the item. With </span><span style=\"font-weight: 700;\">custom boxes for packaging</span><span>, you can choose the length, width, and height that suit your product.</span></p><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Cardboard, kraft, corrugated, Bux Board, and cardstock options are available. You can select the material according to the product, how it will be handled, and where it needs to be shipped.</span></p><h2 style=\"margin: 20px 0px 8px !important;\"><span>Custom Print Boxes for Your Brand</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Packaging can also be part of your brand presentation. </span><span style=\"font-weight: 700;\">Custom print boxes</span><span> let you add your logo, colors, artwork, product information, or other design elements to the box.</span></p><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>You can choose between no printing and full-color CMYK printing, with additional PMS color options. Finishing choices such as gloss or matte lamination, UV, embossing, and foiling can also give the box a different look and feel.</span></p><h2 style=\"margin: 20px 0px 8px !important;\"><span>Print Custom Box Designs Around Your Product</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Every large product has different packaging requirements. Instead of trying to fit it into a standard box, you can </span><span style=\"font-weight: 700;\">print custom box</span><span> designs around its dimensions and shape.</span></p><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Die cutting, glueing, scoring, and perforation are also available when required. These options can help create packaging that is better suited to the product and easier to handle.</span></p><h2 style=\"margin: 20px 0px 8px !important;\"><span>Review Your Design Before Production</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>You do not have to approve your packaging until you see how it will look. Flat views and 3D mock-ups are available for design review, while physical samples can be requested before production.</span></p><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>This gives you an opportunity to check the artwork, dimensions, and overall appearance before the final order moves ahead.</span></p><h2 style=\"margin: 20px 0px 8px !important;\"><span>Custom Cardboard Packaging Boxes</span></h2><p style=\"padding: 10px 0px 0px; margin: 0px 0px 6px !important;\"><span>Our </span><span style=\"font-weight: 700;\">custom cardboard packaging boxes</span><span> can be made for products that require extra space and support. Recycled, recyclable, and biodegradable options are also available for businesses looking for more environmentally conscious packaging.</span></p>', '<p style=\"margin: 0px 0px 10px;\"><a href=\"http://localhost/vapefinalwebsite/product/ebdesign-bc5000-disposable-vape\">EBDesign BC5000 Disposable Vape - 5,000 Puffs, 13mL</a></p>', 15.99, 20.99, 70, 'In Stock', 'assets/images/products/prod_1793833073_06c84811_1.webp', 0.00, 0, 1, 'assets/images/banners/deal_1793833517_321314.webp', 'http://localhost/vapefinalwebsite/product/juul2-starter-kit', 'published', 0, 0, 0, '', '[\"Flavor\",\"Strength\"]', NULL, NULL, '2026-11-04 22:56:09', '2026-11-04 23:55:01');
 
 -- --------------------------------------------------------
 
@@ -897,11 +895,10 @@ INSERT INTO `product_collections` (`product_id`, `collection_id`) VALUES
 (46, 74),
 (47, 74),
 (48, 16),
-(51, 16),
 (52, 16),
 (53, 39),
-(56, 16),
-(57, 16);
+(58, 16),
+(59, 16);
 
 -- --------------------------------------------------------
 
@@ -930,9 +927,10 @@ INSERT INTO `product_faqs` (`id`, `product_id`, `question`, `answer`, `sort_orde
 (6, 1, 'Does the RYL have adjustable airflow?', 'Yes, an intuitive airflow slider switch on the bottom allows vapers to fine-tune the draw between a tight mouth-to-lung (MTL) draw and an open restricted direct-to-lung (RDL) hit.', 6),
 (7, 1, 'How do you charge the RYL 35K?', 'Connect any Type-C USB cable to the bottom charging port. It takes around 60 to 90 minutes to fully charge. Avoid using fast charging laptop bricks to prolong internal battery longevity.', 7),
 (28, 52, 'How many puffs does the test actually deliver?', 'The test is engineered to deliver up to its rated puffs depending on draw length and frequency. Standard moderate vaping typically lasts 2 to 4 weeks per device.', 1),
-(51, 56, 'FAQs 1', 'FAQs 1', 1),
-(52, 56, 'FAQs 2', 'FAQs 2', 2),
-(53, 56, 'FAQs 3', 'FAQs 3', 3);
+(212, 59, 'FAQ #1', 'FAQ #1', 1),
+(213, 59, 'FAQ #2', 'FAQ #2', 2),
+(214, 59, 'FAQ #3', 'FAQ #3', 3),
+(215, 59, 'FAQ #4', 'FAQ #4', 4);
 
 -- --------------------------------------------------------
 
@@ -967,30 +965,26 @@ INSERT INTO `product_images` (`id`, `product_id`, `variant_id`, `image_url`, `al
 (75, 52, NULL, 'assets/images/products/prod_1793387678_d1720c74_2.png', NULL, 2),
 (76, 52, NULL, 'assets/images/products/prod_1793387678_f4e1054e_3.png', NULL, 3),
 (77, 52, NULL, 'assets/images/products/prod_1793387678_be0cb574_4.png', NULL, 4),
-(979, 57, NULL, 'assets/images/products/prod_1793747537_17219329_1.webp', NULL, 1),
-(980, 57, NULL, 'assets/images/products/prod_1793747537_97c57311_2.png', NULL, 2),
-(981, 57, NULL, 'assets/images/products/prod_1793747537_807e4c80_3.png', NULL, 3),
-(982, 57, NULL, 'assets/images/products/prod_1793747537_cd8f7d34_4.png', NULL, 4),
-(1023, 56, NULL, 'assets/images/products/prod_1793746052_851d96fa_1.png', NULL, 1),
-(1024, 56, NULL, 'assets/images/products/prod_1793746052_9b7cb4ef_2.png', NULL, 2),
-(1025, 56, NULL, 'assets/images/products/prod_1793746052_10d4da4c_3.png', NULL, 3),
-(1026, 56, NULL, 'assets/images/products/prod_1793746052_d58c9b30_4.png', NULL, 4),
-(1027, 56, NULL, 'assets/images/products/prod_1793746052_6b3cbb1b_5.png', NULL, 5),
-(1028, 56, NULL, 'assets/images/products/prod_1793746052_33c5d841_6.png', NULL, 6),
-(1029, 56, NULL, 'assets/images/products/prod_1793746052_8cc3e4d8_7.png', NULL, 7),
-(1030, 56, NULL, 'assets/images/products/prod_1793746052_c2f7d5d2_8.png', NULL, 8),
-(1031, 56, NULL, 'assets/images/products/prod_1793746052_9ed5f6e4_9.png', NULL, 9),
-(1032, 56, NULL, 'assets/images/products/prod_1793746052_472fa332_10.png', NULL, 10),
-(1033, 56, NULL, 'assets/images/products/prod_1793746052_3abf7b43_11.png', NULL, 11),
-(1034, 56, NULL, 'assets/images/products/prod_1793746052_e02b4dc9_12.png', NULL, 12),
-(1035, 56, NULL, 'assets/images/products/prod_1793746052_231dda48_13.png', NULL, 13),
-(1036, 56, NULL, 'assets/images/products/prod_1793746052_ecffc714_14.png', NULL, 14),
-(1037, 56, NULL, 'assets/images/products/prod_1793746052_64355544_15.png', NULL, 15),
-(1038, 56, NULL, 'assets/images/products/prod_1793746052_c0293194_16.png', NULL, 16),
-(1039, 56, NULL, 'assets/images/products/prod_1793746052_8d3b7d2c_17.png', NULL, 17),
-(1040, 56, NULL, 'assets/images/products/prod_1793746052_1e82e97b_18.png', NULL, 18),
-(1041, 56, NULL, 'assets/images/products/prod_1793746052_a08f31a4_19.png', NULL, 19),
-(1042, 56, NULL, 'assets/images/products/prod_1793746052_4b88934d_20.png', NULL, 20);
+(1357, 58, NULL, 'assets/images/products/prod_1793831901_3249b583_2.webp', 'testtttttttttt - Featured Image', 1),
+(1358, 58, NULL, 'assets/images/products/prod_1793831901_22198840_1.webp', 'testtttttttttt - Gallery Image 2', 2),
+(1359, 58, NULL, 'assets/images/products/prod_1793831901_90f85129_3.webp', 'testtttttttttt - Gallery Image 3', 3),
+(1360, 58, NULL, 'assets/images/products/prod_1793831901_58906451_4.jpg', 'testtttttttttt - Gallery Image 4', 4),
+(1361, 58, NULL, 'assets/images/products/prod_1793831901_4fd607ef_5.jpg', 'testtttttttttt - Gallery Image 5', 5),
+(1362, 58, NULL, 'assets/images/products/prod_1793831901_567c22e9_6.jpg', 'testtttttttttt - Gallery Image 6', 6),
+(1363, 58, NULL, 'assets/images/products/prod_1793831901_43ab5bd3_7.jpg', 'testtttttttttt - Gallery Image 7', 7),
+(1364, 58, NULL, 'assets/images/products/var_1793831884_b96fc2.png', 'testtttttttttt - Gallery Image 8', 8),
+(1365, 58, NULL, 'assets/images/products/var_1793831891_660344.png', 'testtttttttttt - Gallery Image 9', 9),
+(1600, 59, NULL, 'assets/images/products/prod_1793833073_06c84811_1.webp', 'Test Product Title - Featured Image', 1),
+(1601, 59, NULL, 'assets/images/products/prod_1793833073_5f95759c_2.webp', 'Test Product Title - Gallery Image 2', 2),
+(1602, 59, NULL, 'assets/images/products/prod_1793833073_70cd1a7d_3.webp', 'Test Product Title - Gallery Image 3', 3),
+(1603, 59, NULL, 'assets/images/products/prod_1793833073_394ed0e2_4.jpg', 'Test Product Title - Gallery Image 4', 4),
+(1604, 59, NULL, 'assets/images/products/prod_1793833073_f923232d_5.jpg', 'Test Product Title - Gallery Image 5', 5),
+(1605, 59, NULL, 'assets/images/products/prod_1793833073_92ed113c_6.jpg', 'Test Product Title - Gallery Image 6', 6),
+(1606, 59, NULL, 'assets/images/products/prod_1793833073_d44b43f1_7.jpg', 'Test Product Title - Gallery Image 7', 7),
+(1607, 59, NULL, 'assets/images/products/var_1793833209_4ba596.png', 'Test Product Title - Gallery Image 8', 8),
+(1608, 59, NULL, 'assets/images/products/var_1793833213_982776.png', 'Test Product Title - Gallery Image 9', 9),
+(1609, 59, NULL, 'assets/images/products/var_1793833218_10d0d7_1.png', 'Test Product Title - Gallery Image 10', 10),
+(1610, 59, NULL, 'assets/images/products/var_1793833218_b8226f_2.png', 'Test Product Title - Gallery Image 11', 11);
 
 -- --------------------------------------------------------
 
@@ -1043,8 +1037,7 @@ INSERT INTO `product_reviews` (`id`, `product_id`, `user_id`, `customer_name`, `
 (4, 2, NULL, 'Brandon Lewis', 5, 'Best disposable on the market', 'Pulse mode gives such thick clouds. Rocket animation is sick too.', 'approved', '2026-01-12 11:20:00', '2026-10-16 18:29:26'),
 (5, 4, NULL, 'Eric Hoffman', 5, 'Great flavor from PnP X coils', 'No leaking whatsoever after 3 weeks of daily use. Gene chip fires instantly.', 'approved', '2026-02-18 16:45:00', '2026-10-16 18:29:26'),
 (6, 6, NULL, 'Samantha Ray', 5, 'Watermelon Lime is elite', 'Sweet with a sharp citrus bite. The bundle deal saved me over $20.', 'rejected', '2026-03-01 09:15:00', '2026-10-19 23:58:40'),
-(8, 18, NULL, 'Live Reviewer', 5, 'Super Satisfied', 'Hits nicely and lasts long.', 'approved', '2026-10-20 00:01:11', '2026-10-20 00:01:11'),
-(9, 51, NULL, 'test', 3, 'test', 'test', 'approved', '2026-10-28 19:27:05', '2026-10-28 19:27:18');
+(8, 18, NULL, 'Live Reviewer', 5, 'Super Satisfied', 'Hits nicely and lasts long.', 'approved', '2026-10-20 00:01:11', '2026-10-20 00:01:11');
 
 -- --------------------------------------------------------
 
@@ -1107,19 +1100,21 @@ INSERT INTO `product_specifications` (`id`, `product_id`, `spec_key`, `spec_valu
 (37, 6, 'Bottle Type', 'Chubby Gorilla Child-Resistant Dropper Bottle', 0, 'bottle', 'Physical Specs', 3),
 (38, 48, 'Puffs', '5000', 0, 'general', 'General Specs', 0),
 (39, 48, 'Nicotine Strength', '50mg', 0, 'general', 'General Specs', 0),
-(40, 51, 'Puffs', '5000', 0, 'general', 'General Specs', 0),
-(41, 51, 'Nicotine Strength', '50mg', 0, 'general', 'General Specs', 0),
 (63, 52, 'Specifications 1', 'Specifications 1', 0, 'general', 'General Specs', 1),
 (64, 52, 'Specifications 2', 'Specifications 2', 0, 'general', 'General Specs', 2),
 (65, 52, 'Specifications 3', 'Specifications 3', 0, 'general', 'General Specs', 3),
-(219, 56, 'Puffs', '15,000', 1, 'puffs', 'Key Highlights', 1),
-(220, 56, 'Nicotine', '50mg', 1, 'nicotine', 'Key Highlights', 2),
-(221, 56, 'Battery', '850MAH', 1, 'battery', 'Key Highlights', 3),
-(222, 56, 'Capacity', '16ml', 1, 'capacity', 'Key Highlights', 4),
-(223, 56, 'Specifications 1', 'Specifications 1', 0, 'general', 'General Specs', 1),
-(224, 56, 'Specifications 2', 'Specifications 2', 0, 'general', 'General Specs', 2),
-(225, 56, 'Specifications 3', 'Specifications 3', 0, 'general', 'General Specs', 3),
-(226, 56, 'Specifications 4', 'Specifications 4', 0, 'general', 'General Specs', 4);
+(507, 58, 'Puffs', '15,000', 1, 'puffs', 'Key Highlights', 1),
+(508, 58, 'Nicotine', '50mg', 1, 'nicotine', 'Key Highlights', 2),
+(509, 58, 'Battery', '850MAH', 1, 'battery', 'Key Highlights', 3),
+(510, 58, 'Capacity', '16ml', 1, 'capacity', 'Key Highlights', 4),
+(656, 59, 'Puffs', '15,000', 1, 'puffs', 'Key Highlights', 1),
+(657, 59, 'Nicotine', '50mg', 1, 'nicotine', 'Key Highlights', 2),
+(658, 59, 'Battery', '1000mAH', 1, 'battery', 'Key Highlights', 3),
+(659, 59, 'Capacity', '18mg', 1, 'capacity', 'Key Highlights', 4),
+(660, 59, 'Specifications 1', 'Specifications 1', 0, 'general', 'General Specs', 1),
+(661, 59, 'Specifications 2', 'Specifications 2', 0, 'general', 'General Specs', 2),
+(662, 59, 'Specifications 3', 'Specifications 3', 0, 'general', 'General Specs', 3),
+(663, 59, 'Specifications 4', 'Specifications 4', 0, 'general', 'General Specs', 4);
 
 -- --------------------------------------------------------
 
@@ -1197,70 +1192,26 @@ INSERT INTO `product_variants` (`id`, `product_id`, `sku`, `variant_name`, `pric
 (89, 52, 'TEST-4740-5081-TEST2-RED', 'test 2 / red', 78.80, NULL, 0, 0, NULL),
 (90, 52, 'TEST-4740-5081-TEST2-BLUE', 'test 2 / blue', 78.80, NULL, 0, 0, NULL),
 (91, 52, 'TEST-4740-5081-TEST2-GREEN', 'test 2 / green', 78.80, NULL, 0, 0, NULL),
-(872, 56, 'TEST-1199-2E16-BANANA-10MG', 'Banana Ice / 10mg', 15.89, NULL, 0, 1, NULL),
-(873, 56, 'TEST-1199-2E16-BANANA-20MG', 'Banana Ice / 20mg', 15.89, NULL, 5, 0, NULL),
-(874, 56, 'TEST-1199-2E16-BANANA-30MG', 'Banana Ice / 30mg', 15.89, NULL, 5, 0, NULL),
-(875, 56, 'TEST-1199-2E16-BANANA-40MG', 'Banana Ice / 40mg', 15.89, NULL, 5, 0, NULL),
-(876, 56, 'TEST-1199-2E16-PEACHP-10MG', 'Peach Passionfruit / 10mg', 15.89, NULL, 5, 0, NULL),
-(877, 56, 'TEST-1199-2E16-PEACHP-20MG', 'Peach Passionfruit / 20mg', 15.89, NULL, 0, 0, NULL),
-(878, 56, 'TEST-1199-2E16-PEACHP-30MG', 'Peach Passionfruit / 30mg', 15.89, NULL, 5, 0, NULL),
-(879, 56, 'TEST-1199-2E16-PEACHP-40MG', 'Peach Passionfruit / 40mg', 15.89, NULL, 5, 0, NULL),
-(880, 56, 'TEST-1199-2E16-DRAGON-10MG', 'Dragonfruit Lemonade / 10mg', 15.89, NULL, 5, 0, NULL),
-(881, 56, 'TEST-1199-2E16-DRAGON-20MG', 'Dragonfruit Lemonade / 20mg', 15.89, NULL, 5, 0, NULL),
-(882, 56, 'TEST-1199-2E16-DRAGON-30MG', 'Dragonfruit Lemonade / 30mg', 15.89, NULL, 0, 0, NULL),
-(883, 56, 'TEST-1199-2E16-DRAGON-40MG', 'Dragonfruit Lemonade / 40mg', 15.89, NULL, 5, 0, NULL),
-(884, 56, 'TEST-1199-2E16-PINKBL-10MG', 'Pink & Blue (Winter) / 10mg', 15.89, NULL, 5, 0, NULL),
-(885, 56, 'TEST-1199-2E16-PINKBL-20MG', 'Pink & Blue (Winter) / 20mg', 15.89, NULL, 5, 0, NULL),
-(886, 56, 'TEST-1199-2E16-PINKBL-30MG', 'Pink & Blue (Winter) / 30mg', 15.89, NULL, 5, 0, NULL),
-(887, 56, 'TEST-1199-2E16-PINKBL-40MG', 'Pink & Blue (Winter) / 40mg', 15.89, NULL, 0, 0, NULL),
-(888, 56, 'TEST-1199-2E16-SOURST-10MG', 'Sour Strawberry / 10mg', 15.89, NULL, 5, 0, NULL),
-(889, 56, 'TEST-1199-2E16-SOURST-20MG', 'Sour Strawberry / 20mg', 15.89, NULL, 5, 0, NULL),
-(890, 56, 'TEST-1199-2E16-SOURST-30MG', 'Sour Strawberry / 30mg', 15.89, NULL, 5, 0, NULL),
-(891, 56, 'TEST-1199-2E16-SOURST-40MG', 'Sour Strawberry / 40mg', 15.89, NULL, 5, 0, NULL),
-(892, 56, 'TEST-1199-2E16-GRAPET-10MG', 'Grape Tease / 10mg', 15.89, NULL, 5, 0, NULL),
-(893, 56, 'TEST-1199-2E16-GRAPET-20MG', 'Grape Tease / 20mg', 15.89, NULL, 5, 0, NULL),
-(894, 56, 'TEST-1199-2E16-GRAPET-30MG', 'Grape Tease / 30mg', 15.89, NULL, 5, 0, NULL),
-(895, 56, 'TEST-1199-2E16-GRAPET-40MG', 'Grape Tease / 40mg', 15.89, NULL, 5, 0, NULL),
-(896, 56, 'TEST-1199-2E16-ICYMIN-10MG', 'Icy Mint / 10mg', 15.89, NULL, 5, 0, NULL),
-(897, 56, 'TEST-1199-2E16-ICYMIN-20MG', 'Icy Mint / 20mg', 15.89, NULL, 5, 0, NULL),
-(898, 56, 'TEST-1199-2E16-ICYMIN-30MG', 'Icy Mint / 30mg', 15.89, NULL, 5, 0, NULL),
-(899, 56, 'TEST-1199-2E16-ICYMIN-40MG', 'Icy Mint / 40mg', 15.89, NULL, 5, 0, NULL),
-(900, 56, 'TEST-1199-2E16-MIAMIM-10MG', 'Miami Mint / 10mg', 15.89, NULL, 5, 0, NULL),
-(901, 56, 'TEST-1199-2E16-MIAMIM-20MG', 'Miami Mint / 20mg', 15.89, NULL, 5, 0, NULL),
-(902, 56, 'TEST-1199-2E16-MIAMIM-30MG', 'Miami Mint / 30mg', 15.89, NULL, 5, 0, NULL),
-(903, 56, 'TEST-1199-2E16-MIAMIM-40MG', 'Miami Mint / 40mg', 15.89, NULL, 5, 0, NULL),
-(904, 56, 'TEST-1199-2E16-NIGHTC-10MG', 'Night Crawler / 10mg', 15.89, NULL, 5, 0, NULL),
-(905, 56, 'TEST-1199-2E16-NIGHTC-20MG', 'Night Crawler / 20mg', 15.89, NULL, 5, 0, NULL),
-(906, 56, 'TEST-1199-2E16-NIGHTC-30MG', 'Night Crawler / 30mg', 15.89, NULL, 5, 0, NULL),
-(907, 56, 'TEST-1199-2E16-NIGHTC-40MG', 'Night Crawler / 40mg', 15.89, NULL, 5, 0, NULL),
-(908, 56, 'TEST-1199-2E16-PEACHB-10MG', 'Peach Baddie / 10mg', 15.89, NULL, 5, 0, NULL),
-(909, 56, 'TEST-1199-2E16-PEACHB-20MG', 'Peach Baddie / 20mg', 15.89, NULL, 5, 0, NULL),
-(910, 56, 'TEST-1199-2E16-PEACHB-30MG', 'Peach Baddie / 30mg', 15.89, NULL, 5, 0, NULL),
-(911, 56, 'TEST-1199-2E16-PEACHB-40MG', 'Peach Baddie / 40mg', 15.89, NULL, 5, 0, NULL),
-(912, 56, 'TEST-1199-2E16-PRETTY-10MG', 'Pretty in Pink / 10mg', 15.89, NULL, 5, 0, NULL),
-(913, 56, 'TEST-1199-2E16-PRETTY-20MG', 'Pretty in Pink / 20mg', 15.89, NULL, 5, 0, NULL),
-(914, 56, 'TEST-1199-2E16-PRETTY-30MG', 'Pretty in Pink / 30mg', 15.89, NULL, 5, 0, NULL),
-(915, 56, 'TEST-1199-2E16-PRETTY-40MG', 'Pretty in Pink / 40mg', 15.89, NULL, 5, 0, NULL),
-(916, 56, 'TEST-1199-2E16-RASPBE-10MG', 'Raspberry Watermelon / 10mg', 15.89, NULL, 5, 0, NULL),
-(917, 56, 'TEST-1199-2E16-RASPBE-20MG', 'Raspberry Watermelon / 20mg', 15.89, NULL, 5, 0, NULL),
-(918, 56, 'TEST-1199-2E16-RASPBE-30MG', 'Raspberry Watermelon / 30mg', 15.89, NULL, 5, 0, NULL),
-(919, 56, 'TEST-1199-2E16-RASPBE-40MG', 'Raspberry Watermelon / 40mg', 15.89, NULL, 5, 0, NULL),
-(920, 56, 'TEST-1199-2E16-SOURAP-10MG', 'Sour Apple Ice / 10mg', 15.89, NULL, 5, 0, NULL),
-(921, 56, 'TEST-1199-2E16-SOURAP-20MG', 'Sour Apple Ice / 20mg', 15.89, NULL, 5, 0, NULL),
-(922, 56, 'TEST-1199-2E16-SOURAP-30MG', 'Sour Apple Ice / 30mg', 15.89, NULL, 5, 0, NULL),
-(923, 56, 'TEST-1199-2E16-SOURAP-40MG', 'Sour Apple Ice / 40mg', 15.89, NULL, 5, 0, NULL),
-(924, 56, 'TEST-1199-2E16-TRIPLE-10MG', 'Triple Berry / 10mg', 15.89, NULL, 5, 0, NULL),
-(925, 56, 'TEST-1199-2E16-TRIPLE-20MG', 'Triple Berry / 20mg', 15.89, NULL, 5, 0, NULL),
-(926, 56, 'TEST-1199-2E16-TRIPLE-30MG', 'Triple Berry / 30mg', 15.89, NULL, 5, 0, NULL),
-(927, 56, 'TEST-1199-2E16-TRIPLE-40MG', 'Triple Berry / 40mg', 15.89, NULL, 5, 0, NULL),
-(928, 56, 'TEST-1199-2E16-WHITEY-10MG', 'White Yummy Ice / 10mg', 15.89, NULL, 5, 0, NULL),
-(929, 56, 'TEST-1199-2E16-WHITEY-20MG', 'White Yummy Ice / 20mg', 15.89, NULL, 5, 0, NULL),
-(930, 56, 'TEST-1199-2E16-WHITEY-30MG', 'White Yummy Ice / 30mg', 15.89, NULL, 5, 0, NULL),
-(931, 56, 'TEST-1199-2E16-WHITEY-40MG', 'White Yummy Ice / 40mg', 15.89, NULL, 5, 0, NULL),
-(932, 56, 'TEST-1199-2E16-WILDBE-10MG', 'Wild Berry Dew / 10mg', 15.89, NULL, 5, 0, NULL),
-(933, 56, 'TEST-1199-2E16-WILDBE-20MG', 'Wild Berry Dew / 20mg', 15.89, NULL, 5, 0, NULL),
-(934, 56, 'TEST-1199-2E16-WILDBE-30MG', 'Wild Berry Dew / 30mg', 15.89, NULL, 5, 0, NULL),
-(935, 56, 'TEST-1199-2E16-WILDBE-40MG', 'Wild Berry Dew / 40mg', 15.89, NULL, 5, 0, NULL);
+(3124, 58, 'VH-PROD-ORANGE-10MG', 'orange / 10mg', 30.12, NULL, 5, 1, NULL),
+(3125, 58, 'VH-PROD-ORANGE-20MG', 'orange / 20mg', 30.12, NULL, 5, 0, NULL),
+(3126, 58, 'VH-PROD-BANANA-10MG', 'Banana / 10mg', 30.12, NULL, 5, 0, NULL),
+(3127, 58, 'VH-PROD-BANANA-20MG', 'Banana / 20mg', 30.12, NULL, 5, 0, NULL),
+(3128, 58, 'VH-PROD-STRAWB-10MG', 'Strawberry / 10mg', 30.12, NULL, 5, 0, NULL),
+(3129, 58, 'VH-PROD-STRAWB-20MG', 'Strawberry / 20mg', 30.12, NULL, 5, 0, NULL),
+(3589, 59, 'TEST-2454-29CB-BANANA-10MG', 'Banana Icy / 10mg', 15.99, NULL, 5, 1, 'assets/images/products/var_1793833218_10d0d7_1.png'),
+(3590, 59, 'TEST-2454-29CB-BANANA-20MG', 'Banana Icy / 20mg', 15.99, NULL, 5, 0, 'assets/images/products/var_1793833218_b8226f_2.png'),
+(3591, 59, 'TEST-2454-29CB-BLUERA-10MG', 'Blue Razz Icy / 10mg', 15.99, NULL, 5, 0, NULL),
+(3592, 59, 'TEST-2454-29CB-BLUERA-20MG', 'Blue Razz Icy / 20mg', 15.99, NULL, 5, 0, NULL),
+(3593, 59, 'TEST-2454-29CB-CLEAR-10MG', 'Clear / 10mg', 15.99, NULL, 5, 0, NULL),
+(3594, 59, 'TEST-2454-29CB-CLEAR-20MG', 'Clear / 20mg', 15.99, NULL, 5, 0, NULL),
+(3595, 59, 'TEST-2454-29CB-COLASL-10MG', 'Cola Slush / 10mg', 15.99, NULL, 5, 0, NULL),
+(3596, 59, 'TEST-2454-29CB-COLASL-20MG', 'Cola Slush / 20mg', 15.99, NULL, 5, 0, NULL),
+(3597, 59, 'TEST-2454-29CB-COOLMI-10MG', 'Cool Mint / 10mg', 15.99, NULL, 5, 0, NULL),
+(3598, 59, 'TEST-2454-29CB-COOLMI-20MG', 'Cool Mint / 20mg', 15.99, NULL, 5, 0, NULL),
+(3599, 59, 'TEST-2454-29CB-GLAZED-10MG', 'Glazed Donut / 10mg', 15.99, NULL, 5, 0, NULL),
+(3600, 59, 'TEST-2454-29CB-GLAZED-20MG', 'Glazed Donut / 20mg', 15.99, NULL, 5, 0, NULL),
+(3601, 59, 'TEST-2454-29CB-GRAPES-10MG', 'Grape Slush / 10mg', 15.99, NULL, 5, 0, NULL),
+(3602, 59, 'TEST-2454-29CB-GRAPES-20MG', 'Grape Slush / 20mg', 15.99, NULL, 5, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -1910,37 +1861,37 @@ ALTER TABLE `password_resets`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `product_faqs`
 --
 ALTER TABLE `product_faqs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=216;
 
 --
 -- AUTO_INCREMENT for table `product_images`
 --
 ALTER TABLE `product_images`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1043;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1611;
 
 --
 -- AUTO_INCREMENT for table `product_reviews`
 --
 ALTER TABLE `product_reviews`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `product_specifications`
 --
 ALTER TABLE `product_specifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=227;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=664;
 
 --
 -- AUTO_INCREMENT for table `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=936;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3603;
 
 --
 -- AUTO_INCREMENT for table `refund_requests`

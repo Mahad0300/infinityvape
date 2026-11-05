@@ -4077,3 +4077,276 @@ img {
   background-color: #f3e8ff !important;
   color: #7e22ce !important;
 }
+
+
+/* ==========================================================================
+   RICH TEXT EDITOR (RTE) COMPONENT
+   Standardized styling for Add & Edit Product description editors
+   ========================================================================== */
+.rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-bottom: 1px solid #cbd5e1;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.rte-format-select {
+  height: 30px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  min-width: 140px;
+  transition: all 0.15s ease;
+}
+
+.rte-format-select:focus {
+  border-color: #082142;
+}
+
+.rte-divider {
+  width: 1px;
+  height: 20px;
+  background: #cbd5e1;
+  margin: 0 3px;
+}
+
+.rte-toolbar button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  transition: all 0.15s ease;
+}
+
+.rte-toolbar button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.rte-toolbar button:active {
+  background: #e2e8f0;
+}
+
+.highlight-swatch {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  background: #fde047;
+  border: 1px solid #ca8a04;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+
+.rte-editor-content {
+  min-height: 200px;
+  padding: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #1e293b;
+  outline: none;
+}
+
+.rte-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.rte-editor-content h1,
+.rte-editor-content h2,
+.rte-editor-content h3,
+.rte-editor-content h4,
+.rte-editor-content h5,
+.rte-editor-content h6 {
+  color: #082142 !important;
+}
+
+.rte-editor-content h1 { font-size: 1.5rem; font-weight: 800; margin: 16px 0 8px; }
+.rte-editor-content h2 { font-size: 1.35rem; font-weight: 700; margin: 14px 0 6px; }
+.rte-editor-content h3 { font-size: 1.18rem; font-weight: 600; margin: 12px 0 5px; }
+.rte-editor-content h4 { font-size: 1.05rem; font-weight: 600; margin: 10px 0 4px; }
+.rte-editor-content h5 { font-size: 0.95rem; font-weight: 600; margin: 8px 0 3px; }
+.rte-editor-content h6 { font-size: 0.88rem; font-weight: 600; margin: 8px 0 3px; text-transform: uppercase; }
+
+.rte-editor-content p,
+.rte-editor-content li,
+.rte-editor-content div {
+  color: #1e293b !important;
+}
+
+.rte-editor-content span:not(.rte-highlight):not(mark) {
+  color: inherit !important;
+}
+
+.rte-editor-content p { margin: 0 0 8px; }
+.rte-editor-content ul, .rte-editor-content ol { margin: 0 0 10px 22px; padding-left: 0; }
+.rte-editor-content li { margin-bottom: 4px; }
+.rte-editor-content a { color: #f25c27 !important; text-decoration: underline; font-weight: 600; }
+.rte-editor-content mark, .rte-editor-content .rte-highlight { background-color: #fef08a !important; padding: 1px 3px; border-radius: 2px; color: #082142 !important; }
+
+
+/* ==========================================================================
+   ADMIN COLLECTIONS & RICH TEXT EDITOR CONTAINER
+   ========================================================================== */
+.rich-text-editor {
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.rich-text-editor:focus-within {
+  border-color: #082142;
+  box-shadow: 0 0 0 3px rgba(8, 33, 66, 0.12);
+}
+
+.related-col-checkbox-card:hover,
+.header-col-checkbox-card:hover {
+  border-color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+
+.related-col-checkbox-card.is-selected,
+.header-col-checkbox-card.is-selected {
+  border-color: var(--admin-primary, #082142) !important;
+  background-color: #f0f4f9 !important;
+}
+
+
+/* ==========================================================================
+   SHOPIFY-STYLE VARIANT OPTION & VALUE DUPLICATE VALIDATION
+   ========================================================================== */
+.inline-tag-input-wrap.has-error {
+  border-color: #ef4444 !important;
+  border-style: solid !important;
+  background-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  animation: shakeOptionInput 0.35s ease-in-out;
+}
+
+.custom-option-name-input.has-error {
+  border-color: #ef4444 !important;
+  border-style: solid !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  animation: shakeOptionInput 0.35s ease-in-out;
+}
+
+.option-val-error-msg,
+.option-name-error-msg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
+  width: 100%;
+  animation: errorFadeIn 0.2s ease-out;
+}
+
+.option-val-error-msg svg,
+.option-name-error-msg svg {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+@keyframes shakeOptionInput {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes errorFadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pillDuplicatePulse {
+  0% { transform: scale(1); border-color: #ef4444; background-color: #fee2e2; color: #991b1b; }
+  50% { transform: scale(1.08); border-color: #dc2626; background-color: #fecaca; color: #7f1d1d; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25); }
+  100% { transform: scale(1); border-color: #ef4444; background-color: #fee2e2; color: #991b1b; }
+}
+
+.variant-pill-tag.pill-duplicate-match {
+  animation: pillDuplicatePulse 0.8s ease-in-out;
+  border-color: #ef4444 !important;
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+/* Variant Parent Row & Dropdown Accordion Polish */
+.variant-parent-row {
+  cursor: pointer;
+  user-select: none;
+}
+
+.variant-toggle-btn svg {
+  pointer-events: none;
+}
+
+.variant-toggle-btn .chevron-icon {
+  transform-origin: center center;
+}
+
+
+/* Variant Table Thumbnail Hover Clear Buttons */
+.shopify-variant-thumb {
+  position: relative;
+}
+
+.variant-thumb-clear-btn,
+.group-thumb-clear-btn {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  z-index: 10;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.shopify-variant-thumb:hover .variant-thumb-clear-btn,
+.shopify-variant-thumb:hover .group-thumb-clear-btn {
+  opacity: 1;
+}
+
+.variant-thumb-clear-btn:hover,
+.group-thumb-clear-btn:hover {
+  transform: scale(1.15);
+  background: #dc2626;
+}

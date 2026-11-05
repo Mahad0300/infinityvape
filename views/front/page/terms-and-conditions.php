@@ -59,33 +59,6 @@ SCHEMA;
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
-<style>
-.legal-page-content p {
-  color: #334155;
-  line-height: 1.75;
-  margin-bottom: 16px;
-  font-size: 15px;
-}
-.legal-page-content ul {
-  margin: 8px 0 18px 24px;
-  padding: 0;
-  color: #334155;
-  line-height: 1.75;
-  font-size: 15px;
-}
-.legal-page-content li {
-  margin-bottom: 8px;
-}
-.legal-page-content a {
-  color: #fa5a1e;
-  text-decoration: underline;
-  font-weight: 500;
-}
-.legal-page-content a:hover {
-  color: #e0450d;
-}
-</style>
-
 <!-- ==========================================
      1. BREADCRUMBS
      ========================================== -->

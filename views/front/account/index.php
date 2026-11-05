@@ -31,12 +31,12 @@ include dirname(__DIR__) . '/includes/header.php';
     
     <!-- Flash Messages (if any) -->
     <?php if (!empty($success)): ?>
-      <div class="account-flash-alert success" style="margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; font-size: 14px;">
+      <div class="account-flash-alert success">
         <?= htmlspecialchars($success) ?>
       </div>
     <?php endif; ?>
     <?php if (!empty($error)): ?>
-      <div class="account-flash-alert error" style="margin-bottom: 24px; padding: 14px 18px; border-radius: 8px; background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-size: 14px;">
+      <div class="account-flash-alert error">
         <?= htmlspecialchars($error) ?>
       </div>
     <?php endif; ?>

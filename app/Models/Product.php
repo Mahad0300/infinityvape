@@ -81,7 +81,7 @@ class Product extends Model
                                b.name AS brand,
                                COALESCE(c.name, 'Disposable') AS category,
                                c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img,
+                               COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS img,
                                (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variants_count,
                                COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), p.stock_quantity, 0) AS calculated_stock
                         FROM products p 
@@ -125,7 +125,7 @@ class Product extends Model
                                COALESCE(c.name, 'Disposables') AS category,
                                c.slug AS category_slug,
                                c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp') AS img,
+                               COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS img,
                                (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variants_count,
                                COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), p.stock_quantity, 0) AS calculated_stock
                         FROM products p 
@@ -356,7 +356,7 @@ class Product extends Model
                            COALESCE(c.name, 'Disposable') AS category,
                            c.id AS collection_id,
                            c.slug AS collection_slug,
-                           COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img,
+                           COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS img,
                            (SELECT spec_value FROM product_specifications WHERE product_id = p.id AND (spec_key = 'Puffs' OR spec_key = 'Puff Count') LIMIT 1) AS spec_puffs,
                            (SELECT spec_value FROM product_specifications WHERE product_id = p.id AND (spec_key = 'Nicotine' OR spec_key = 'Nicotine Strength') LIMIT 1) AS spec_nicotine,
                            (SELECT spec_value FROM product_specifications WHERE product_id = p.id AND (spec_key = 'Battery' OR spec_key = 'Battery Capacity') LIMIT 1) AS spec_battery
@@ -620,12 +620,13 @@ class Product extends Model
             $stockStatus = 'Low Stock';
         }
 
-        $featuredImage = trim($data['featured_image'] ?? $data['image'] ?? $data['img'] ?? 'assets/images/vape-image.webp');
+        $rawFeat = trim($data['featured_image'] ?? $data['image'] ?? $data['img'] ?? '');
+        $featuredImage = (!empty($rawFeat) && $rawFeat !== 'assets/images/vape-image.webp' && $rawFeat !== 'assets/images/no-image.svg') ? $rawFeat : null;
         $status = in_array($data['status'] ?? '', ['published', 'draft', 'archived']) ? $data['status'] : ($data['status'] === 'active' ? 'published' : 'published');
         $tags = is_array($data['tags'] ?? null) ? implode(', ', $data['tags']) : trim($data['tags'] ?? '');
         $optionNames = array_key_exists('option_names', $data) ? (is_array($data['option_names']) ? json_encode($data['option_names']) : $data['option_names']) : '["Flavor"]';
-        $seoTitle = trim($data['seo_title'] ?? ($title . ' | Infinity Vape Shop'));
-        $seoDescription = trim($data['seo_description'] ?? strip_tags($shortDesc ?: $longDesc));
+        $seoTitle = !empty(trim($data['seo_title'] ?? '')) ? trim($data['seo_title']) : null;
+        $seoDescription = !empty(trim($data['seo_description'] ?? '')) ? trim($data['seo_description']) : null;
         $bundleBannerActive = !empty($data['bundle_banner_active']) ? 1 : 0;
         $bundleBannerImg = !empty($data['bundle_banner_img']) ? trim($data['bundle_banner_img']) : null;
         $bundleBannerLink = !empty($data['bundle_banner_link']) ? trim($data['bundle_banner_link']) : null;
@@ -679,12 +680,37 @@ class Product extends Model
             }
 
             // Save Images to product_images table if provided
+            $finalCreateImages = [];
             if (!empty($data['images']) && is_array($data['images'])) {
-                $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
-                foreach ($data['images'] as $order => $imgUrl) {
-                    if (!empty($imgUrl)) {
-                        $imgStmt->execute([$productId, $imgUrl, $order + 1]);
+                foreach ($data['images'] as $img) {
+                    $img = trim($img);
+                    if (!empty($img) && !in_array($img, $finalCreateImages)) {
+                        $finalCreateImages[] = $img;
                     }
+                }
+            }
+            if (!empty($data['existing_images']) && is_array($data['existing_images'])) {
+                foreach ($data['existing_images'] as $img) {
+                    $img = trim($img);
+                    if (!empty($img) && !in_array($img, $finalCreateImages)) {
+                        $finalCreateImages[] = $img;
+                    }
+                }
+            }
+            if (!empty($data['variants']) && is_array($data['variants'])) {
+                foreach ($data['variants'] as $v) {
+                    $vImg = is_array($v) ? trim($v['image_url'] ?? '') : '';
+                    if (!empty($vImg) && !in_array($vImg, $finalCreateImages)) {
+                        $finalCreateImages[] = $vImg;
+                    }
+                }
+            }
+
+            if (!empty($finalCreateImages)) {
+                $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)");
+                foreach ($finalCreateImages as $order => $imgUrl) {
+                    $altText = $title . ' - ' . ($order === 0 ? 'Featured Image' : 'Gallery Image ' . ($order + 1));
+                    $imgStmt->execute([$productId, $imgUrl, $altText, $order + 1]);
                 }
             }
 
@@ -812,21 +838,26 @@ class Product extends Model
         }
 
         $hasImageKey = array_key_exists('featured_image', $data) || array_key_exists('image', $data) || array_key_exists('img', $data);
-        $featuredImage = $data['featured_image'] ?? $data['image'] ?? $data['img'] ?? null;
+        $rawFeatured = $data['featured_image'] ?? $data['image'] ?? $data['img'] ?? null;
+        $featuredImage = (!empty($rawFeatured) && $rawFeatured !== 'assets/images/vape-image.webp' && $rawFeatured !== 'assets/images/no-image.svg') ? $rawFeatured : null;
 
         $statusVal = $data['status'] ?? $existing['status'] ?? 'published';
         $status = in_array($statusVal, ['published', 'draft', 'archived']) ? $statusVal : ($statusVal === 'active' ? 'published' : 'published');
         $tags = isset($data['tags']) ? (is_array($data['tags']) ? implode(', ', $data['tags']) : trim($data['tags'])) : ($existing['tags'] ?? '');
         $optionNames = array_key_exists('option_names', $data) ? (is_array($data['option_names']) ? json_encode($data['option_names']) : $data['option_names']) : ($existing['option_names'] ?? '["Flavor"]');
-        $seoTitle = trim($data['seo_title'] ?? $existing['seo_title'] ?? ($title . ' | Infinity Vape Shop'));
-        $seoDescription = trim($data['seo_description'] ?? $existing['seo_description'] ?? strip_tags($shortDesc ?: $longDesc));
+        $seoTitle = array_key_exists('seo_title', $data) 
+            ? (!empty(trim($data['seo_title'] ?? '')) ? trim($data['seo_title']) : null) 
+            : ($existing['seo_title'] ?? null);
+        $seoDescription = array_key_exists('seo_description', $data) 
+            ? (!empty(trim($data['seo_description'] ?? '')) ? trim($data['seo_description']) : null) 
+            : ($existing['seo_description'] ?? null);
 
         $bundleBannerActive = isset($data['bundle_banner_active']) ? (int)$data['bundle_banner_active'] : 0;
         $bundleBannerImg = array_key_exists('bundle_banner_img', $data) ? $data['bundle_banner_img'] : null;
         $bundleBannerLink = array_key_exists('bundle_banner_link', $data) ? $data['bundle_banner_link'] : null;
 
         try {
-            if ($hasImageKey && $featuredImage !== null) {
+            if ($hasImageKey) {
                 $sql = "UPDATE products 
                         SET brand_id = ?, name = ?, title = ?, sku = ?, slug = ?, custom_url = ?, 
                             short_desc = ?, long_desc = ?, related_posts_content = ?, base_price = ?, compare_price = ?, 
@@ -884,7 +915,7 @@ class Product extends Model
             }
 
             // Sync images in product_images table
-            if (isset($data['existing_images']) || isset($data['images'])) {
+            if (isset($data['existing_images']) || isset($data['images']) || !empty($data['variants'])) {
                 $finalImages = [];
                 if (!empty($data['existing_images']) && is_array($data['existing_images'])) {
                     foreach ($data['existing_images'] as $eImg) {
@@ -902,12 +933,21 @@ class Product extends Model
                         }
                     }
                 }
+                if (!empty($data['variants']) && is_array($data['variants'])) {
+                    foreach ($data['variants'] as $v) {
+                        $vImg = is_array($v) ? trim($v['image_url'] ?? '') : '';
+                        if (!empty($vImg) && !in_array($vImg, $finalImages)) {
+                            $finalImages[] = $vImg;
+                        }
+                    }
+                }
 
                 $db->prepare("DELETE FROM product_images WHERE product_id = ?")->execute([(int)$id]);
                 if (!empty($finalImages)) {
-                    $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?, ?, ?)");
+                    $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)");
                     foreach ($finalImages as $order => $imgUrl) {
-                        $imgStmt->execute([(int)$id, $imgUrl, $order + 1]);
+                        $altText = $title . ' - ' . ($order === 0 ? 'Featured Image' : 'Gallery Image ' . ($order + 1));
+                        $imgStmt->execute([(int)$id, $imgUrl, $altText, $order + 1]);
                     }
                 }
             }
@@ -1013,8 +1053,10 @@ class Product extends Model
             } catch (\Exception $e) {}
         }
 
-        if (count($images) < 2) {
-            $featImg = !empty($images[0]['image_url']) ? $images[0]['image_url'] : (!empty($product['featured_image']) ? $product['featured_image'] : (!empty($product['img']) ? $product['img'] : 'assets/images/vape-image.webp'));
+        if (empty($images)) {
+            $featImg = !empty($product['featured_image']) && $product['featured_image'] !== 'assets/images/vape-image.webp'
+                ? $product['featured_image'] 
+                : (!empty($product['img']) && $product['img'] !== 'assets/images/vape-image.webp' ? $product['img'] : 'assets/images/no-image.svg');
             $pTitle = $product['title'] ?? ($product['name'] ?? 'Product');
             
             $images = [
@@ -1022,21 +1064,6 @@ class Product extends Model
                     'image_url' => $featImg,
                     'alt_text'  => $pTitle . ' - Front View'
                 ]
-            ];
-
-            // Complementary multi-view thumbnails (box, angle, flavor profile)
-            $boxIdx = (($productId % 6) + 1);
-            $images[] = [
-                'image_url' => "assets/images/product-box-{$boxIdx}.png",
-                'alt_text'  => $pTitle . ' - Packaging View'
-            ];
-            $images[] = [
-                'image_url' => 'assets/images/disposible.webp',
-                'alt_text'  => $pTitle . ' - Handheld View'
-            ];
-            $images[] = [
-                'image_url' => 'assets/images/e-liquid.webp',
-                'alt_text'  => $pTitle . ' - Flavor & Specs'
             ];
         }
 
@@ -1208,7 +1235,17 @@ class Product extends Model
                 $stmt = $db->prepare("SELECT * FROM product_variants WHERE product_id = ? ORDER BY id ASC");
                 $stmt->execute([(int)$productId]);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($rows)) return $rows;
+                if (!empty($rows)) {
+                    $prodCompare = !empty($product['compare_price']) ? (float)$product['compare_price'] : null;
+                    foreach ($rows as &$r) {
+                        $r['full_image_url'] = !empty($r['image_url']) ? asset($r['image_url']) : '';
+                        if (!isset($r['compare_price']) || $r['compare_price'] === null) {
+                            $r['compare_price'] = $prodCompare;
+                        }
+                    }
+                    unset($r);
+                    return $rows;
+                }
             } catch (\Exception $e) {}
         }
 
@@ -1353,7 +1390,17 @@ class Product extends Model
                 $stmt = $db->prepare("SELECT bp.title, bp.slug FROM product_related_posts prp JOIN blog_posts bp ON prp.post_id = bp.id WHERE prp.product_id = ? ORDER BY prp.sort_order ASC");
                 $stmt->execute([(int)$productId]);
                 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($rows)) return $rows;
+                if (!empty($rows)) {
+                    $prodCompare = !empty($product['compare_price']) ? (float)$product['compare_price'] : null;
+                    foreach ($rows as &$r) {
+                        $r['full_image_url'] = !empty($r['image_url']) ? asset($r['image_url']) : '';
+                        if (!isset($r['compare_price']) || $r['compare_price'] === null) {
+                            $r['compare_price'] = $prodCompare;
+                        }
+                    }
+                    unset($r);
+                    return $rows;
+                }
             } catch (\Exception $e) {}
         }
 

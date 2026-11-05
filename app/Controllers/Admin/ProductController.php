@@ -115,6 +115,18 @@ class ProductController extends AdminController
                                     $vImg = 'assets/images/products/' . $vFileName;
                                 }
                             }
+                        } elseif (preg_match('#^data:image/(\w+);base64,(.+)$#i', $vImg, $b64Matches)) {
+                            $b64Ext = strtolower($b64Matches[1]);
+                            if ($b64Ext === 'jpeg') $b64Ext = 'jpg';
+                            if (in_array($b64Ext, ['jpg', 'png', 'webp', 'avif', 'gif'])) {
+                                $b64Decoded = base64_decode($b64Matches[2]);
+                                if ($b64Decoded !== false) {
+                                    $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $b64Ext;
+                                    if (@file_put_contents($varDir . $vFileName, $b64Decoded)) {
+                                        $vImg = 'assets/images/products/' . $vFileName;
+                                    }
+                                }
+                            }
                         }
 
                         $varPrice = trim($v['price'] ?? '');
@@ -142,6 +154,77 @@ class ProductController extends AdminController
                         ];
                     }
                 }
+            }
+
+            // Existing images array from form (e.g. variant images uploaded via AJAX on add page)
+            $existingImages = [];
+            if (isset($_POST['existing_images']) && is_array($_POST['existing_images'])) {
+                $existingImages = array_values(array_filter(array_map('trim', $_POST['existing_images'])));
+            }
+
+            // Combine all unique images that user kept in Media Assets
+            $allImagesToSave = [];
+            if (!empty($orderedImages)) {
+                foreach ($orderedImages as $oi) {
+                    if (!empty($oi) && !in_array($oi, $allImagesToSave)) $allImagesToSave[] = $oi;
+                }
+            } elseif (!empty($uploadedImages)) {
+                foreach ($uploadedImages as $ui) {
+                    if (!empty($ui) && !in_array($ui, $allImagesToSave)) $allImagesToSave[] = $ui;
+                }
+            }
+            foreach ($existingImages as $ei) {
+                if (!empty($ei) && !in_array($ei, $allImagesToSave)) $allImagesToSave[] = $ei;
+            }
+
+            // Normalize and preserve variant images, and ensure they are tracked in product gallery
+            if (!empty($variants)) {
+                foreach ($variants as &$v) {
+                    $vImg = trim($v['image_url'] ?? '');
+                    if (!empty($vImg)) {
+                        // Strip full domain / URL scheme if present
+                        if (preg_match('#^https?://[^/]+/(.*)$#i', $vImg, $mUrl)) {
+                            $vImg = $mUrl[1];
+                        }
+                        $vImg = preg_replace('#^[^/]+/assets/#i', 'assets/', $vImg);
+                        $vImg = ltrim($vImg, '/');
+
+                        if (strpos($vImg, 'assets/') === 0 && !empty($vImg)) {
+                            $v['image_url'] = $vImg;
+                            if (!in_array($vImg, $allImagesToSave)) {
+                                $allImagesToSave[] = $vImg;
+                            }
+                        } else {
+                            $v['image_url'] = null;
+                        }
+                    } else {
+                        $v['image_url'] = null;
+                    }
+                }
+                unset($v);
+            }
+
+            // User-chosen featured image handling (via 1-click Set as Featured)
+            $chosenFeatured = ltrim(trim($_POST['image'] ?? ''), '/');
+            $featuredImage = null;
+            if (!empty($chosenFeatured)) {
+                foreach ($allImagesToSave as $imgCandidate) {
+                    if (ltrim(trim($imgCandidate), '/') === $chosenFeatured) {
+                        $featuredImage = $imgCandidate;
+                        break;
+                    }
+                }
+            }
+            if (empty($featuredImage) && !empty($allImagesToSave)) {
+                $featuredImage = $allImagesToSave[0];
+            }
+            if (empty($featuredImage)) {
+                $featuredImage = null;
+            }
+
+            // Ensure the chosen featured image is at index 0
+            if (!empty($allImagesToSave) && in_array($featuredImage, $allImagesToSave)) {
+                $allImagesToSave = array_values(array_unique(array_merge([$featuredImage], $allImagesToSave)));
             }
 
             // Option names parsing
@@ -224,7 +307,8 @@ class ProductController extends AdminController
                 'related_posts_content' => trim($_POST['related_posts_content'] ?? ''),
                 'tags' => trim($_POST['tags'] ?? ''),
                 'featured_image' => $featuredImage,
-                'images' => !empty($orderedImages) ? $orderedImages : $uploadedImages,
+                'images' => !empty($allImagesToSave) ? $allImagesToSave : (!empty($orderedImages) ? $orderedImages : $uploadedImages),
+                'existing_images' => $allImagesToSave,
                 'variants' => $variants,
                 'option_names' => !empty($optionNames) ? json_encode(array_values($optionNames)) : '["Flavor"]',
                 'highlights' => $highlights,
@@ -378,6 +462,18 @@ class ProductController extends AdminController
                                         $vImg = 'assets/images/products/' . $vFileName;
                                     }
                                 }
+                            } elseif (preg_match('#^data:image/(\w+);base64,(.+)$#i', $vImg, $b64Matches)) {
+                                $b64Ext = strtolower($b64Matches[1]);
+                                if ($b64Ext === 'jpeg') $b64Ext = 'jpg';
+                                if (in_array($b64Ext, ['jpg', 'png', 'webp', 'avif', 'gif'])) {
+                                    $b64Decoded = base64_decode($b64Matches[2]);
+                                    if ($b64Decoded !== false) {
+                                        $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $b64Ext;
+                                        if (@file_put_contents($varDir . $vFileName, $b64Decoded)) {
+                                            $vImg = 'assets/images/products/' . $vFileName;
+                                        }
+                                    }
+                                }
                             }
 
                             $varPrice = trim($v['price'] ?? '');
@@ -502,14 +598,78 @@ class ProductController extends AdminController
                 'specs' => $specs
             ];
 
-            if (isset($_POST['existing_images'])) {
-                $data['existing_images'] = $existingImages;
-            }
+            // Combine all unique images that user kept in Media Assets
+            $allImagesToSave = [];
             if (!empty($orderedImages)) {
-                $data['images'] = $orderedImages;
+                foreach ($orderedImages as $oi) {
+                    if (!empty($oi) && !in_array($oi, $allImagesToSave)) $allImagesToSave[] = $oi;
+                }
             } elseif (!empty($uploadedImages)) {
-                $data['images'] = $uploadedImages;
+                foreach ($uploadedImages as $ui) {
+                    if (!empty($ui) && !in_array($ui, $allImagesToSave)) $allImagesToSave[] = $ui;
+                }
             }
+            foreach ($existingImages as $ei) {
+                if (!empty($ei) && !in_array($ei, $allImagesToSave)) $allImagesToSave[] = $ei;
+            }
+
+            // Normalize and preserve variant images, and ensure they are tracked in product gallery
+            if (!empty($variants)) {
+                foreach ($variants as &$v) {
+                    $vImg = trim($v['image_url'] ?? '');
+                    if (!empty($vImg)) {
+                        // Strip full domain / URL scheme if present
+                        if (preg_match('#^https?://[^/]+/(.*)$#i', $vImg, $mUrl)) {
+                            $vImg = $mUrl[1];
+                        }
+                        $vImg = preg_replace('#^[^/]+/assets/#i', 'assets/', $vImg);
+                        $vImg = ltrim($vImg, '/');
+
+                        if (strpos($vImg, 'assets/') === 0 && !empty($vImg)) {
+                            $v['image_url'] = $vImg;
+                            if (!in_array($vImg, $allImagesToSave)) {
+                                $allImagesToSave[] = $vImg;
+                            }
+                        } else {
+                            $v['image_url'] = null;
+                        }
+                    } else {
+                        $v['image_url'] = null;
+                    }
+                }
+                unset($v);
+            }
+
+            // User-chosen featured image handling (via 1-click Set as Featured)
+            $chosenFeatured = ltrim(trim($_POST['image'] ?? ''), '/');
+            $featuredImage = null;
+            if (!empty($chosenFeatured)) {
+                foreach ($allImagesToSave as $imgCandidate) {
+                    if (ltrim(trim($imgCandidate), '/') === $chosenFeatured) {
+                        $featuredImage = $imgCandidate;
+                        break;
+                    }
+                }
+            }
+            if (empty($featuredImage) && !empty($allImagesToSave)) {
+                $featuredImage = $allImagesToSave[0];
+            }
+            if (empty($featuredImage)) {
+                if (isset($_POST['media_assets_managed']) && empty($allImagesToSave)) {
+                    $featuredImage = null;
+                } else {
+                    $featuredImage = !empty($product['featured_image']) && $product['featured_image'] !== 'assets/images/vape-image.webp' ? $product['featured_image'] : null;
+                }
+            }
+
+            // Ensure the chosen featured image is at index 0
+            if (!empty($allImagesToSave) && in_array($featuredImage, $allImagesToSave)) {
+                $allImagesToSave = array_values(array_unique(array_merge([$featuredImage], $allImagesToSave)));
+            }
+            $data['featured_image'] = $featuredImage;
+            $data['images'] = $allImagesToSave;
+            $data['existing_images'] = $allImagesToSave;
+
             if ($variants !== null) {
                 $data['variants'] = $variants;
             }
@@ -535,7 +695,7 @@ class ProductController extends AdminController
         $collections = Collection::all();
         $brands = Brand::all();
         $images = Product::getRawImages($id);
-        if (empty($images) && !empty($product['featured_image'])) {
+        if (empty($images) && !empty($product['featured_image']) && $product['featured_image'] !== 'assets/images/vape-image.webp' && $product['featured_image'] !== 'assets/images/no-image.svg') {
             $images = [['image_url' => $product['featured_image']]];
         }
         $rawVariants = Product::getRawVariants($id);
@@ -557,6 +717,57 @@ class ProductController extends AdminController
             'error' => get_flash('error'),
             'success' => get_flash('success')
         ]);
+    }
+
+    /**
+     * AJAX endpoint to immediately upload a variant image and return its URL
+     */
+    public function uploadVariantImage()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: POST, OPTIONS');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
+            exit;
+        }
+
+        if (empty($_FILES['image']['name']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'error' => 'No image uploaded or upload error.']);
+            exit;
+        }
+
+        $varDir = ROOT_PATH . '/public/assets/images/products/';
+        if (!is_dir($varDir)) {
+            @mkdir($varDir, 0777, true);
+        }
+
+        $tmpName = $_FILES['image']['tmp_name'];
+        $cleanExt = null;
+        if (!is_valid_image_upload($tmpName, $_FILES['image']['name'], $cleanExt)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid image format. Supports PNG, JPG, WEBP, AVIF.']);
+            exit;
+        }
+
+        $fileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $cleanExt;
+        if (!@move_uploaded_file($tmpName, $varDir . $fileName)) {
+            echo json_encode(['success' => false, 'error' => 'Failed to save image to filesystem.']);
+            exit;
+        }
+
+        $relUrl = 'assets/images/products/' . $fileName;
+        echo json_encode([
+            'success' => true,
+            'image_url' => $relUrl,
+            'asset_url' => asset($relUrl)
+        ]);
+        exit;
     }
 
     /**

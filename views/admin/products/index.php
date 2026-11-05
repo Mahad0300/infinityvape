@@ -102,7 +102,9 @@ include dirname(__DIR__) . '/includes/header.php';
           <?php if (!empty($products)): ?>
             <?php foreach ($products as $p): ?>
               <?php
-                $imgSrc = !empty($p['featured_image']) ? asset($p['featured_image']) : (!empty($p['img']) ? asset($p['img']) : asset('assets/images/no-image.svg'));
+                $imgSrc = !empty($p['featured_image']) && $p['featured_image'] !== 'assets/images/vape-image.webp' 
+                    ? asset($p['featured_image']) 
+                    : (!empty($p['img']) && $p['img'] !== 'assets/images/vape-image.webp' ? asset($p['img']) : asset('assets/images/no-image.svg'));
                 $priceVal = (float)str_replace(['$', ','], '', $p['base_price'] ?? $p['price'] ?? 0);
                 $variantsCount = (int)($p['variants_count'] ?? 0);
                 $stockVal = (int)($p['calculated_stock'] ?? $p['stock_quantity'] ?? $p['stock'] ?? 0);

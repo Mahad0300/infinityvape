@@ -30,353 +30,13 @@ $comparePrice = !empty($product['compare_price']) ? (float) $product['compare_pr
 $hasDiscount = ($comparePrice > $basePrice);
 $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
 
-$page_title       = $page_title ?? ($productTitle . ' | Infinity Vape Shop');
-$meta_description = $meta_description ?? (!empty($product['meta_desc']) ? $product['meta_desc'] : (!empty($product['short_description']) ? $product['short_description'] : ''));
-$canonical_url    = $canonical_url ?? url('product/' . urlencode(!empty($product['slug']) ? $product['slug'] : $product['id']));
-$page_js          = 'product';
+$page_title = $page_title ?? (!empty($product['seo_title']) ? trim($product['seo_title']) : $productTitle);
+$meta_description = $meta_description ?? (!empty($product['seo_description']) ? trim($product['seo_description']) : (!empty($product['short_desc']) ? trim(preg_replace('/\s+/', ' ', strip_tags($product['short_desc']))) : (!empty($product['long_desc']) ? mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags($product['long_desc']))), 0, 160) : '')));
+$canonical_url = $canonical_url ?? url('product/' . urlencode(!empty($product['slug']) ? $product['slug'] : $product['id']));
+$page_js = 'product';
 
 include dirname(__DIR__) . '/includes/header.php';
 ?>
-
-<style>
-/* Product Image Gallery & Layout (50% / 50% Grid) */
-.product-main-grid {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-  gap: 44px !important;
-  align-items: start !important;
-}
-
-.product-gallery-col {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-}
-
-.product-gallery-sticky {
-  position: sticky !important;
-  top: 24px !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-}
-
-.product-main-image-card {
-  position: relative !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 auto !important;
-  aspect-ratio: 1 / 1 !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 16px !important;
-  padding: 24px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  overflow: hidden !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
-}
-
-/* Main Large Image Hover Navigation Buttons (< and >) */
-.main-image-nav-btn {
-  position: absolute !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
-  color: #0f172a !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  z-index: 10 !important;
-  opacity: 0 !important;
-  transition: all 0.25s ease !important;
-  backdrop-filter: blur(4px) !important;
-}
-
-.product-main-image-card:hover .main-image-nav-btn {
-  opacity: 1 !important;
-}
-
-.main-image-nav-btn:hover {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #0f172a !important;
-  transform: translateY(-50%) scale(1.08) !important;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25) !important;
-}
-
-.main-image-nav-btn.prev {
-  left: 16px !important;
-}
-
-.main-image-nav-btn.next {
-  right: 16px !important;
-}
-
-/* Horizontal Scrollable Thumbnails Container */
-.product-thumbnails-wrap {
-  position: relative !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 16px auto 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-  display: flex !important;
-  align-items: center !important;
-  transition: padding 0.15s ease !important;
-}
-
-.product-thumbnails-wrap.has-scroll {
-  padding: 0 38px !important; /* Space for arrow buttons ONLY when scroll is needed */
-}
-
-.product-thumbnails-track {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 10px !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  padding: 4px 2px !important;
-  scroll-behavior: smooth !important;
-  -webkit-overflow-scrolling: touch !important;
-  /* Scrollbar completely hidden */
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-.product-thumbnails-track::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.product-thumb-btn {
-  width: 76px !important;
-  height: 76px !important;
-  flex: 0 0 76px !important;
-  background-color: #ffffff !important;
-  border: 2px solid #e2e8f0 !important;
-  border-radius: 10px !important;
-  padding: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  overflow: hidden !important;
-}
-
-.product-thumb-btn img {
-  max-width: 100% !important;
-  max-height: 100% !important;
-  object-fit: contain !important;
-}
-
-.product-thumb-btn:hover {
-  border-color: #94a3b8 !important;
-  transform: translateY(-2px) !important;
-}
-
-.product-thumb-btn.active {
-  border-color: #f25c27 !important;
-  box-shadow: 0 0 0 2px rgba(242, 92, 39, 0.25) !important;
-  background-color: #ffffff !important;
-}
-
-/* Thumbnail Navigation Arrows (Visible ONLY when thumbnails exceed container width) */
-.thumb-scroll-btn {
-  display: none !important;
-  position: absolute !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 50% !important;
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
-  color: #0f172a !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  z-index: 5 !important;
-  pointer-events: auto !important;
-  transition: all 0.2s ease !important;
-}
-
-.product-thumbnails-wrap.has-scroll .thumb-scroll-btn {
-  display: flex !important;
-}
-
-.thumb-scroll-btn:hover {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #0f172a !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25) !important;
-  transform: translateY(-50%) scale(1.08) !important;
-}
-
-.thumb-scroll-btn.thumb-scroll-prev {
-  left: 0 !important;
-}
-
-.thumb-scroll-btn.thumb-scroll-next {
-  right: 0 !important;
-}
-
-.thumb-scroll-btn:disabled,
-.thumb-scroll-btn.is-disabled {
-  opacity: 0.35 !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
-  background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #94a3b8 !important;
-}
-
-@media (max-width: 991px) {
-  .product-main-grid {
-    grid-template-columns: 1fr !important;
-    gap: 36px !important;
-  }
-  .main-image-nav-btn {
-    opacity: 0.9 !important;
-  }
-}
-
-/* Modern eCommerce Variant Options & Badges */
-.product-variants-wrapper {
-  margin-top: 6px;
-  margin-bottom: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.variant-option-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.variant-option-header {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 0.92rem;
-  line-height: 1.25;
-}
-
-.variant-option-label {
-  font-weight: 700;
-  color: #082142;
-  letter-spacing: -0.01em;
-}
-
-.variant-selected-value {
-  font-weight: 600;
-  color: #475569;
-}
-
-.variant-badges-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-}
-
-.variant-badge-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  min-height: 38px;
-  border-radius: 6px;
-  border: 1.5px solid #cbd5e1;
-  background-color: #ffffff;
-  color: #1e293b;
-  font-size: 0.88rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-
-.variant-badge-btn:hover {
-  border-color: #082142;
-  color: #082142;
-}
-
-/* Active Selected Badge State (Rock Solid, Zero Layout Shift) */
-.variant-badge-btn.active {
-  background-color: #082142 !important;
-  border-color: #082142 !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(8, 33, 66, 0.2) !important;
-}
-
-/* Out of Stock & Disabled Pill Style */
-.variant-badge-btn:disabled,
-.variant-badge-btn.is-disabled,
-.variant-badge-btn.is-out-of-stock {
-  opacity: 0.38 !important;
-  background-color: #f8fafc !important;
-  border-color: #bec4cb !important;
-  color: #25292e !important;
-  text-decoration: line-through !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
-  box-shadow: none !important;
-  user-select: none !important;
-}
-
-.variant-badge-btn:disabled:hover,
-.variant-badge-btn.is-disabled:hover,
-.variant-badge-btn.is-out-of-stock:hover {
-  border-color: #e2e8f0 !important;
-  color: #94a3b8 !important;
-  background-color: #f8fafc !important;
-}
-
-/* Out of Stock Add to Cart & Buy Now Buttons */
-.btn-product-add-cart:disabled,
-.btn-product-add-cart.is-disabled,
-.btn-product-buy-now:disabled,
-.btn-product-buy-now.is-disabled {
-  opacity: 0.55 !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
-  box-shadow: none !important;
-}
-
-.btn-product-add-cart:disabled,
-.btn-product-add-cart.is-disabled {
-  background-color: #cbd5e1 !important;
-  color: #64748b !important;
-  border-color: #cbd5e1 !important;
-}
-
-.btn-product-buy-now:disabled,
-.btn-product-buy-now.is-disabled {
-  background-color: #94a3b8 !important;
-  color: #f1f5f9 !important;
-}
-</style>
 
 <!-- ==========================================
      1. BREADCRUMB NAVIGATION
@@ -393,7 +53,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </svg>
       </li>
       <li class="breadcrumb-item">
-        <a href="<?= class_exists('\\App\\Models\\Collection') ? \App\Models\Collection::getUrl($categorySlug) : url('collection/' . urlencode($categorySlug)) ?>"><?= htmlspecialchars($categoryName) ?></a>
+        <a href="<?= class_exists('\App\Models\Collection') ? \App\Models\Collection::getUrl($categorySlug) : url('collection/' . urlencode($categorySlug)) ?>"><?= htmlspecialchars($categoryName) ?></a>
       </li>
       <li class="breadcrumb-separator" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -408,7 +68,7 @@ include dirname(__DIR__) . '/includes/header.php';
 </nav>
 
 <?php if (!empty($isDraftPreview)): ?>
-<div style="background: #fffbeb; border-bottom: 1px solid #fef3c7; color: #92400e; padding: 10px 16px; text-align: center; font-size: 13.5px; font-weight: 600;">
+<div class="draft-preview-banner">
   ⚠️ <strong>Draft Preview Mode:</strong> This product is currently in Draft status and is completely hidden from customers on the public storefront.
 </div>
 <?php endif; ?>
@@ -434,7 +94,9 @@ include dirname(__DIR__) . '/includes/header.php';
             }
           }
           if (empty($galleryList)) {
-            $galleryList[] = !empty($product['featured_image']) ? $product['featured_image'] : (!empty($product['img']) ? $product['img'] : 'assets/images/vape-image.webp');
+            $galleryList[] = !empty($product['featured_image']) && $product['featured_image'] !== 'assets/images/vape-image.webp'
+              ? $product['featured_image'] 
+              : (!empty($product['img']) && $product['img'] !== 'assets/images/vape-image.webp' ? $product['img'] : 'assets/images/no-image.svg');
           }
           $mainImgSrc = $galleryList[0];
           ?>
@@ -450,9 +112,10 @@ include dirname(__DIR__) . '/includes/header.php';
               <img 
                 id="productMainImage" 
                 src="<?= asset($mainImgSrc) ?>" 
+                data-default-src="<?= asset($mainImgSrc) ?>" 
                 alt="<?= htmlspecialchars($productTitle) ?>" 
                 class="product-main-img"
-                onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';"
+                onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';"
               >
             </div>
 
@@ -473,7 +136,7 @@ include dirname(__DIR__) . '/includes/header.php';
             <div class="product-thumbnails-track" id="productThumbnailsTrack">
               <?php foreach ($galleryList as $tIdx => $tImg): ?>
                 <button type="button" class="product-thumb-btn <?= $tIdx === 0 ? 'active' : '' ?>" data-index="<?= $tIdx ?>" data-img="<?= asset($tImg) ?>" aria-label="View product image <?= $tIdx + 1 ?>">
-                  <img src="<?= asset($tImg) ?>" alt="<?= htmlspecialchars($productTitle) ?> thumbnail <?= $tIdx + 1 ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';">
+                  <img src="<?= asset($tImg) ?>" alt="<?= htmlspecialchars($productTitle) ?> thumbnail <?= $tIdx + 1 ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
                 </button>
               <?php endforeach; ?>
             </div>
@@ -526,11 +189,14 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
 
         <!-- Pricing Row -->
-        <div class="product-price-section">
+        <div class="product-price-section" data-base-compare="<?= $comparePrice ?>" data-base-price="<?= $basePrice ?>">
+          <span class="product-price-current">$<?= number_format($basePrice, 2) ?></span>
           <?php if ($hasDiscount): ?>
             <span class="product-price-old">$<?= number_format($comparePrice, 2) ?></span>
           <?php endif; ?>
-          <span class="product-price-current">$<?= number_format($basePrice, 2) ?></span>
+          <?php if ($hasDiscount && $discountPct > 0): ?>
+            <span class="product-discount-pill">SAVE <?= $discountPct ?>%</span>
+          <?php endif; ?>
         </div>
 
         <!-- Stock Status Strip -->
@@ -602,82 +268,82 @@ include dirname(__DIR__) . '/includes/header.php';
         // 1. Resolve configured option names from database (e.g. ["Flavor", "Nicotine Strength"])
         $configuredOptionNames = [];
         if (!empty($product['option_names'])) {
-            if (is_array($product['option_names'])) {
-                $configuredOptionNames = $product['option_names'];
-            } else {
-                $decoded = json_decode($product['option_names'], true);
-                if (is_array($decoded)) {
-                    $configuredOptionNames = $decoded;
-                }
+          if (is_array($product['option_names'])) {
+            $configuredOptionNames = $product['option_names'];
+          } else {
+            $decoded = json_decode($product['option_names'], true);
+            if (is_array($decoded)) {
+              $configuredOptionNames = $decoded;
             }
+          }
         }
 
         // 2. Detect number of dimensions/parts in variant names (e.g. "Banana Ice / 20mg")
         $maxParts = 1;
         foreach ($productVariants as $pv) {
-            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
-            if (count($parts) > $maxParts) {
-                $maxParts = count($parts);
-            }
+          $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+          if (count($parts) > $maxParts) {
+            $maxParts = count($parts);
+          }
         }
 
         // 3. Assign human-friendly labels for each option dimension
         $optionLabels = [];
         for ($i = 0; $i < $maxParts; $i++) {
-            if (!empty($configuredOptionNames[$i])) {
-                $optionLabels[$i] = $configuredOptionNames[$i];
+          if (!empty($configuredOptionNames[$i])) {
+            $optionLabels[$i] = $configuredOptionNames[$i];
+          } else {
+            if ($i === 0) {
+              $optionLabels[$i] = 'Flavor';
+            } elseif ($i === 1) {
+              $optionLabels[$i] = 'Strength';
+            } elseif ($i === 2) {
+              $optionLabels[$i] = 'Size';
             } else {
-                if ($i === 0) {
-                    $optionLabels[$i] = 'Flavor';
-                } elseif ($i === 1) {
-                    $optionLabels[$i] = 'Strength';
-                } elseif ($i === 2) {
-                    $optionLabels[$i] = 'Size';
-                } else {
-                    $optionLabels[$i] = 'Option ' . ($i + 1);
-                }
+              $optionLabels[$i] = 'Option ' . ($i + 1);
             }
+          }
         }
 
         // 4. Collect unique values for each option level while preserving order
         $optionValuesMap = array_fill(0, $maxParts, []);
         foreach ($productVariants as $pv) {
-            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
-            for ($i = 0; $i < $maxParts; $i++) {
-                $val = $parts[$i] ?? ($i === 0 ? $pv['variant_name'] : '');
-                if ($val !== '' && !in_array($val, $optionValuesMap[$i])) {
-                    $optionValuesMap[$i][] = $val;
-                }
+          $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+          for ($i = 0; $i < $maxParts; $i++) {
+            $val = $parts[$i] ?? ($i === 0 ? $pv['variant_name'] : '');
+            if ($val !== '' && !in_array($val, $optionValuesMap[$i])) {
+              $optionValuesMap[$i][] = $val;
             }
+          }
         }
 
         $parsedOptions = [];
         for ($i = 0; $i < $maxParts; $i++) {
-            if (!empty($optionValuesMap[$i])) {
-                $parsedOptions[] = [
-                    'index'  => $i,
-                    'name'   => $optionLabels[$i],
-                    'values' => $optionValuesMap[$i]
-                ];
-            }
+          if (!empty($optionValuesMap[$i])) {
+            $parsedOptions[] = [
+              'index' => $i,
+              'name' => $optionLabels[$i],
+              'values' => $optionValuesMap[$i]
+            ];
+          }
         }
 
         // Resolve default in-stock variant combination
         $defaultVariant = null;
         foreach ($productVariants as $pv) {
-            $st = isset($pv['stock_quantity']) ? (int)$pv['stock_quantity'] : 0;
-            if ($st > 0) {
-                $defaultVariant = $pv;
-                break;
-            }
+          $st = isset($pv['stock_quantity']) ? (int) $pv['stock_quantity'] : 0;
+          if ($st > 0) {
+            $defaultVariant = $pv;
+            break;
+          }
         }
         if (!$defaultVariant && !empty($productVariants)) {
-            $defaultVariant = $productVariants[0];
+          $defaultVariant = $productVariants[0];
         }
 
         $defaultParts = [];
         if ($defaultVariant) {
-            $defaultParts = array_map('trim', explode(' / ', $defaultVariant['variant_name']));
+          $defaultParts = array_map('trim', explode(' / ', $defaultVariant['variant_name']));
         }
         ?>
 
@@ -707,15 +373,24 @@ include dirname(__DIR__) . '/includes/header.php';
           </select>
 
           <!-- Store JSON data for instant client-side switching -->
+          <?php
+          $jsonVariants = array_map(function($var) use ($comparePrice) {
+            if (!isset($var['compare_price']) || $var['compare_price'] === null || $var['compare_price'] === '') {
+              $var['compare_price'] = $comparePrice > 0 ? $comparePrice : null;
+            }
+            return $var;
+          }, $productVariants);
+          ?>
           <script id="productVariantsJson" type="application/json">
-            <?= json_encode($productVariants, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>
+            <?= json_encode($jsonVariants, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>
           </script>
 
           <!-- Dynamic Option Groups (Option 1: Flavor badges, Option 2: Strength badges, etc.) -->
-          <?php foreach ($parsedOptions as $opt): 
+          <?php
+          foreach ($parsedOptions as $opt):
             $currOptIdx = $opt['index'];
             $selectedOptVal = $defaultParts[$currOptIdx] ?? ($opt['values'][0] ?? '');
-          ?>
+            ?>
           <div class="variant-option-group" data-option-index="<?= $currOptIdx ?>">
             <div class="variant-option-header">
               <span class="variant-option-label"><?= htmlspecialchars($opt['name']) ?>:</span>
@@ -724,33 +399,34 @@ include dirname(__DIR__) . '/includes/header.php';
               </span>
             </div>
             <div class="variant-badges-list" role="radiogroup" aria-label="<?= htmlspecialchars($opt['name']) ?>">
-              <?php foreach ($opt['values'] as $vIdx => $val): 
+              <?php
+              foreach ($opt['values'] as $vIdx => $val):
                 $isOutStock = false;
                 if ($currOptIdx === 0) {
-                    // Check if this Option 0 value has ANY stock in any variant
-                    $hasAny = false;
-                    foreach ($productVariants as $pv) {
-                        $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
-                        if (($pParts[0] ?? $pv['variant_name']) === $val && (int)($pv['stock_quantity'] ?? 0) > 0) {
-                            $hasAny = true;
-                            break;
-                        }
+                  // Check if this Option 0 value has ANY stock in any variant
+                  $hasAny = false;
+                  foreach ($productVariants as $pv) {
+                    $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                    if (($pParts[0] ?? $pv['variant_name']) === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
+                      $hasAny = true;
+                      break;
                     }
-                    $isOutStock = !$hasAny;
+                  }
+                  $isOutStock = !$hasAny;
                 } elseif ($currOptIdx === 1 && !empty($defaultParts[0])) {
-                    // Check if combination of default Option 0 + this Option 1 is in stock
-                    $hasStock = false;
-                    foreach ($productVariants as $pv) {
-                        $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
-                        if (($pParts[0] ?? '') === $defaultParts[0] && ($pParts[1] ?? '') === $val && (int)($pv['stock_quantity'] ?? 0) > 0) {
-                            $hasStock = true;
-                            break;
-                        }
+                  // Check if combination of default Option 0 + this Option 1 is in stock
+                  $hasStock = false;
+                  foreach ($productVariants as $pv) {
+                    $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                    if (($pParts[0] ?? '') === $defaultParts[0] && ($pParts[1] ?? '') === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
+                      $hasStock = true;
+                      break;
                     }
-                    $isOutStock = !$hasStock;
+                  }
+                  $isOutStock = !$hasStock;
                 }
                 $isActive = ($val === $selectedOptVal) && !$isOutStock;
-              ?>
+                ?>
               <button 
                 type="button" 
                 class="variant-badge-btn <?= $isActive ? 'active' : '' ?> <?= $isOutStock ? 'is-out-of-stock is-disabled' : '' ?>" 
@@ -772,7 +448,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div class="product-purchase-row" data-in-stock="<?= $isOutOfStock ? '0' : '1' ?>">
           
           <!-- Quantity Counter -->
-          <div class="product-qty-selector" style="<?= $isOutOfStock ? 'opacity: 0.5; pointer-events: none;' : '' ?>">
+          <div class="product-qty-selector">
             <button type="button" class="qty-btn" id="qtyMinus" aria-label="Decrease quantity" <?= $isOutOfStock ? 'disabled' : '' ?>>&minus;</button>
             <input type="number" id="productQuantity" class="qty-input" value="1" min="1" max="99" readonly <?= $isOutOfStock ? 'disabled' : '' ?>>
             <button type="button" class="qty-btn" id="qtyPlus" aria-label="Increase quantity" <?= $isOutOfStock ? 'disabled' : '' ?>>&plus;</button>
@@ -783,7 +459,7 @@ include dirname(__DIR__) . '/includes/header.php';
             type="button" 
             class="btn-product-add-cart <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
             id="btnProductAddToCart"
-            <?= $isOutOfStock ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' ?>
+            <?= $isOutOfStock ? 'disabled' : '' ?>
           >
             <?= $isOutOfStock ? 'Out of Stock' : 'Add to cart' ?>
           </button>
@@ -794,7 +470,7 @@ include dirname(__DIR__) . '/includes/header.php';
           type="button" 
           class="btn-product-buy-now <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
           id="btnProductBuyNow"
-          <?= $isOutOfStock ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : '' ?>
+          <?= $isOutOfStock ? 'disabled' : '' ?>
         >
           Buy it now
         </button>
@@ -907,72 +583,7 @@ $firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
 ?>
 
 <?php if (!empty($tabs)): ?>
-<style>
-/* Rich text styling for Description (Tab 1) & Related Posts (Tab 5) */
-.tab-description-content,
-.related-posts-rich-text {
-  font-size: 15px;
-  line-height: 1.7;
-  color: #1e293b;
-}
-.tab-description-content h1, .related-posts-rich-text h1,
-.tab-description-content h2, .related-posts-rich-text h2,
-.tab-description-content h3, .related-posts-rich-text h3,
-.tab-description-content h4, .related-posts-rich-text h4,
-.tab-description-content h5, .related-posts-rich-text h5,
-.tab-description-content h6, .related-posts-rich-text h6 {
-  color: #082142 !important;
-  font-family: 'Outfit', sans-serif;
-  margin-top: 1.25em;
-  margin-bottom: 0.5em;
-  font-weight: 700;
-  line-height: 1.35;
-}
-.tab-description-content h1, .related-posts-rich-text h1 { font-size: 1.6rem; }
-.tab-description-content h2, .related-posts-rich-text h2 { font-size: 1.4rem; }
-.tab-description-content h3, .related-posts-rich-text h3 { font-size: 1.22rem; }
-.tab-description-content h4, .related-posts-rich-text h4 { font-size: 1.1rem; }
-.tab-description-content h5, .related-posts-rich-text h5 { font-size: 1rem; }
-.tab-description-content h6, .related-posts-rich-text h6 { font-size: 0.9rem; text-transform: uppercase; }
 
-.tab-description-content p,
-.related-posts-rich-text p {
-  margin-bottom: 1em;
-  color: #1e293b !important;
-}
-.tab-description-content a,
-.related-posts-rich-text a {
-  color: #f25c27 !important;
-  text-decoration: underline;
-  font-weight: 600;
-  transition: color 0.15s ease;
-}
-.tab-description-content a:hover,
-.related-posts-rich-text a:hover {
-  color: #db4915 !important;
-}
-.tab-description-content mark, .tab-description-content .rte-highlight,
-.related-posts-rich-text mark, .related-posts-rich-text .rte-highlight {
-  background-color: #fef08a !important;
-  color: #082142 !important;
-  padding: 1px 4px;
-  border-radius: 2px;
-}
-.tab-description-content ul, .related-posts-rich-text ul,
-.tab-description-content ol, .related-posts-rich-text ol {
-  margin: 0 0 1em 1.5em;
-  padding-left: 0;
-  color: #1e293b !important;
-}
-.tab-description-content li, .related-posts-rich-text li {
-  margin-bottom: 0.35em;
-  color: #1e293b !important;
-}
-.tab-description-content span:not(.rte-highlight):not(mark),
-.related-posts-rich-text span:not(.rte-highlight):not(mark) {
-  color: inherit !important;
-}
-</style>
 <section class="product-tabs-section" id="productTabsSection">
   <div class="container">
     
@@ -1187,7 +798,9 @@ $firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
           $relSlug = !empty($rel['slug']) ? $rel['slug'] : $rel['id'];
           $relTitle = !empty($rel['title']) ? $rel['title'] : ($rel['name'] ?? 'Vape Device');
           $relUrl = url('product/' . urlencode($relSlug));
-          $relImg = !empty($rel['featured_image']) ? $rel['featured_image'] : (!empty($rel['img']) ? $rel['img'] : 'assets/images/vape-image.webp');
+          $relImg = !empty($rel['featured_image']) && $rel['featured_image'] !== 'assets/images/vape-image.webp'
+            ? $rel['featured_image'] 
+            : (!empty($rel['img']) && $rel['img'] !== 'assets/images/vape-image.webp' ? $rel['img'] : 'assets/images/no-image.svg');
           if (!preg_match('~^(https?://|//|#)~i', $relImg)) {
             $relImg = url($relImg);
           }
@@ -1198,12 +811,17 @@ $firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
           ?>
         <div class="product-card">
           <div class="product-card-media">
+            <?php if ($relHasDiscount && $relDiscPct > 0): ?>
+              <div class="product-badges">
+                <span class="badge badge-discount">-<?= $relDiscPct ?>%</span>
+              </div>
+            <?php endif; ?>
             <a href="<?= htmlspecialchars($relUrl) ?>" class="product-img-wrap">
               <img src="<?= htmlspecialchars($relImg) ?>" 
                    alt="<?= htmlspecialchars($relTitle) ?>" 
                    class="product-img" 
                    loading="lazy"
-                   onerror="this.onerror=null;this.src='<?= url('assets/images/vape-image.webp') ?>';">
+                   onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
             </a>
             <div class="product-action-wrap">
               <button type="button" class="btn-add-to-cart" data-id="<?= $rel['id'] ?>" data-title="<?= htmlspecialchars($relTitle) ?>" data-price="<?= $relBasePrice ?>" data-image="<?= htmlspecialchars($relImg) ?>">

@@ -2,7 +2,7 @@
 $page_title = 'Edit Product';
 $current_admin_page = 'products';
 $page_script = 'edit-product.js';
-$product_id = isset($_GET['id']) ? (int)$_GET['id'] : 1;
+$product_id = isset($_GET['id']) ? (int) $_GET['id'] : 1;
 include dirname(__DIR__) . '/includes/header.php';
 
 // Dynamic Brands & Collections from Database
@@ -12,17 +12,17 @@ $allCols = \App\Models\Collection::all();
 $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids', 'Disposable', 'Kits', 'Mods', 'Tanks'];
 
 // Dynamic Product Data from Database
-$prodId = (int)($product['id'] ?? $product_id ?? 1);
+$prodId = (int) ($product['id'] ?? $product_id ?? 1);
 $product_data = [
   'id' => $prodId,
   'title' => $product['title'] ?? $product['name'] ?? '',
   'short_desc' => $product['short_desc'] ?? '',
   'description' => $product['long_desc'] ?? $product['description'] ?? '',
   'related_posts_content' => $product['related_posts_content'] ?? '',
-  'price' => (string)($product['base_price'] ?? $product['price'] ?? '0.00'),
-  'compare_price' => (string)($product['compare_price'] ?? ''),
+  'price' => (string) ($product['base_price'] ?? $product['price'] ?? '0.00'),
+  'compare_price' => (string) ($product['compare_price'] ?? ''),
   'sku' => $product['sku'] ?? '',
-  'stock' => (string)($product['stock_quantity'] ?? $product['stock'] ?? 0),
+  'stock' => (string) ($product['stock_quantity'] ?? $product['stock'] ?? 0),
   'brand' => $product['brand'] ?? '',
   'collection' => $product['category'] ?? '',
   'status' => $product['status'] ?? 'published',
@@ -31,7 +31,7 @@ $product_data = [
   'seo_desc' => $product['seo_description'] ?? '',
   'slug' => $product['slug'] ?? '',
   'image' => $product['featured_image'] ?? $product['img'] ?? '',
-  'bundle_banner_active' => (int)($product['bundle_banner_active'] ?? 0),
+  'bundle_banner_active' => (int) ($product['bundle_banner_active'] ?? 0),
   'bundle_banner_img' => $product['bundle_banner_img'] ?? '',
   'bundle_banner_link' => $product['bundle_banner_link'] ?? ''
 ];
@@ -233,16 +233,23 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
 
           <!-- Top 4 Feature -->
           <?php
-            $hlPuffs = ''; $hlNic = ''; $hlBat = ''; $hlCap = '';
-            if (!empty($highlights)) {
-              foreach ($highlights as $hl) {
-                $icon = strtolower($hl['icon_type'] ?? $hl['spec_key'] ?? '');
-                if (strpos($icon, 'puff') !== false) $hlPuffs = $hl['spec_value'];
-                elseif (strpos($icon, 'nic') !== false) $hlNic = $hl['spec_value'];
-                elseif (strpos($icon, 'bat') !== false) $hlBat = $hl['spec_value'];
-                elseif (strpos($icon, 'cap') !== false) $hlCap = $hl['spec_value'];
-              }
+          $hlPuffs = '';
+          $hlNic = '';
+          $hlBat = '';
+          $hlCap = '';
+          if (!empty($highlights)) {
+            foreach ($highlights as $hl) {
+              $icon = strtolower($hl['icon_type'] ?? $hl['spec_key'] ?? '');
+              if (strpos($icon, 'puff') !== false)
+                $hlPuffs = $hl['spec_value'];
+              elseif (strpos($icon, 'nic') !== false)
+                $hlNic = $hl['spec_value'];
+              elseif (strpos($icon, 'bat') !== false)
+                $hlBat = $hl['spec_value'];
+              elseif (strpos($icon, 'cap') !== false)
+                $hlCap = $hl['spec_value'];
             }
+          }
           ?>
           <div style="margin-top: 20px;">
             <div style="margin-bottom: 12px;">
@@ -286,6 +293,7 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
         </div>
         <div class="admin-card-body">
           <input type="file" id="productMediaInput" name="product_images[]" multiple accept="image/*" class="d-none">
+          <input type="hidden" name="media_assets_managed" value="1">
           <input type="hidden" name="image" id="productImageUrl" value="<?= e($product_data['image']) ?>">
           <input type="hidden" name="featured_image_index" id="featuredImageIndex" value="0">
           
@@ -301,15 +309,34 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
 
           <div class="media-preview-grid" id="mediaPreviewGrid" style="<?= empty($images) && empty($product_data['image']) ? 'display: none;' : '' ?>">
             <?php if (!empty($images)): ?>
+              <?php 
+                $featuredImgPath = ltrim(trim($product_data['image'] ?? ($product['featured_image'] ?? '')), '/');
+                $featuredFound = false;
+                // If featuredImgPath matches an image in $images, mark it; otherwise default to index 0
+                foreach ($images as $im) {
+                  if (!empty($featuredImgPath) && ltrim(trim($im['image_url']), '/') === $featuredImgPath) {
+                    $featuredFound = true;
+                    break;
+                  }
+                }
+              ?>
               <?php foreach ($images as $idx => $img): ?>
-                <div class="media-preview-item <?= $idx === 0 ? 'is-featured' : '' ?>" data-existing="1">
+                <?php 
+                  $currPath = ltrim(trim($img['image_url']), '/');
+                  $isFeatured = $featuredFound ? ($currPath === $featuredImgPath) : ($idx === 0);
+                ?>
+                <div class="media-preview-item <?= $isFeatured ? 'is-featured' : '' ?>" data-existing="1">
                   <img src="<?= asset($img['image_url']) ?>" alt="Product image">
                   <input type="hidden" name="existing_images[]" value="<?= htmlspecialchars($img['image_url']) ?>">
                   <button type="button" class="media-preview-remove btn-remove-existing-img" title="Remove">&times;</button>
-                  <?php if ($idx === 0): ?><span class="media-preview-badge">★ Featured</span><?php endif; ?>
+                  <?php if ($isFeatured): ?>
+                    <span class="media-preview-badge">★ Featured</span>
+                  <?php else: ?>
+                    <button type="button" class="media-set-featured-btn" title="Set as featured image">Set as Featured</button>
+                  <?php endif; ?>
                 </div>
               <?php endforeach; ?>
-            <?php elseif (!empty($product_data['image'])): ?>
+            <?php elseif (!empty($product_data['image']) && $product_data['image'] !== 'assets/images/vape-image.webp' && $product_data['image'] !== 'assets/images/no-image.svg'): ?>
               <div class="media-preview-item is-featured" data-existing="1">
                 <img src="<?= asset($product_data['image']) ?>" alt="Main product image">
                 <input type="hidden" name="existing_images[]" value="<?= htmlspecialchars($product_data['image']) ?>">
@@ -442,12 +469,11 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
                       <th style="width: 130px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Price</th>
                       <th style="width: 135px; min-width: 135px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Available</th>
                       <th style="min-width: 160px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">SKU</th>
-                      <th style="width: 44px; text-align: right; padding: 10px 14px;"></th>
                     </tr>
                   </thead>
                   <tbody id="variantsTableBody">
                     <tr id="emptyVariantsRow">
-                      <td colspan="6" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
+                      <td colspan="5" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="margin: 0 auto 8px; display: block; stroke: #94a3b8;">
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -743,13 +769,13 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
             <div class="admin-form-group">
               <label for="seoTitleInput" class="admin-form-label">SEO Meta Title</label>
               <input type="text" id="seoTitleInput" name="seo_title" class="admin-form-input" placeholder="Enter custom SEO title" maxlength="70" value="<?php echo htmlspecialchars($product_data['seo_title']); ?>">
-              <div class="char-counter"><span id="seoTitleCount">0</span> of 70 characters used</div>
+              <div class="char-counter"><span id="seoTitleCount"><?php echo mb_strlen($product_data['seo_title'] ?? ''); ?></span> of 70 characters used</div>
             </div>
 
             <div class="admin-form-group">
               <label for="seoDescInput" class="admin-form-label">SEO Meta Description</label>
               <textarea id="seoDescInput" name="seo_description" class="admin-form-textarea" rows="3" placeholder="Enter meta description for search engines..." maxlength="320"><?php echo htmlspecialchars($product_data['seo_desc']); ?></textarea>
-              <div class="char-counter"><span id="seoDescCount">0</span> of 320 characters used</div>
+              <div class="char-counter"><span id="seoDescCount"><?php echo mb_strlen($product_data['seo_desc'] ?? ''); ?></span> of 320 characters used</div>
             </div>
 
             <div class="admin-form-group">
@@ -768,9 +794,19 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
               <span>Infinity Vape Shop</span>
             </div>
+            <?php
+            $initialPreviewTitle = !empty($product_data['seo_title']) ? $product_data['seo_title'] : (!empty($product_data['title']) ? $product_data['title'] : 'Product Title');
+            $initialPreviewDesc = !empty($product_data['seo_desc']) ? $product_data['seo_desc'] : (!empty($product_data['short_desc']) ? $product_data['short_desc'] : (!empty($product_data['description']) ? trim(preg_replace('/\s+/', ' ', strip_tags($product_data['description']))) : ''));
+            if (mb_strlen($initialPreviewDesc) > 160) {
+              $initialPreviewDesc = mb_substr($initialPreviewDesc, 0, 157) . '...';
+            }
+            if (empty($initialPreviewDesc)) {
+              $initialPreviewDesc = 'Product description will appear in search results...';
+            }
+            ?>
             <div class="seo-preview-url" id="seoPreviewUrl">www.infinityvapeshop.com/products/<?php echo $product_data['slug'] ?: 'product-handle'; ?></div>
-            <div class="seo-preview-title" id="seoPreviewTitle"><?php echo htmlspecialchars($product_data['title']) ?: 'Product Title'; ?></div>
-            <div class="seo-preview-desc" id="seoPreviewDesc"><?php echo htmlspecialchars($product_data['seo_desc']) ?: 'Product description will appear in search results...'; ?></div>
+            <div class="seo-preview-title" id="seoPreviewTitle"><?php echo htmlspecialchars($initialPreviewTitle); ?></div>
+            <div class="seo-preview-desc" id="seoPreviewDesc"><?php echo htmlspecialchars($initialPreviewDesc); ?></div>
           </div>
 
         </div>

@@ -11,116 +11,6 @@ $allCols = \App\Models\Collection::all();
 $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids', 'Disposable', 'Kits', 'Mods', 'Tanks'];
 ?>
 
-<style>
-.rte-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  background: #f8fafc;
-  padding: 8px 10px;
-  border-bottom: 1px solid #cbd5e1;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-}
-.rte-format-select {
-  height: 30px;
-  padding: 2px 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-  min-width: 140px;
-  transition: all 0.15s ease;
-}
-.rte-format-select:focus {
-  border-color: #082142;
-}
-.rte-divider {
-  width: 1px;
-  height: 20px;
-  background: #cbd5e1;
-  margin: 0 3px;
-}
-.rte-toolbar button {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  padding: 4px 9px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  height: 30px;
-  transition: all 0.15s ease;
-}
-.rte-toolbar button:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
-}
-.rte-toolbar button:active {
-  background: #e2e8f0;
-}
-.highlight-swatch {
-  display: inline-block;
-  width: 13px;
-  height: 13px;
-  background: #fde047;
-  border: 1px solid #ca8a04;
-  border-radius: 2px;
-  margin-right: 5px;
-}
-.rte-editor-content {
-  min-height: 200px;
-  padding: 14px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: #1e293b;
-  outline: none;
-}
-.rte-editor-content:empty::before {
-  content: attr(data-placeholder);
-  color: #94a3b8;
-  pointer-events: none;
-}
-.rte-editor-content h1,
-.rte-editor-content h2,
-.rte-editor-content h3,
-.rte-editor-content h4,
-.rte-editor-content h5,
-.rte-editor-content h6 {
-  color: #082142 !important;
-}
-.rte-editor-content h1 { font-size: 1.5rem; font-weight: 800; margin: 16px 0 8px; }
-.rte-editor-content h2 { font-size: 1.35rem; font-weight: 700; margin: 14px 0 6px; }
-.rte-editor-content h3 { font-size: 1.18rem; font-weight: 600; margin: 12px 0 5px; }
-.rte-editor-content h4 { font-size: 1.05rem; font-weight: 600; margin: 10px 0 4px; }
-.rte-editor-content h5 { font-size: 0.95rem; font-weight: 600; margin: 8px 0 3px; }
-.rte-editor-content h6 { font-size: 0.88rem; font-weight: 600; margin: 8px 0 3px; text-transform: uppercase; }
-.rte-editor-content p,
-.rte-editor-content li,
-.rte-editor-content div {
-  color: #1e293b !important;
-}
-.rte-editor-content span:not(.rte-highlight):not(mark) {
-  color: inherit !important;
-}
-.rte-editor-content p { margin: 0 0 8px; }
-.rte-editor-content ul, .rte-editor-content ol { margin: 0 0 10px 22px; padding-left: 0; }
-.rte-editor-content li { margin-bottom: 4px; }
-.rte-editor-content a { color: #f25c27 !important; text-decoration: underline; font-weight: 600; }
-.rte-editor-content mark, .rte-editor-content .rte-highlight { background-color: #fef08a !important; padding: 1px 3px; border-radius: 2px; color: #082142 !important; }
-</style>
-
 <!-- Title & Action Bar -->
 <div class="page-title-bar">
   <div class="page-heading-group">
@@ -237,6 +127,7 @@ $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids',
         </div>
         <div class="admin-card-body">
           <input type="file" id="productMediaInput" name="product_images[]" multiple accept="image/*" class="d-none">
+          <input type="hidden" name="media_assets_managed" value="1">
           <input type="hidden" name="image" id="productImageUrl" value="">
           <input type="hidden" name="featured_image_index" id="featuredImageIndex" value="0">
           
@@ -373,12 +264,11 @@ $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids',
                       <th style="width: 130px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Price</th>
                       <th style="width: 135px; min-width: 135px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">Available</th>
                       <th style="min-width: 160px; font-size: 12px; font-weight: 600; color: #475569; padding: 10px 14px; text-align: left;">SKU</th>
-                      <th style="width: 44px; text-align: right; padding: 10px 14px;"></th>
                     </tr>
                   </thead>
                   <tbody id="variantsTableBody">
                     <tr id="emptyVariantsRow">
-                      <td colspan="6" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
+                      <td colspan="5" class="variant-empty-cell" style="padding: 32px 20px; text-align: center; color: #64748b;">
                         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" style="margin: 0 auto 8px; display: block; stroke: #94a3b8;">
                           <circle cx="12" cy="12" r="10"></circle>
                           <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -607,7 +497,6 @@ $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids',
           </div>
         </div>
       </div>
-
 
       <!-- 8. Search Engine Listing (SEO) Card -->
       <div class="admin-card">

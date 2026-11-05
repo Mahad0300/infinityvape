@@ -84,6 +84,7 @@ return [
     'admin/edit-product.php'=>[\App\Controllers\Admin\ProductController::class, 'edit'],
     'admin/delete-product' => [\App\Controllers\Admin\ProductController::class, 'delete'],
     'admin/delete-product.php'=>[\App\Controllers\Admin\ProductController::class, 'delete'],
+    'admin/upload-variant-image' => [\App\Controllers\Admin\ProductController::class, 'uploadVariantImage'],
     'admin/inventory'      => [\App\Controllers\Admin\InventoryController::class, 'index'],
     'admin/inventory.php'  => [\App\Controllers\Admin\InventoryController::class, 'index'],
     'admin/inventory/update'=>[\App\Controllers\Admin\InventoryController::class, 'update'],

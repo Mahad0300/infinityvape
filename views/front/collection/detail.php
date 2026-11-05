@@ -364,7 +364,9 @@ include dirname(__DIR__) . '/includes/header.php';
               $pUrl   = url('product/' . urlencode($pSlug));
               
               // Clean image url with proper fallback
-              $pImg = !empty($p['featured_image']) ? $p['featured_image'] : 'assets/images/vape-image.webp';
+              $pImg = !empty($p['featured_image']) && $p['featured_image'] !== 'assets/images/vape-image.webp' 
+                  ? $p['featured_image'] 
+                  : (!empty($p['img']) && $p['img'] !== 'assets/images/vape-image.webp' ? $p['img'] : 'assets/images/no-image.svg');
               if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
                   $pImg = url($pImg);
               }
@@ -428,12 +430,17 @@ include dirname(__DIR__) . '/includes/header.php';
               
               <!-- Card Media & Badges -->
               <div class="card-media-box">
+                <?php if ($hasDiscount && $discountPct > 0): ?>
+                  <div class="card-badges-wrap">
+                    <span class="badge-discount-tag">-<?= $discountPct ?>%</span>
+                  </div>
+                <?php endif; ?>
                 <a href="<?= htmlspecialchars($pUrl) ?>" class="card-img-link">
                   <img src="<?= htmlspecialchars($pImg) ?>" 
                        alt="<?= htmlspecialchars($pTitle) ?>" 
                        class="card-product-img" 
                        loading="lazy"
-                       onerror="this.onerror=null;this.src='<?= url('assets/images/vape-image.webp') ?>';">
+                       onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
                 </a>
 
                 <button type="button" class="btn-card-add-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= $basePrice ?>">

@@ -11,18 +11,28 @@ if (!isset($page_title)) {
 if (empty($meta_description)) {
     if (!empty($meta_desc)) {
         $meta_description = $meta_desc;
+    } elseif (!empty($collection['seo_description'])) {
+        $meta_description = $collection['seo_description'];
     } elseif (!empty($collection['meta_desc'])) {
         $meta_description = $collection['meta_desc'];
     } elseif (!empty($collection['short_description'])) {
         $meta_description = $collection['short_description'];
+    } elseif (!empty($product['seo_description'])) {
+        $meta_description = $product['seo_description'];
+    } elseif (!empty($product['short_desc'])) {
+        $meta_description = $product['short_desc'];
+    } elseif (!empty($product['long_desc'])) {
+        $meta_description = $product['long_desc'];
     } elseif (!empty($product['meta_desc'])) {
         $meta_description = $product['meta_desc'];
     } elseif (!empty($product['short_description'])) {
         $meta_description = $product['short_description'];
     } elseif (!empty($page_description)) {
         $meta_description = $page_description;
-    } else {
+    } elseif (!isset($product)) {
         $meta_description = 'Shop authentic disposable vapes, premium e-liquids, nicotine pouches, and vaping accessories at Infinity Vape Shop. Fast shipping & best online prices.';
+    } else {
+        $meta_description = '';
     }
 }
 $meta_description = trim(preg_replace('/\s+/', ' ', strip_tags($meta_description)));
@@ -115,7 +125,10 @@ $formatNavUrl = function($link) {
   <meta property="og:url" content="<?php echo htmlspecialchars($canonical_url); ?>">
   <?php endif; ?>
   <meta property="og:site_name" content="Infinity Vape Shop">
-  <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
+  <base href="<?php echo function_exists('base_url') ? rtrim(base_url(), '/') . '/' : ''; ?>">
+  <script>
+    window.APP_BASE_URL = "<?php echo function_exists('base_url') ? rtrim(base_url(), '/') : ''; ?>";
+  </script>
   
   <?php if (!empty($page_schema)): ?>
   <?php echo $page_schema; ?>
@@ -127,10 +140,7 @@ $formatNavUrl = function($link) {
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Global Single CSS (All styles organized in style.css) -->
-  <link rel="stylesheet" href="assets/css/style.css?v=1.0.1">
-  <style>
-    .megamenu-grid-2 { grid-template-columns: 240px 240px auto !important; gap: 40px !important; }
-  </style>
+  <link rel="stylesheet" href="assets/css/style.css?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/css/style.css') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/css/style.css') : '1.0.2' ?>">
 </head>
 <body>
 
