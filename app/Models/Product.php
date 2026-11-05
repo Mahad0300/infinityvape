@@ -125,6 +125,15 @@ class Product extends Model
                                COALESCE(c.name, 'Disposables') AS category,
                                c.slug AS category_slug,
                                c.id AS collection_id,
+                               c.parent_id AS collection_parent_id,
+                               CASE 
+                                   WHEN c.parent_id IS NOT NULL AND c.parent_id > 0 AND p_col.id IS NOT NULL THEN p_col.name
+                                   ELSE COALESCE(c.name, 'Disposables')
+                               END AS parent_category_name,
+                               CASE 
+                                   WHEN c.parent_id IS NOT NULL AND c.parent_id > 0 AND p_col.id IS NOT NULL THEN p_col.slug
+                                   ELSE COALESCE(c.slug, 'disposables')
+                               END AS parent_category_slug,
                                COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS img,
                                (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variants_count,
                                COALESCE((SELECT SUM(pv.stock_quantity) FROM product_variants pv WHERE pv.product_id = p.id), p.stock_quantity, 0) AS calculated_stock
@@ -132,6 +141,7 @@ class Product extends Model
                         LEFT JOIN brands b ON p.brand_id = b.id 
                         LEFT JOIN product_collections pc ON p.id = pc.product_id
                         LEFT JOIN collections c ON pc.collection_id = c.id
+                        LEFT JOIN collections p_col ON c.parent_id = p_col.id
                         WHERE " . ($isNumeric ? "p.id = ?" : "(p.slug = ? OR p.custom_url = ?)") . "
                         LIMIT 1";
                 $stmt = $db->prepare($sql);
@@ -631,10 +641,26 @@ class Product extends Model
         $bundleBannerImg = !empty($data['bundle_banner_img']) ? trim($data['bundle_banner_img']) : null;
         $bundleBannerLink = !empty($data['bundle_banner_link']) ? trim($data['bundle_banner_link']) : null;
 
+        $frequentlyBoughtTogether = null;
+        if (!empty($data['frequently_bought_together'])) {
+            if (is_array($data['frequently_bought_together'])) {
+                $fbtClean = array_values(array_slice(array_unique(array_filter(array_map('intval', $data['frequently_bought_together']))), 0, 4));
+                $frequentlyBoughtTogether = !empty($fbtClean) ? json_encode($fbtClean) : null;
+            } elseif (is_string($data['frequently_bought_together'])) {
+                $fbtDecoded = json_decode($data['frequently_bought_together'], true);
+                if (is_array($fbtDecoded)) {
+                    $fbtClean = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtDecoded))), 0, 4));
+                    $frequentlyBoughtTogether = !empty($fbtClean) ? json_encode($fbtClean) : null;
+                } else {
+                    $frequentlyBoughtTogether = trim($data['frequently_bought_together']);
+                }
+            }
+        }
+
         try {
             $sql = "INSERT INTO products 
-                    (brand_id, name, title, sku, slug, custom_url, short_desc, long_desc, related_posts_content, base_price, compare_price, stock_quantity, stock_status, featured_image, status, tags, option_names, seo_title, seo_description, bundle_banner_active, bundle_banner_img, bundle_banner_link)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    (brand_id, name, title, sku, slug, custom_url, short_desc, long_desc, related_posts_content, base_price, compare_price, stock_quantity, stock_status, featured_image, status, tags, option_names, seo_title, seo_description, bundle_banner_active, bundle_banner_img, bundle_banner_link, frequently_bought_together)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -659,7 +685,8 @@ class Product extends Model
                 $seoDescription,
                 $bundleBannerActive,
                 $bundleBannerImg,
-                $bundleBannerLink
+                $bundleBannerLink,
+                $frequentlyBoughtTogether
             ]);
 
             $productId = (int)$db->lastInsertId();
@@ -856,6 +883,25 @@ class Product extends Model
         $bundleBannerImg = array_key_exists('bundle_banner_img', $data) ? $data['bundle_banner_img'] : null;
         $bundleBannerLink = array_key_exists('bundle_banner_link', $data) ? $data['bundle_banner_link'] : null;
 
+        $frequentlyBoughtTogether = $existing['frequently_bought_together'] ?? null;
+        if (array_key_exists('frequently_bought_together', $data)) {
+            if (is_array($data['frequently_bought_together'])) {
+                $fbtClean = array_values(array_slice(array_unique(array_filter(array_map('intval', $data['frequently_bought_together']))), 0, 4));
+                $frequentlyBoughtTogether = !empty($fbtClean) ? json_encode($fbtClean) : null;
+            } elseif (is_string($data['frequently_bought_together'])) {
+                $fbtDecoded = json_decode($data['frequently_bought_together'], true);
+                if (is_array($fbtDecoded)) {
+                    $fbtClean = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtDecoded))), 0, 4));
+                    $frequentlyBoughtTogether = !empty($fbtClean) ? json_encode($fbtClean) : null;
+                } else {
+                    $val = trim($data['frequently_bought_together']);
+                    $frequentlyBoughtTogether = ($val !== '') ? $val : null;
+                }
+            } else {
+                $frequentlyBoughtTogether = null;
+            }
+        }
+
         try {
             if ($hasImageKey) {
                 $sql = "UPDATE products 
@@ -864,6 +910,7 @@ class Product extends Model
                             stock_quantity = ?, stock_status = ?, featured_image = ?, status = ?, 
                             tags = ?, option_names = ?, seo_title = ?, seo_description = ?,
                             bundle_banner_active = ?, bundle_banner_img = ?, bundle_banner_link = ?,
+                            frequently_bought_together = ?,
                             updated_at = CURRENT_TIMESTAMP
                         WHERE id = ?";
                 $params = [
@@ -872,6 +919,7 @@ class Product extends Model
                     $stockQuantity, $stockStatus, $featuredImage, $status,
                     $tags, $optionNames, $seoTitle, $seoDescription,
                     $bundleBannerActive, $bundleBannerImg, $bundleBannerLink,
+                    $frequentlyBoughtTogether,
                     (int)$id
                 ];
             } else {
@@ -881,6 +929,7 @@ class Product extends Model
                             stock_quantity = ?, stock_status = ?, status = ?, 
                             tags = ?, option_names = ?, seo_title = ?, seo_description = ?,
                             bundle_banner_active = ?, bundle_banner_img = ?, bundle_banner_link = ?,
+                            frequently_bought_together = ?,
                             updated_at = CURRENT_TIMESTAMP
                         WHERE id = ?";
                 $params = [
@@ -889,6 +938,7 @@ class Product extends Model
                     $stockQuantity, $stockStatus, $status,
                     $tags, $optionNames, $seoTitle, $seoDescription,
                     $bundleBannerActive, $bundleBannerImg, $bundleBannerLink,
+                    $frequentlyBoughtTogether,
                     (int)$id
                 ];
             }
@@ -1405,5 +1455,187 @@ class Product extends Model
         }
 
         return [];
+    }
+
+    /**
+     * Dynamic Frequently Bought Together products
+     */
+    public static function getFrequentlyBoughtProducts($productOrId)
+    {
+        $db = self::getDB();
+        if (!$db) return [];
+
+        $fbtRaw = null;
+        if (is_array($productOrId)) {
+            $fbtRaw = $productOrId['frequently_bought_together'] ?? null;
+            if ($fbtRaw === null && isset($productOrId['id'])) {
+                $p = self::find($productOrId['id']);
+                $fbtRaw = $p['frequently_bought_together'] ?? null;
+            }
+        } elseif (is_numeric($productOrId)) {
+            $p = self::find((int)$productOrId);
+            $fbtRaw = $p['frequently_bought_together'] ?? null;
+        }
+
+        if (empty($fbtRaw)) return [];
+
+        $ids = [];
+        if (is_array($fbtRaw)) {
+            $ids = array_map('intval', $fbtRaw);
+        } else {
+            $decoded = json_decode($fbtRaw, true);
+            if (is_array($decoded)) {
+                $ids = array_map('intval', $decoded);
+            } else {
+                $ids = array_map('intval', explode(',', $fbtRaw));
+            }
+        }
+
+        $ids = array_values(array_unique(array_filter($ids, function($id) { return $id > 0; })));
+        $ids = array_slice($ids, 0, 4);
+
+        if (empty($ids)) return [];
+
+        try {
+            $inPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+            $sql = "SELECT p.*, 
+                           b.name AS brand,
+                           b.slug AS brand_slug,
+                           COALESCE(c.name, 'Disposable') AS category,
+                           c.slug AS category_slug,
+                           COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS img
+                    FROM products p 
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    LEFT JOIN product_collections pc ON p.id = pc.product_id
+                    LEFT JOIN collections c ON pc.collection_id = c.id
+                    WHERE p.id IN ($inPlaceholders) AND p.status = 'published'
+                    GROUP BY p.id";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($ids);
+            $fetched = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Index by ID
+            $indexed = [];
+            foreach ($fetched as $item) {
+                $indexed[$item['id']] = $item;
+            }
+
+            $results = [];
+            foreach ($ids as $fbtId) {
+                if (isset($indexed[$fbtId])) {
+                    $item = $indexed[$fbtId];
+                    // Fetch variants
+                    $variants = self::getVariants($item['id'], $item);
+                    $item['variants'] = $variants;
+
+                    // Parse option names
+                    $optionNames = [];
+                    if (!empty($item['option_names'])) {
+                        $optDecoded = json_decode($item['option_names'], true);
+                        if (is_array($optDecoded)) {
+                            $optionNames = $optDecoded;
+                        }
+                    }
+                    if (empty($optionNames)) {
+                        $optionNames = ['Flavor'];
+                    }
+                    $item['parsed_option_names'] = $optionNames;
+
+                    // Parse multi-option dimensions if variants exist
+                    $parsedOptions = [];
+                    if (!empty($variants)) {
+                        $maxParts = 1;
+                        foreach ($variants as $pv) {
+                            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+                            if (count($parts) > $maxParts) {
+                                $maxParts = count($parts);
+                            }
+                        }
+
+                        $optionLabels = [];
+                        for ($i = 0; $i < $maxParts; $i++) {
+                            if (!empty($optionNames[$i])) {
+                                $optionLabels[$i] = $optionNames[$i];
+                            } else {
+                                $optionLabels[$i] = ($i === 0) ? 'Flavor' : (($i === 1) ? 'Strength' : (($i === 2) ? 'Size' : 'Option ' . ($i + 1)));
+                            }
+                        }
+
+                        $optionValuesMap = array_fill(0, $maxParts, []);
+                        foreach ($variants as $pv) {
+                            $parts = array_map('trim', explode(' / ', $pv['variant_name']));
+                            for ($i = 0; $i < $maxParts; $i++) {
+                                $val = $parts[$i] ?? ($i === 0 ? $pv['variant_name'] : '');
+                                if ($val !== '' && !in_array($val, $optionValuesMap[$i])) {
+                                    $optionValuesMap[$i][] = $val;
+                                }
+                            }
+                        }
+
+                        for ($i = 0; $i < $maxParts; $i++) {
+                            if (!empty($optionValuesMap[$i])) {
+                                $parsedOptions[] = [
+                                    'index' => $i,
+                                    'name' => $optionLabels[$i],
+                                    'values' => $optionValuesMap[$i]
+                                ];
+                            }
+                        }
+                    }
+                    $item['parsed_options'] = $parsedOptions;
+
+                    // Calculate price range
+                    $prices = [];
+                    if (!empty($variants)) {
+                        foreach ($variants as $v) {
+                            $vp = (float)($v['price'] ?? $item['base_price']);
+                            if ($vp > 0) $prices[] = $vp;
+                        }
+                    }
+                    if (empty($prices)) {
+                        $prices[] = (float)$item['base_price'];
+                    }
+
+                    $minPrice = min($prices);
+                    $maxPrice = max($prices);
+
+                    $item['min_price'] = $minPrice;
+                    $item['max_price'] = $maxPrice;
+                    $item['price_display'] = ($minPrice === $maxPrice) 
+                        ? '$' . number_format($minPrice, 2) 
+                        : '$' . number_format($minPrice, 2) . ' - $' . number_format($maxPrice, 2);
+
+                    // Calculate total stock & stock status
+                    $totalStock = 0;
+                    $firstInStockVariant = null;
+                    if (!empty($variants)) {
+                        foreach ($variants as $v) {
+                            $vStock = (int)($v['stock_quantity'] ?? 0);
+                            $totalStock += $vStock;
+                            if ($vStock > 0 && $firstInStockVariant === null) {
+                                $firstInStockVariant = $v;
+                            }
+                        }
+                        // Product has variants: It is ONLY out of stock if ALL variants have 0 stock!
+                        $isOutOfStock = ($totalStock <= 0);
+                    } else {
+                        $totalStock = (int)($item['stock_quantity'] ?? 0);
+                        $isOutOfStock = ($totalStock <= 0) || (strtolower(str_replace(' ', '_', $item['stock_status'] ?? '')) === 'out_of_stock');
+                    }
+
+                    $item['calculated_stock'] = $totalStock;
+                    $item['is_out_of_stock'] = $isOutOfStock;
+                    $item['first_in_stock_variant'] = $firstInStockVariant ?? (!empty($variants) ? $variants[0] : null);
+
+                    $results[] = $item;
+                }
+            }
+
+            return $results;
+        } catch (\Exception $e) {
+            error_log("Product::getFrequentlyBoughtProducts error: " . $e->getMessage());
+            return [];
+        }
     }
 }

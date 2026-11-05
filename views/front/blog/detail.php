@@ -126,21 +126,21 @@ include dirname(__DIR__) . '/includes/header.php';
              SOCIAL SHARE BUTTONS
              ============================================== -->
         <div class="blog-article-share-bar">
-          <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode(url('blog-detail?slug=' . urlencode($postSlug))) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-fb" aria-label="Share on Facebook">
+          <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode(url('blog/' . urlencode($postSlug))) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-fb" aria-label="Share on Facebook">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
             <span>Share on Facebook</span>
           </a>
 
-          <a href="https://twitter.com/intent/tweet?url=<?= urlencode(url('blog-detail?slug=' . urlencode($postSlug))) ?>&text=<?= urlencode($postTitle) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-x" aria-label="Share on X">
+          <a href="https://twitter.com/intent/tweet?url=<?= urlencode(url('blog/' . urlencode($postSlug))) ?>&text=<?= urlencode($postTitle) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-x" aria-label="Share on X">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
             <span>Share on X</span>
           </a>
 
-          <a href="https://pinterest.com/pin/create/button/?url=<?= urlencode(url('blog-detail?slug=' . urlencode($postSlug))) ?>&description=<?= urlencode($postTitle) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-pinterest" aria-label="Share on Pinterest">
+          <a href="https://pinterest.com/pin/create/button/?url=<?= urlencode(url('blog/' . urlencode($postSlug))) ?>&description=<?= urlencode($postTitle) ?>" target="_blank" rel="noopener noreferrer" class="btn-social-share share-pinterest" aria-label="Share on Pinterest">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path d="M12 0a12 12 0 0 0-4.37 23.18c-.05-.98-.1-2.48.02-3.55l1.04-4.42s-.26-.52-.26-1.3c0-1.22.7-2.13 1.59-2.13.75 0 1.11.56 1.11 1.24 0 .76-.48 1.89-.73 2.94-.21.88.44 1.6 1.3 1.6 1.57 0 2.78-1.65 2.78-4.04 0-2.11-1.52-3.59-3.69-3.59-2.51 0-3.99 1.89-3.99 3.84 0 .76.29 1.58.66 2.02.07.09.08.17.06.26l-.25 1.02c-.04.16-.14.2-.32.12-1.18-.55-1.92-2.27-1.92-3.65 0-2.98 2.16-5.71 6.24-5.71 3.28 0 5.82 2.34 5.82 5.46 0 3.26-2.05 5.88-4.9 5.88-.96 0-1.86-.5-2.17-1.09l-.59 2.26c-.22.84-.8 1.89-1.2 2.52A12 12 0 1 0 12 0z"/>
             </svg>
@@ -205,7 +205,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <ul class="recent-posts-list">
             <?php foreach ($recentPosts as $rp): 
               $rpSlug = !empty($rp['slug']) ? $rp['slug'] : $rp['id'];
-              $rpUrl = url('blog-detail?slug=' . urlencode($rpSlug));
+              $rpUrl = url('blog/' . urlencode($rpSlug));
               $rpImg = !empty($rp['featured_image_url']) ? $rp['featured_image_url'] : 'assets/images/blog-1.jpg';
               if (!preg_match('~^(https?://|//|#)~i', $rpImg)) {
                   $rpImg = url($rpImg);
@@ -239,7 +239,7 @@ include dirname(__DIR__) . '/includes/header.php';
         ?>
         <?php if ($featDetail): 
           $fdSlug = !empty($featDetail['slug']) ? $featDetail['slug'] : $featDetail['id'];
-          $fdUrl = url('blog-detail?slug=' . urlencode($fdSlug));
+          $fdUrl = url('blog/' . urlencode($fdSlug));
           $fdImg = !empty($featDetail['featured_image_url']) ? $featDetail['featured_image_url'] : 'assets/images/blog-1.jpg';
           if (!preg_match('~^(https?://|//|#)~i', $fdImg)) {
               $fdImg = url($fdImg);
@@ -271,7 +271,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <ul class="popular-posts-list">
             <?php foreach ($popularPosts as $pop): 
               $popSlug = !empty($pop['slug']) ? $pop['slug'] : $pop['id'];
-              $popUrl = url('blog-detail?slug=' . urlencode($popSlug));
+              $popUrl = url('blog/' . urlencode($popSlug));
               $popImg = !empty($pop['featured_image_url']) ? $pop['featured_image_url'] : 'assets/images/blog-3.jpg';
               if (!preg_match('~^(https?://|//|#)~i', $popImg)) {
                   $popImg = url($popImg);

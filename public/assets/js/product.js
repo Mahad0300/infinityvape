@@ -232,8 +232,285 @@ document.addEventListener('DOMContentLoaded', () => {
     return matched || null;
   }
 
+  function syncCustomItemState(cItem, inStock, isSelected) {
+    if (!cItem) return;
+    if (!inStock) {
+      cItem.classList.add('is-disabled');
+      cItem.setAttribute('aria-disabled', 'true');
+      cItem.classList.remove('is-selected');
+      cItem.setAttribute('aria-selected', 'false');
+      if (!cItem.querySelector('.item-badge-out')) {
+        const out = document.createElement('span');
+        out.className = 'item-badge-out';
+        out.textContent = 'Out of stock';
+        cItem.appendChild(out);
+      }
+    } else {
+      cItem.classList.remove('is-disabled');
+      cItem.removeAttribute('aria-disabled');
+      const out = cItem.querySelector('.item-badge-out');
+      if (out) out.remove();
+      cItem.classList.toggle('is-selected', isSelected);
+      cItem.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+    }
+  }
+
   function updateBadgesAvailability() {
     if (!variantsWrapper || productVariantsList.length === 0) return;
+
+    const customSelects = Array.from(variantsWrapper.querySelectorAll('.custom-variant-select'));
+    const dropdowns = Array.from(variantsWrapper.querySelectorAll('.variant-dropdown-select'));
+
+    if (customSelects.length > 0) {
+      const maxDims = customSelects.length;
+      if (maxDims === 1) {
+        const cSelect = customSelects[0];
+        const select = cSelect.querySelector('.variant-dropdown-select');
+        const menu = cSelect.querySelector('.custom-variant-menu');
+
+        Array.from(select.options).forEach((opt) => {
+          const val = opt.value.trim().toLowerCase();
+          const v = productVariantsList.find(
+            (item) => (item.variant_name || '').trim().toLowerCase() === val
+          );
+          const stock = v ? parseInt(v.stock_quantity, 10) : 0;
+          const orig = opt.getAttribute('data-original-text') || opt.value;
+          if (!opt.hasAttribute('data-original-text')) {
+            opt.setAttribute('data-original-text', orig);
+          }
+          const inStock = stock > 0;
+          opt.disabled = !inStock;
+          opt.textContent = inStock ? orig : `${orig} (Out of stock)`;
+
+          if (menu) {
+            const cItem = menu.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+            syncCustomItemState(cItem, inStock, opt.value === select.value);
+          }
+        });
+
+        // Ensure active selection is in-stock
+        if (select.selectedOptions.length === 0 || select.selectedOptions[0].disabled) {
+          const firstAvail = Array.from(select.options).find(o => !o.disabled);
+          if (firstAvail) {
+            select.value = firstAvail.value;
+          }
+        }
+        const activeVal = select.value;
+        const lbl = document.getElementById('selectedVal-0');
+        if (lbl) lbl.textContent = activeVal;
+        const trigVal = cSelect.querySelector('.custom-variant-current-val');
+        if (trigVal) trigVal.textContent = activeVal;
+        if (menu) {
+          menu.querySelectorAll('.custom-variant-item').forEach(it => {
+            const isMatch = it.getAttribute('data-value') === activeVal && !it.classList.contains('is-disabled');
+            it.classList.toggle('is-selected', isMatch);
+            it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+          });
+        }
+      } else {
+        // Multi-Option Dimensions (e.g. Option 0 = Flavor, Option 1 = Strength)
+        const cSelect0 = customSelects[0];
+        const select0 = cSelect0.querySelector('.variant-dropdown-select');
+        const menu0 = cSelect0.querySelector('.custom-variant-menu');
+
+        Array.from(select0.options).forEach((opt) => {
+          const val0 = opt.value.trim().toLowerCase();
+          const hasAnyInStock = productVariantsList.some((v) => {
+            const parts = (v.variant_name || '').split(' / ').map((s) => s.trim().toLowerCase());
+            const vStock = parseInt(v.stock_quantity, 10) || 0;
+            return (parts[0] === val0) && (vStock > 0);
+          });
+
+          const orig = opt.getAttribute('data-original-text') || opt.value;
+          if (!opt.hasAttribute('data-original-text')) {
+            opt.setAttribute('data-original-text', orig);
+          }
+          opt.disabled = !hasAnyInStock;
+          opt.textContent = hasAnyInStock ? orig : `${orig} (Out of stock)`;
+
+          if (menu0) {
+            const cItem = menu0.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+            syncCustomItemState(cItem, hasAnyInStock, opt.value === select0.value);
+          }
+        });
+
+        if (select0.selectedOptions.length === 0 || select0.selectedOptions[0].disabled) {
+          const firstAvail0 = Array.from(select0.options).find(o => !o.disabled);
+          if (firstAvail0) {
+            select0.value = firstAvail0.value;
+          }
+        }
+        const activeVal0 = select0.value;
+        const lbl0 = document.getElementById('selectedVal-0');
+        if (lbl0) lbl0.textContent = activeVal0;
+        const trigVal0 = cSelect0.querySelector('.custom-variant-current-val');
+        if (trigVal0) trigVal0.textContent = activeVal0;
+        if (menu0) {
+          menu0.querySelectorAll('.custom-variant-item').forEach(it => {
+            const isMatch = it.getAttribute('data-value') === activeVal0 && !it.classList.contains('is-disabled');
+            it.classList.toggle('is-selected', isMatch);
+            it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+          });
+        }
+
+        const activeValues = [activeVal0 ? activeVal0.trim() : ''];
+
+        for (let g = 1; g < maxDims; g++) {
+          const cSelectG = customSelects[g];
+          const selectG = cSelectG.querySelector('.variant-dropdown-select');
+          const menuG = cSelectG.querySelector('.custom-variant-menu');
+
+          Array.from(selectG.options).forEach((opt) => {
+            const testVal = opt.value.trim();
+            const testCombo = activeValues.slice(0, g);
+            testCombo[g] = testVal;
+
+            const matchedVar = getVariantForValues(testCombo);
+            const vStock = matchedVar ? parseInt(matchedVar.stock_quantity, 10) : 0;
+            const inStock = matchedVar && vStock > 0;
+            const orig = opt.getAttribute('data-original-text') || opt.value;
+            if (!opt.hasAttribute('data-original-text')) {
+              opt.setAttribute('data-original-text', orig);
+            }
+
+            opt.disabled = !inStock;
+            opt.textContent = inStock ? orig : `${orig} (Out of stock)`;
+
+            if (menuG) {
+              const cItem = menuG.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+              syncCustomItemState(cItem, inStock, opt.value === selectG.value);
+            }
+          });
+
+          if (selectG.selectedOptions.length === 0 || selectG.selectedOptions[0].disabled) {
+            const firstAvail = Array.from(selectG.options).find(o => !o.disabled);
+            if (firstAvail) {
+              selectG.value = firstAvail.value;
+            }
+          }
+          const activeValG = selectG.value;
+          const lblG = document.getElementById(`selectedVal-${g}`);
+          if (lblG) lblG.textContent = activeValG;
+          const trigValG = cSelectG.querySelector('.custom-variant-current-val');
+          if (trigValG) trigValG.textContent = activeValG;
+          if (menuG) {
+            menuG.querySelectorAll('.custom-variant-item').forEach(it => {
+              const isMatch = it.getAttribute('data-value') === activeValG && !it.classList.contains('is-disabled');
+              it.classList.toggle('is-selected', isMatch);
+              it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+            });
+          }
+
+          activeValues[g] = activeValG ? activeValG.trim() : '';
+        }
+      }
+      return;
+    }
+
+    if (dropdowns.length > 0) {
+      const maxDims = dropdowns.length;
+      if (maxDims === 1) {
+        const select = dropdowns[0];
+        Array.from(select.options).forEach((opt) => {
+          const val = opt.value.trim().toLowerCase();
+          const v = productVariantsList.find(
+            (item) => (item.variant_name || '').trim().toLowerCase() === val
+          );
+          const stock = v ? parseInt(v.stock_quantity, 10) : 0;
+          const orig = opt.getAttribute('data-original-text') || opt.value;
+          if (!opt.hasAttribute('data-original-text')) {
+            opt.setAttribute('data-original-text', orig);
+          }
+          if (stock <= 0) {
+            opt.disabled = true;
+            opt.textContent = `${orig} (Out of stock)`;
+          } else {
+            opt.disabled = false;
+            opt.textContent = orig;
+          }
+        });
+
+        // Ensure active selection is in-stock
+        if (select.selectedOptions.length === 0 || select.selectedOptions[0].disabled) {
+          const firstAvail = Array.from(select.options).find(o => !o.disabled);
+          if (firstAvail) {
+            select.value = firstAvail.value;
+          }
+        }
+        const lbl = document.getElementById('selectedVal-0');
+        if (lbl) lbl.textContent = select.value;
+      } else {
+        // Multi-Option Dimensions (e.g. Option 0 = Flavor, Option 1 = Strength)
+        const select0 = dropdowns[0];
+        Array.from(select0.options).forEach((opt) => {
+          const val0 = opt.value.trim().toLowerCase();
+          const hasAnyInStock = productVariantsList.some((v) => {
+            const parts = (v.variant_name || '').split(' / ').map((s) => s.trim().toLowerCase());
+            const vStock = parseInt(v.stock_quantity, 10) || 0;
+            return (parts[0] === val0) && (vStock > 0);
+          });
+
+          const orig = opt.getAttribute('data-original-text') || opt.value;
+          if (!opt.hasAttribute('data-original-text')) {
+            opt.setAttribute('data-original-text', orig);
+          }
+          if (!hasAnyInStock) {
+            opt.disabled = true;
+            opt.textContent = `${orig} (Out of stock)`;
+          } else {
+            opt.disabled = false;
+            opt.textContent = orig;
+          }
+        });
+
+        if (select0.selectedOptions.length === 0 || select0.selectedOptions[0].disabled) {
+          const firstAvail0 = Array.from(select0.options).find(o => !o.disabled);
+          if (firstAvail0) {
+            select0.value = firstAvail0.value;
+          }
+        }
+        const lbl0 = document.getElementById('selectedVal-0');
+        if (lbl0) lbl0.textContent = select0.value;
+
+        const activeValues = [select0.value ? select0.value.trim() : ''];
+
+        for (let g = 1; g < maxDims; g++) {
+          const selectG = dropdowns[g];
+          Array.from(selectG.options).forEach((opt) => {
+            const testVal = opt.value.trim();
+            const testCombo = activeValues.slice(0, g);
+            testCombo[g] = testVal;
+
+            const matchedVar = getVariantForValues(testCombo);
+            const vStock = matchedVar ? parseInt(matchedVar.stock_quantity, 10) : 0;
+            const orig = opt.getAttribute('data-original-text') || opt.value;
+            if (!opt.hasAttribute('data-original-text')) {
+              opt.setAttribute('data-original-text', orig);
+            }
+
+            if (!matchedVar || vStock <= 0) {
+              opt.disabled = true;
+              opt.textContent = `${orig} (Out of stock)`;
+            } else {
+              opt.disabled = false;
+              opt.textContent = orig;
+            }
+          });
+
+          if (selectG.selectedOptions.length === 0 || selectG.selectedOptions[0].disabled) {
+            const firstAvail = Array.from(selectG.options).find(o => !o.disabled);
+            if (firstAvail) {
+              selectG.value = firstAvail.value;
+            }
+          }
+          const lblG = document.getElementById(`selectedVal-${g}`);
+          if (lblG) lblG.textContent = selectG.value;
+
+          activeValues[g] = selectG.value ? selectG.value.trim() : '';
+        }
+      }
+      return;
+    }
 
     const groups = Array.from(variantsWrapper.querySelectorAll('.variant-option-group'));
     const maxDims = groups.length;
@@ -373,6 +650,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function resolveSelectedVariant() {
     if (!variantsWrapper || productVariantsList.length === 0) return null;
+
+    const customSelects = variantsWrapper.querySelectorAll('.custom-variant-select');
+    if (customSelects.length > 0) {
+      const selectedValues = [];
+      customSelects.forEach((cSel) => {
+        const activeItem = cSel.querySelector('.custom-variant-item.is-selected:not(.is-disabled)') || cSel.querySelector('.custom-variant-item.is-selected');
+        const nativeSel = cSel.querySelector('.variant-dropdown-select');
+        const val = activeItem ? activeItem.getAttribute('data-value') : (nativeSel ? nativeSel.value : '');
+        if (val) {
+          selectedValues.push(val.trim());
+        }
+      });
+      if (selectedValues.length === 0) return null;
+      const matched = getVariantForValues(selectedValues);
+      return matched || productVariantsList[0];
+    }
+
+    const dropdowns = variantsWrapper.querySelectorAll('.variant-dropdown-select');
+    if (dropdowns.length > 0) {
+      const selectedValues = [];
+      dropdowns.forEach((sel) => {
+        if (sel.value) {
+          selectedValues.push(sel.value.trim());
+        }
+      });
+      if (selectedValues.length === 0) return null;
+      const matched = getVariantForValues(selectedValues);
+      return matched || productVariantsList[0];
+    }
 
     const groups = variantsWrapper.querySelectorAll('.variant-option-group');
     const selectedValues = [];
@@ -562,49 +868,144 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (variantsWrapper) {
-    const badgeBtns = variantsWrapper.querySelectorAll('.variant-badge-btn');
-    badgeBtns.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
+    const customSelects = variantsWrapper.querySelectorAll('.custom-variant-select');
+    if (customSelects.length > 0) {
+      customSelects.forEach((cSelect) => {
+        const trigger = cSelect.querySelector('.custom-variant-trigger');
+        const menu = cSelect.querySelector('.custom-variant-menu');
+        const nativeSelect = cSelect.querySelector('.variant-dropdown-select');
+        const optIndex = cSelect.getAttribute('data-option-index');
 
-        // If option is disabled or out-of-stock, strictly prevent selection!
-        if (btn.disabled || btn.classList.contains('is-out-of-stock') || btn.classList.contains('is-disabled')) {
-          return;
+        if (trigger) {
+          trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = cSelect.classList.contains('is-open');
+            document.querySelectorAll('.custom-variant-select.is-open').forEach((s) => {
+              if (s !== cSelect) {
+                s.classList.remove('is-open');
+                s.setAttribute('aria-expanded', 'false');
+              }
+            });
+            cSelect.classList.toggle('is-open', !isOpen);
+            cSelect.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+          });
         }
 
-        const group = btn.closest('.variant-option-group');
-        if (!group) return;
+        if (menu) {
+          menu.addEventListener('click', (e) => {
+            const item = e.target.closest('.custom-variant-item');
+            if (!item || item.classList.contains('is-disabled')) return;
+            e.preventDefault();
+            e.stopPropagation();
 
-        const optIndex = group.getAttribute('data-option-index');
-        const val = btn.getAttribute('data-value');
+            const val = item.getAttribute('data-value');
 
-        group.querySelectorAll('.variant-badge-btn').forEach((b) => {
-          b.classList.remove('active');
-          b.setAttribute('aria-pressed', 'false');
-        });
-        btn.classList.add('active');
-        btn.setAttribute('aria-pressed', 'true');
+            const currentValSpan = cSelect.querySelector('.custom-variant-current-val');
+            if (currentValSpan) currentValSpan.textContent = val;
 
-        const labelEl = document.getElementById(`selectedVal-${optIndex}`);
-        if (labelEl) {
-          labelEl.textContent = val;
-        }
+            const lbl = document.getElementById(`selectedVal-${optIndex}`);
+            if (lbl) lbl.textContent = val;
 
-        // Dynamically recalculate availability for dependent options
-        updateBadgesAvailability();
+            menu.querySelectorAll('.custom-variant-item').forEach(it => {
+              it.classList.remove('is-selected');
+              it.setAttribute('aria-selected', 'false');
+            });
+            item.classList.add('is-selected');
+            item.setAttribute('aria-selected', 'true');
 
-        const matched = resolveSelectedVariant();
-        if (matched) {
-          applyVariant(matched);
+            cSelect.classList.remove('is-open');
+            cSelect.setAttribute('aria-expanded', 'false');
+
+            if (nativeSelect) {
+              nativeSelect.value = val;
+            }
+
+            updateBadgesAvailability();
+
+            const matched = resolveSelectedVariant();
+            if (matched) {
+              applyVariant(matched);
+            }
+          });
         }
       });
-    });
 
-    // Initial setup on page load: compute availability and apply initial variant
-    updateBadgesAvailability();
-    const initialMatched = resolveSelectedVariant();
-    if (initialMatched) {
-      applyVariant(initialMatched);
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-variant-select')) {
+          document.querySelectorAll('.custom-variant-select.is-open').forEach((s) => {
+            s.classList.remove('is-open');
+            s.setAttribute('aria-expanded', 'false');
+          });
+          document.querySelectorAll('.fbt-item-card.has-open-select').forEach((c) => {
+            c.classList.remove('has-open-select');
+          });
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelectorAll('.custom-variant-select.is-open').forEach((s) => {
+            s.classList.remove('is-open');
+            s.setAttribute('aria-expanded', 'false');
+          });
+          document.querySelectorAll('.fbt-item-card.has-open-select').forEach((c) => {
+            c.classList.remove('has-open-select');
+          });
+        }
+      });
+
+      // Initial setup on page load: compute availability and apply initial variant
+      updateBadgesAvailability();
+      const initialMatched = resolveSelectedVariant();
+      if (initialMatched) {
+        applyVariant(initialMatched);
+      }
+    } else {
+      const badgeBtns = variantsWrapper.querySelectorAll('.variant-badge-btn');
+      badgeBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+
+          // If option is disabled or out-of-stock, strictly prevent selection!
+          if (btn.disabled || btn.classList.contains('is-out-of-stock') || btn.classList.contains('is-disabled')) {
+            return;
+          }
+
+          const group = btn.closest('.variant-option-group');
+          if (!group) return;
+
+          const optIndex = group.getAttribute('data-option-index');
+          const val = btn.getAttribute('data-value');
+
+          group.querySelectorAll('.variant-badge-btn').forEach((b) => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
+          btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
+
+          const labelEl = document.getElementById(`selectedVal-${optIndex}`);
+          if (labelEl) {
+            labelEl.textContent = val;
+          }
+
+          // Dynamically recalculate availability for dependent options
+          updateBadgesAvailability();
+
+          const matched = resolveSelectedVariant();
+          if (matched) {
+            applyVariant(matched);
+          }
+        });
+      });
+
+      // Initial setup on page load: compute availability and apply initial variant
+      updateBadgesAvailability();
+      const initialMatched = resolveSelectedVariant();
+      if (initialMatched) {
+        applyVariant(initialMatched);
+      }
     }
   } else if (flavorSelect) {
     // Fallback if badges wrapper is not present
@@ -916,6 +1317,481 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 9. Card Interactions for "You May Also Like" Grid
   // Handled cleanly by centralized cart-drawer.js delegation to prevent duplicate additions.
+
+  // 10. Frequently Bought Together (FBT) Cross-Sell Bundle Interactions
+  const fbtContainer = document.getElementById('fbtBundleContainer');
+  if (fbtContainer) {
+    const fbtCards = fbtContainer.querySelectorAll('.fbt-item-card');
+    const fbtAddBtn = document.getElementById('btnFbtAddToCart');
+    const fbtTotalEl = fbtContainer.querySelector('.fbt-btn-total-price');
+    const fbtLabelEl = fbtContainer.querySelector('.btn-fbt-label');
+    const fbtActionFooter = fbtContainer.querySelector('.fbt-action-footer');
+
+    function calculateFbtTotal() {
+      let total = 0;
+      let count = 0;
+
+      fbtCards.forEach((card) => {
+        const checkbox = card.querySelector('.fbt-item-checkbox');
+        const isOutOfStock = card.dataset.outOfStock === '1' || (checkbox && checkbox.disabled);
+        if (checkbox && checkbox.checked && !isOutOfStock) {
+          const price = parseFloat(card.dataset.currentPrice || card.dataset.basePrice) || 0;
+          const qtyInput = card.querySelector('.fbt-qty-num');
+          const qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+          total += price * qty;
+          count++;
+          card.classList.add('is-checked');
+        } else {
+          if (isOutOfStock && checkbox) {
+            checkbox.checked = false;
+          }
+          card.classList.remove('is-checked');
+        }
+      });
+
+      if (fbtTotalEl) {
+        fbtTotalEl.textContent = '$' + total.toFixed(2);
+      }
+
+      // Hide or Show "Add to cart" button based on selection
+      if (fbtActionFooter) {
+        if (count === 0) {
+          fbtActionFooter.style.display = 'none';
+          if (fbtAddBtn) fbtAddBtn.disabled = true;
+        } else {
+          fbtActionFooter.style.display = 'block';
+          if (fbtAddBtn) {
+            fbtAddBtn.disabled = false;
+            if (fbtLabelEl) {
+              fbtLabelEl.textContent = count === 1 ? 'Add 1 item to cart' : `Add ${count} items to cart`;
+            }
+            if (fbtTotalEl) fbtTotalEl.style.display = 'inline';
+            const dot = fbtContainer.querySelector('.fbt-btn-dot');
+            if (dot) dot.style.display = 'inline';
+          }
+        }
+      }
+    }
+
+    fbtCards.forEach((card) => {
+      // 1. Toggle Options Card
+      const toggleBtn = card.querySelector('.fbt-toggle-options-btn');
+      const popover = card.querySelector('.fbt-options-popover');
+      if (toggleBtn && popover) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const isHidden = (popover.style.display === 'none' || !popover.style.display);
+          popover.style.display = isHidden ? 'block' : 'none';
+          toggleBtn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+        });
+      }
+
+      // 2. Variants resolution from option dropdowns
+      let variants = [];
+      try {
+        variants = JSON.parse(card.getAttribute('data-variants') || '[]');
+      } catch (e) {
+        variants = [];
+      }
+
+      function resolveFbtVariant() {
+        if (!variants || variants.length === 0) return null;
+
+        const selects = card.querySelectorAll('.fbt-dropdown-select');
+        const chosenValues = Array.from(selects).map(s => s.value.trim());
+
+        // Match exact or multi-dimension variant
+        let matched = variants.find(v => {
+          const parts = v.variant_name.split(' / ').map(s => s.trim());
+          if (parts.length === chosenValues.length) {
+            return parts.every((p, idx) => p.toLowerCase() === chosenValues[idx].toLowerCase());
+          }
+          if (chosenValues.length === 1) {
+            return v.variant_name.trim().toLowerCase() === chosenValues[0].toLowerCase();
+          }
+          return false;
+        });
+
+        if (!matched && variants.length > 0) {
+          matched = variants[0];
+        }
+
+        return matched;
+      }
+
+      function updateFbtCardOptions() {
+        if (!variants || variants.length === 0) return;
+
+        const customSelects = Array.from(card.querySelectorAll('.fbt-custom-select'));
+        if (customSelects.length === 0) return;
+
+        const maxDims = customSelects.length;
+
+        if (maxDims === 1) {
+          const cSelect = customSelects[0];
+          const nativeSelect = cSelect.querySelector('.fbt-dropdown-select');
+          const menu = cSelect.querySelector('.custom-variant-menu');
+          if (!nativeSelect) return;
+
+          Array.from(nativeSelect.options).forEach((opt) => {
+            const val = opt.value.trim().toLowerCase();
+            const v = variants.find(
+              (item) => (item.variant_name || '').trim().toLowerCase() === val
+            );
+            const stock = v ? (parseInt(v.stock_quantity, 10) || 0) : 0;
+            const inStock = stock > 0;
+            opt.disabled = !inStock;
+
+            if (menu) {
+              const cItem = menu.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+              syncCustomItemState(cItem, inStock, opt.value === nativeSelect.value);
+            }
+          });
+
+          // Ensure active selection is in-stock if possible
+          if (nativeSelect.selectedOptions.length === 0 || nativeSelect.selectedOptions[0].disabled) {
+            const firstAvail = Array.from(nativeSelect.options).find(o => !o.disabled);
+            if (firstAvail) {
+              nativeSelect.value = firstAvail.value;
+            }
+          }
+
+          const activeVal = nativeSelect.value;
+          const trigVal = cSelect.querySelector('.custom-variant-current-val');
+          if (trigVal) trigVal.textContent = activeVal;
+          if (menu) {
+            menu.querySelectorAll('.custom-variant-item').forEach(it => {
+              const isMatch = it.getAttribute('data-value') === activeVal && !it.classList.contains('is-disabled');
+              it.classList.toggle('is-selected', isMatch);
+              it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+            });
+          }
+        } else {
+          // Multi-Option Dimensions (e.g. Option 0 = Flavor, Option 1 = Strength)
+          const cSelect0 = customSelects[0];
+          const select0 = cSelect0.querySelector('.fbt-dropdown-select');
+          const menu0 = cSelect0.querySelector('.custom-variant-menu');
+          if (!select0) return;
+
+          Array.from(select0.options).forEach((opt) => {
+            const val0 = opt.value.trim().toLowerCase();
+            const hasAnyInStock = variants.some((v) => {
+              const parts = (v.variant_name || '').split(' / ').map((s) => s.trim().toLowerCase());
+              const vStock = parseInt(v.stock_quantity, 10) || 0;
+              return (parts[0] === val0) && (vStock > 0);
+            });
+
+            opt.disabled = !hasAnyInStock;
+            if (menu0) {
+              const cItem = menu0.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+              syncCustomItemState(cItem, hasAnyInStock, opt.value === select0.value);
+            }
+          });
+
+          if (select0.selectedOptions.length === 0 || select0.selectedOptions[0].disabled) {
+            const firstAvail0 = Array.from(select0.options).find(o => !o.disabled);
+            if (firstAvail0) {
+              select0.value = firstAvail0.value;
+            }
+          }
+
+          const activeVal0 = select0.value;
+          const trigVal0 = cSelect0.querySelector('.custom-variant-current-val');
+          if (trigVal0) trigVal0.textContent = activeVal0;
+          if (menu0) {
+            menu0.querySelectorAll('.custom-variant-item').forEach(it => {
+              const isMatch = it.getAttribute('data-value') === activeVal0 && !it.classList.contains('is-disabled');
+              it.classList.toggle('is-selected', isMatch);
+              it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+            });
+          }
+
+          const activeValues = [activeVal0 ? activeVal0.trim() : ''];
+
+          for (let g = 1; g < maxDims; g++) {
+            const cSelectG = customSelects[g];
+            const selectG = cSelectG.querySelector('.fbt-dropdown-select');
+            const menuG = cSelectG.querySelector('.custom-variant-menu');
+            if (!selectG) continue;
+
+            Array.from(selectG.options).forEach((opt) => {
+              const testVal = opt.value.trim();
+              const testCombo = activeValues.slice(0, g);
+              testCombo[g] = testVal;
+
+              const matchingVars = variants.filter((v) => {
+                const parts = (v.variant_name || '').split(' / ').map((s) => s.trim().toLowerCase());
+                return testCombo.every((val, i) => (parts[i] || '') === val.toLowerCase());
+              });
+
+              const inStock = matchingVars.some((v) => (parseInt(v.stock_quantity, 10) || 0) > 0);
+
+              opt.disabled = !inStock;
+              if (menuG) {
+                const cItem = menuG.querySelector(`.custom-variant-item[data-value="${CSS.escape(opt.value)}"]`);
+                syncCustomItemState(cItem, inStock, opt.value === selectG.value);
+              }
+            });
+
+            // If current selection is out-of-stock, auto switch to first in-stock option
+            if (selectG.selectedOptions.length === 0 || selectG.selectedOptions[0].disabled) {
+              const firstAvailG = Array.from(selectG.options).find(o => !o.disabled);
+              if (firstAvailG) {
+                selectG.value = firstAvailG.value;
+              }
+            }
+
+            const activeValG = selectG.value;
+            const trigValG = cSelectG.querySelector('.custom-variant-current-val');
+            if (trigValG) trigValG.textContent = activeValG;
+            if (menuG) {
+              menuG.querySelectorAll('.custom-variant-item').forEach(it => {
+                const isMatch = it.getAttribute('data-value') === activeValG && !it.classList.contains('is-disabled');
+                it.classList.toggle('is-selected', isMatch);
+                it.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+              });
+            }
+
+            activeValues[g] = activeValG ? activeValG.trim() : '';
+          }
+        }
+      }
+
+      function syncFbtCardVariant() {
+        const hasVariants = variants && variants.length > 0;
+        const matchedVariant = resolveFbtVariant();
+        let isCurrentOutOfStock = false;
+        let price = parseFloat(card.dataset.basePrice) || 0;
+
+        if (hasVariants) {
+          if (matchedVariant) {
+            price = parseFloat(matchedVariant.price || card.dataset.basePrice) || price;
+            card.dataset.currentPrice = price;
+            card.dataset.selectedVariantId = matchedVariant.id || '';
+            card.dataset.selectedVariantName = matchedVariant.variant_name || '';
+
+            const varStock = (typeof matchedVariant.stock_quantity !== 'undefined') 
+              ? parseInt(matchedVariant.stock_quantity, 10) 
+              : null;
+            isCurrentOutOfStock = (varStock !== null && !isNaN(varStock) && varStock <= 0);
+
+            if (matchedVariant.image_url) {
+              const img = card.querySelector('.fbt-item-img');
+              if (img) {
+                const imgUrl = matchedVariant.image_url.startsWith('http') || matchedVariant.image_url.startsWith('data:')
+                  ? matchedVariant.image_url
+                  : (window.APP_BASE_URL || '').replace(/\/+$/, '') + '/' + matchedVariant.image_url.replace(/^\/+/, '');
+                img.src = imgUrl;
+              }
+            }
+          } else {
+            isCurrentOutOfStock = true;
+          }
+        } else {
+          isCurrentOutOfStock = (card.dataset.parentOutOfStock === '1' || card.dataset.outOfStock === '1');
+        }
+
+        card.dataset.currentPrice = price;
+        const priceDisplay = card.querySelector('.fbt-price-display');
+        if (priceDisplay) {
+          priceDisplay.textContent = '$' + price.toFixed(2);
+        }
+
+        const checkbox = card.querySelector('.fbt-item-checkbox');
+        const priceRow = card.querySelector('.fbt-item-price-row');
+        let outBadge = priceRow ? priceRow.querySelector('.fbt-badge-out') : null;
+
+        if (isCurrentOutOfStock) {
+          card.dataset.outOfStock = '1';
+          card.classList.add('is-out-of-stock');
+          if (checkbox) {
+            checkbox.checked = false;
+            checkbox.disabled = true;
+          }
+          if (!outBadge && priceRow) {
+            const badge = document.createElement('span');
+            badge.className = 'fbt-badge-out';
+            badge.textContent = 'Out of stock';
+            priceRow.appendChild(badge);
+          }
+        } else {
+          // Restore in-stock state
+          card.dataset.outOfStock = '0';
+          card.classList.remove('is-out-of-stock');
+          if (checkbox) {
+            checkbox.disabled = false;
+          }
+          if (outBadge) {
+            outBadge.remove();
+          }
+        }
+
+        calculateFbtTotal();
+      }
+
+      // Handle Custom Dropdown Selects inside this FBT card
+      const customSelects = card.querySelectorAll('.fbt-custom-select');
+      customSelects.forEach((cSelect) => {
+        const trigger = cSelect.querySelector('.custom-variant-trigger');
+        const menu = cSelect.querySelector('.custom-variant-menu');
+        const nativeSelect = cSelect.querySelector('.fbt-dropdown-select');
+
+        if (trigger) {
+          trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = cSelect.classList.contains('is-open');
+            document.querySelectorAll('.custom-variant-select.is-open').forEach((s) => {
+              if (s !== cSelect) {
+                s.classList.remove('is-open');
+                s.setAttribute('aria-expanded', 'false');
+              }
+            });
+            document.querySelectorAll('.fbt-item-card.has-open-select').forEach((c) => {
+              if (c !== card) c.classList.remove('has-open-select');
+            });
+            cSelect.classList.toggle('is-open', !isOpen);
+            cSelect.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+            card.classList.toggle('has-open-select', !isOpen);
+          });
+        }
+
+        if (menu) {
+          menu.addEventListener('click', (e) => {
+            const item = e.target.closest('.custom-variant-item');
+            if (!item) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const val = item.getAttribute('data-value');
+            const currentValSpan = cSelect.querySelector('.custom-variant-current-val');
+            if (currentValSpan) currentValSpan.textContent = val;
+
+            menu.querySelectorAll('.custom-variant-item').forEach(it => {
+              it.classList.remove('is-selected');
+              it.setAttribute('aria-selected', 'false');
+            });
+            item.classList.add('is-selected');
+            item.setAttribute('aria-selected', 'true');
+
+            cSelect.classList.remove('is-open');
+            cSelect.setAttribute('aria-expanded', 'false');
+            card.classList.remove('has-open-select');
+
+            if (nativeSelect) {
+              nativeSelect.value = val;
+            }
+
+            // Recalculate options availability and auto-switch dependent options if needed
+            updateFbtCardOptions();
+
+            // Sync active variant, stock status, price and total
+            syncFbtCardVariant();
+          });
+        }
+      });
+
+      // Initialize dependent dropdown availability & in-stock option selection on page load
+      updateFbtCardOptions();
+      syncFbtCardVariant();
+
+      // 3. Quantity controls
+      const minusBtn = card.querySelector('.btn-minus');
+      const plusBtn = card.querySelector('.btn-plus');
+      const qtyInput = card.querySelector('.fbt-qty-num');
+
+      if (minusBtn && plusBtn && qtyInput) {
+        minusBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          let current = parseInt(qtyInput.value, 10) || 1;
+          if (current > 1) {
+            qtyInput.value = current - 1;
+            calculateFbtTotal();
+          }
+        });
+
+        plusBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          let current = parseInt(qtyInput.value, 10) || 1;
+          if (current < 99) {
+            qtyInput.value = current + 1;
+            calculateFbtTotal();
+          }
+        });
+      }
+
+      // 4. Checkbox change
+      const checkbox = card.querySelector('.fbt-item-checkbox');
+      if (checkbox) {
+        checkbox.addEventListener('change', () => {
+          calculateFbtTotal();
+        });
+      }
+    });
+
+    // 5. Add to Cart Button Click
+    if (fbtAddBtn) {
+      fbtAddBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (fbtAddBtn.disabled) return;
+
+        const itemsToAdd = [];
+
+        fbtCards.forEach((card) => {
+          const checkbox = card.querySelector('.fbt-item-checkbox');
+          const isOutOfStock = card.dataset.outOfStock === '1' || (checkbox && checkbox.disabled);
+          if (checkbox && checkbox.checked && !isOutOfStock) {
+            const title = card.getAttribute('data-product-title') || 'Bundle Product';
+            const price = parseFloat(card.dataset.currentPrice || card.dataset.basePrice) || 0;
+            const qtyInput = card.querySelector('.fbt-qty-num');
+            const qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+            const flavor = card.dataset.selectedVariantName || '';
+            const imgEl = card.querySelector('.fbt-item-img');
+            const img = imgEl ? imgEl.src : (card.getAttribute('data-product-img') || '');
+            const id = (title + (flavor ? '-' + flavor : '')).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+            itemsToAdd.push({
+              id: id,
+              title: title,
+              price: price,
+              quantity: qty,
+              flavor: flavor,
+              image: img
+            });
+          }
+        });
+
+        if (itemsToAdd.length === 0) return;
+
+        const originalText = fbtAddBtn.innerHTML;
+        fbtAddBtn.innerHTML = `<span>ADDING ${itemsToAdd.length} ITEM(S)...</span>`;
+        fbtAddBtn.style.opacity = '0.85';
+
+        const cartInstance = window.InfinityCart || window.NewVapeCart;
+        if (cartInstance) {
+          if (typeof cartInstance.addMultiple === 'function') {
+            cartInstance.addMultiple(itemsToAdd);
+          } else {
+            itemsToAdd.forEach(it => cartInstance.add(it));
+          }
+        }
+
+        setTimeout(() => {
+          fbtAddBtn.innerHTML = `<span>ADDED TO CART! ✓</span>`;
+          fbtAddBtn.style.backgroundColor = '#10b981';
+          setTimeout(() => {
+            fbtAddBtn.innerHTML = originalText;
+            fbtAddBtn.style.backgroundColor = '';
+            fbtAddBtn.style.opacity = '';
+            calculateFbtTotal();
+          }, 1500);
+        }, 300);
+      });
+    }
+
+    // Initial total calculation on page load (starts with 0 checked, button hidden)
+    calculateFbtTotal();
+  }
 });
 
 

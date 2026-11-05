@@ -18,7 +18,7 @@ $totalPostsCount = $totalPostsCount ?? 0;
 if (!function_exists('get_blog_card_url')) {
     function get_blog_card_url($post) {
         $slug = !empty($post['slug']) ? $post['slug'] : ($post['id'] ?? '');
-        return url('blog-detail?slug=' . urlencode($slug));
+        return url('blog/' . urlencode($slug));
     }
 }
 
@@ -62,7 +62,7 @@ include dirname(__DIR__) . '/includes/header.php';
 <header class="blog-header-section">
   <div class="container">
     <div class="blog-header-content">
-      <h1 class="blog-main-title">New Vape Blog</h1>
+      <h1 class="blog-main-title">Infinity Vape Shop Blog</h1>
       <p class="blog-main-subtitle">
         Your go-to resource for vaping guides, honest product reviews, flavor recommendations, and the latest industry news. Whether you are new to vaping or a seasoned enthusiast, we have got you covered.
       </p>

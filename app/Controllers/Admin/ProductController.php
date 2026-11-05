@@ -291,6 +291,12 @@ class ProductController extends AdminController
                 }
             }
 
+            $fbtInput = $_POST['frequently_bought_together'] ?? [];
+            $fbtIds = [];
+            if (is_array($fbtInput)) {
+                $fbtIds = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtInput))), 0, 4));
+            }
+
             $data = [
                 'title' => $title,
                 'name' => $title,
@@ -317,7 +323,8 @@ class ProductController extends AdminController
                 'seo_description' => trim($_POST['seo_description'] ?? ''),
                 'bundle_banner_active' => $bundleBannerActive,
                 'bundle_banner_img' => $bundleBannerImg,
-                'bundle_banner_link' => $bundleBannerLink
+                'bundle_banner_link' => $bundleBannerLink,
+                'frequently_bought_together' => $fbtIds
             ];
 
             $newId = Product::create($data);
@@ -338,6 +345,7 @@ class ProductController extends AdminController
 
         $collections = Collection::all();
         $brands = Brand::all();
+        $allProducts = Product::all();
 
         $this->render('admin.products.add', [
             'page_title' => 'Add New Product',
@@ -345,6 +353,7 @@ class ProductController extends AdminController
             'page_script' => 'add-product.js',
             'collections' => $collections,
             'brands' => $brands,
+            'all_products' => $allProducts,
             'error' => get_flash('error'),
             'success' => get_flash('success')
         ]);
@@ -573,6 +582,12 @@ class ProductController extends AdminController
                 $bundleBannerActive = 0;
             }
 
+            $fbtInput = $_POST['frequently_bought_together'] ?? [];
+            $fbtIds = [];
+            if (is_array($fbtInput)) {
+                $fbtIds = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtInput))), 0, 4));
+            }
+
             $data = [
                 'title' => $title,
                 'name' => $title,
@@ -594,6 +609,7 @@ class ProductController extends AdminController
                 'bundle_banner_active' => $bundleBannerActive,
                 'bundle_banner_img' => $bundleBannerImg,
                 'bundle_banner_link' => $bundleBannerLink,
+                'frequently_bought_together' => $fbtIds,
                 'highlights' => $highlights,
                 'specs' => $specs
             ];
@@ -701,6 +717,7 @@ class ProductController extends AdminController
         $rawVariants = Product::getRawVariants($id);
         $specData = Product::getRawSpecifications($id);
         $faqs = Product::getFaqs($id, $product);
+        $allProducts = Product::all();
 
         $this->render('admin.products.edit', [
             'page_title' => 'Edit Product: ' . $product['title'],
@@ -714,6 +731,7 @@ class ProductController extends AdminController
             'faqs' => $faqs,
             'collections' => $collections,
             'brands' => $brands,
+            'all_products' => $allProducts,
             'error' => get_flash('error'),
             'success' => get_flash('success')
         ]);

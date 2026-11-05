@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const opt = brandSelect.options[brandSelect.selectedIndex];
         if (opt && opt.value) {
           entityId = opt.value;
-          linkValue = `/collection/all?brand=${opt.dataset.slug || ''}`;
+          linkValue = `/brand/${opt.dataset.slug || ''}`;
         }
       } else if (linkType === 'page') {
         const opt = pageSelect.options[pageSelect.selectedIndex];

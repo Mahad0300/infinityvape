@@ -70,6 +70,7 @@ class ProductController extends Controller
         $relatedPosts      = Product::getRelatedPosts($id);
         $productImages     = Product::getImages($id, $product);
         $relatedProducts   = Product::getRelatedProducts($id, $product['brand_id'] ?? null, $product['collection_id'] ?? null, 6);
+        $fbtProducts       = Product::getFrequentlyBoughtProducts($product);
 
         $cleanLongDesc = !empty($product['long_desc']) ? trim(preg_replace('/\s+/', ' ', strip_tags($product['long_desc']))) : '';
         if (mb_strlen($cleanLongDesc) > 160) {
@@ -103,6 +104,7 @@ class ProductController extends Controller
             'productFaqs'       => $productFaqs,
             'productReviews'    => $productReviews,
             'relatedPosts'      => $relatedPosts,
+            'fbtProducts'       => $fbtProducts,
             'isArchived'        => ($prodStatus === 'archived'),
             'isDraftPreview'    => $isAdminPreview
         ]);

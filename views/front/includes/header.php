@@ -61,6 +61,15 @@ $formatNavUrl = function($link) {
         }
         $link = 'collection/' . $slug . $rest;
     }
+    // Normalize any legacy category?b= URLs to clean /brand/
+    if (preg_match('#^/?category\?b=([^&]+)(.*)$#i', $link, $m)) {
+        $slug = $m[1];
+        $rest = $m[2];
+        if (!empty($rest) && strpos($rest, '&') === 0) {
+            $rest = '?' . substr($rest, 1);
+        }
+        $link = 'brand/' . $slug . $rest;
+    }
     $clean = trim($link, '/');
     if ($clean === 'terms-and-condition' || $clean === 'page/terms-and-condition' || $clean === 'terms-of-service' || $clean === 'page/terms-of-service') {
         $clean = 'terms-and-conditions';

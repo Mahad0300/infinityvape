@@ -39,6 +39,12 @@ class App
             return $this->dispatch([\App\Controllers\CollectionController::class, 'show']);
         }
 
+        // Dynamic route matching for brands (/brands/{slug} or /brand/{slug})
+        if (preg_match('#^brands?/(.+)$#', $trimmedUri, $matches)) {
+            $_GET['slug'] = basename($matches[1]);
+            return $this->dispatch([\App\Controllers\BrandController::class, 'show']);
+        }
+
         // Dynamic route matching for product (/products/{slug} or /product/{slug})
         if (preg_match('#^products?/(.+)$#', $trimmedUri, $matches)) {
             $_GET['slug'] = basename($matches[1]);

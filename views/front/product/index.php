@@ -21,6 +21,46 @@ $brandName = $product['brand'] ?? 'Vape Brand';
 $brandSlug = $product['brand_slug'] ?? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $brandName)));
 $categoryName = $product['category'] ?? 'Disposables';
 $categorySlug = $product['category_slug'] ?? strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $categoryName)));
+
+// Resolve Parent Category for Product Breadcrumbs:
+// Pattern: Home > (parent category) > Product Title
+// If child category (e.g. 5,000+ Puffs), resolve its parent category (e.g. Disposable)
+// If already top-level parent category (e.g. Disposable), use directly
+$parentCategoryName = $product['parent_category_name'] ?? null;
+$parentCategorySlug = $product['parent_category_slug'] ?? null;
+
+if (empty($parentCategoryName) && class_exists('\App\Models\Collection')) {
+  $collId = $product['collection_id'] ?? null;
+  $rawSlug = $product['category_slug'] ?? ($product['category'] ?? '');
+  $coll = null;
+  if ($collId) {
+    $coll = \App\Models\Collection::find($collId);
+  } elseif (!empty($rawSlug)) {
+    $coll = \App\Models\Collection::findBySlug($rawSlug);
+  }
+  if ($coll) {
+    if (!empty($coll['parent_id'])) {
+      $parentColl = \App\Models\Collection::find($coll['parent_id']);
+      if ($parentColl) {
+        $parentCategoryName = $parentColl['name'];
+        $parentCategorySlug = $parentColl['slug'];
+      }
+    }
+    if (empty($parentCategoryName)) {
+      $parentCategoryName = $coll['name'];
+      $parentCategorySlug = $coll['slug'];
+    }
+  }
+}
+
+if (empty($parentCategoryName)) {
+  $parentCategoryName = $categoryName;
+  $parentCategorySlug = $categorySlug;
+}
+
+$parentCategoryUrl = class_exists('\App\Models\Collection') 
+  ? \App\Models\Collection::getUrl($parentCategorySlug) 
+  : url('collection/' . urlencode($parentCategorySlug));
 $sku = !empty($product['sku']) ? $product['sku'] : ('SKU-' . ($product['id'] ?? '100'));
 $stockStatus = !empty($product['stock_status']) ? ucfirst(str_replace('_', ' ', $product['stock_status'])) : (!empty($product['status']) ? ucfirst($product['status']) : 'In Stock');
 
@@ -43,25 +83,32 @@ include dirname(__DIR__) . '/includes/header.php';
      ========================================== -->
 <nav class="product-breadcrumb-nav" aria-label="Breadcrumb">
   <div class="container">
-    <ol class="breadcrumb-list">
-      <li class="breadcrumb-item">
-        <a href="<?= url() ?>">Home</a>
+    <ol class="breadcrumb-list" itemscope itemtype="https://schema.org/BreadcrumbList">
+      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="<?= url() ?>" itemprop="item">
+          <span itemprop="name">Home</span>
+        </a>
+        <meta itemprop="position" content="1">
       </li>
       <li class="breadcrumb-separator" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </li>
-      <li class="breadcrumb-item">
-        <a href="<?= class_exists('\App\Models\Collection') ? \App\Models\Collection::getUrl($categorySlug) : url('collection/' . urlencode($categorySlug)) ?>"><?= htmlspecialchars($categoryName) ?></a>
+      <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a href="<?= htmlspecialchars($parentCategoryUrl) ?>" itemprop="item">
+          <span itemprop="name"><?= htmlspecialchars($parentCategoryName) ?></span>
+        </a>
+        <meta itemprop="position" content="2">
       </li>
       <li class="breadcrumb-separator" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">
-        <?= htmlspecialchars($productTitle) ?>
+      <li class="breadcrumb-item active" aria-current="page" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span itemprop="name"><?= htmlspecialchars($productTitle) ?></span>
+        <meta itemprop="position" content="3">
       </li>
     </ol>
   </div>
@@ -385,7 +432,7 @@ include dirname(__DIR__) . '/includes/header.php';
             <?= json_encode($jsonVariants, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>
           </script>
 
-          <!-- Dynamic Option Groups (Option 1: Flavor badges, Option 2: Strength badges, etc.) -->
+          <!-- Dynamic Option Groups (Option 1: Flavor custom dropdown, Option 2: Strength custom dropdown, etc.) -->
           <?php
           foreach ($parsedOptions as $opt):
             $currOptIdx = $opt['index'];
@@ -398,46 +445,75 @@ include dirname(__DIR__) . '/includes/header.php';
                 <?= htmlspecialchars($selectedOptVal) ?>
               </span>
             </div>
-            <div class="variant-badges-list" role="radiogroup" aria-label="<?= htmlspecialchars($opt['name']) ?>">
-              <?php
-              foreach ($opt['values'] as $vIdx => $val):
-                $isOutStock = false;
-                if ($currOptIdx === 0) {
-                  // Check if this Option 0 value has ANY stock in any variant
-                  $hasAny = false;
-                  foreach ($productVariants as $pv) {
-                    $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
-                    if (($pParts[0] ?? $pv['variant_name']) === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
-                      $hasAny = true;
-                      break;
+
+            <div class="custom-variant-select" data-option-index="<?= $currOptIdx ?>" tabindex="0" role="combobox" aria-expanded="false">
+              <!-- Custom Trigger Box -->
+              <div class="custom-variant-trigger">
+                <span class="custom-variant-current-val"><?= htmlspecialchars($selectedOptVal) ?></span>
+                <div class="custom-variant-chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Custom Floating Options Menu (Styled perfectly with Navy, White & Checkmark) -->
+              <div class="custom-variant-menu" role="listbox">
+                <?php
+                foreach ($opt['values'] as $vIdx => $val):
+                  $isOutStock = false;
+                  if ($currOptIdx === 0) {
+                    $hasAny = false;
+                    foreach ($productVariants as $pv) {
+                      $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                      if (($pParts[0] ?? $pv['variant_name']) === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
+                        $hasAny = true;
+                        break;
+                      }
                     }
-                  }
-                  $isOutStock = !$hasAny;
-                } elseif ($currOptIdx === 1 && !empty($defaultParts[0])) {
-                  // Check if combination of default Option 0 + this Option 1 is in stock
-                  $hasStock = false;
-                  foreach ($productVariants as $pv) {
-                    $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
-                    if (($pParts[0] ?? '') === $defaultParts[0] && ($pParts[1] ?? '') === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
-                      $hasStock = true;
-                      break;
+                    $isOutStock = !$hasAny;
+                  } elseif ($currOptIdx === 1 && !empty($defaultParts[0])) {
+                    $hasStock = false;
+                    foreach ($productVariants as $pv) {
+                      $pParts = array_map('trim', explode(' / ', $pv['variant_name']));
+                      if (($pParts[0] ?? '') === $defaultParts[0] && ($pParts[1] ?? '') === $val && (int) ($pv['stock_quantity'] ?? 0) > 0) {
+                        $hasStock = true;
+                        break;
+                      }
                     }
+                    $isOutStock = !$hasStock;
                   }
-                  $isOutStock = !$hasStock;
-                }
-                $isActive = ($val === $selectedOptVal) && !$isOutStock;
-                ?>
-              <button 
-                type="button" 
-                class="variant-badge-btn <?= $isActive ? 'active' : '' ?> <?= $isOutStock ? 'is-out-of-stock is-disabled' : '' ?>" 
-                data-option-index="<?= $currOptIdx ?>" 
-                data-value="<?= htmlspecialchars($val) ?>"
-                aria-pressed="<?= $isActive ? 'true' : 'false' ?>"
-                <?= $isOutStock ? 'disabled aria-disabled="true" title="Out of stock"' : '' ?>
+                  $isActive = ($val === $selectedOptVal);
+                  ?>
+                  <div 
+                    class="custom-variant-item <?= $isActive ? 'is-selected' : '' ?> <?= $isOutStock ? 'is-disabled' : '' ?>" 
+                    data-value="<?= htmlspecialchars($val) ?>"
+                    role="option"
+                    aria-selected="<?= $isActive ? 'true' : 'false' ?>"
+                  >
+                    <span class="item-text"><?= htmlspecialchars($val) ?></span>
+                    <?php if ($isOutStock): ?>
+                      <span class="item-badge-out">Out of stock</span>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
+              <!-- Native select preserved in background for cart-drawer & fallback -->
+              <select 
+                id="variant-select-<?= $currOptIdx ?>" 
+                class="variant-dropdown-select d-none" 
+                style="display: none;"
+                data-option-index="<?= $currOptIdx ?>"
+                aria-hidden="true"
+                tabindex="-1"
               >
-                <?= htmlspecialchars($val) ?>
-              </button>
-              <?php endforeach; ?>
+                <?php foreach ($opt['values'] as $val): ?>
+                  <option value="<?= htmlspecialchars($val) ?>" <?= ($val === $selectedOptVal) ? 'selected' : '' ?> data-original-text="<?= htmlspecialchars($val) ?>">
+                    <?= htmlspecialchars($val) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
             </div>
           </div>
           <?php endforeach; ?>
@@ -545,6 +621,174 @@ include dirname(__DIR__) . '/includes/header.php';
           </div>
 
         </div>
+
+        <!-- Frequently Bought Together Section (Cross-Sell Bundle) -->
+        <?php 
+        $fbtList = $fbtProducts ?? \App\Models\Product::getFrequentlyBoughtProducts($product);
+        ?>
+        <?php if (!empty($fbtList)): ?>
+        <div class="fbt-bundle-container" id="fbtBundleContainer">
+          <h3 class="fbt-bundle-title">Frequently Bought Together:</h3>
+
+          <div class="fbt-items-grid">
+            <?php foreach ($fbtList as $fIdx => $fbt): ?>
+              <?php
+              $fbtId = (int)$fbt['id'];
+              $fbtTitle = $fbt['title'] ?? $fbt['name'] ?? 'Product';
+              $fbtSlug = $fbt['slug'] ?? $fbtId;
+              $fbtImg = $fbt['img'] ?? 'assets/images/no-image.svg';
+              $hasVariants = !empty($fbt['variants']);
+              $fbtOptions = $fbt['parsed_options'] ?? [];
+              $isFbtOutOfStock = !empty($fbt['is_out_of_stock']);
+              $defaultVariant = $hasVariants ? ($fbt['first_in_stock_variant'] ?? $fbt['variants'][0]) : null;
+              $defaultParts = $defaultVariant ? array_map('trim', explode(' / ', $defaultVariant['variant_name'])) : [];
+              $defaultPrice = $defaultVariant ? (float)($defaultVariant['price'] ?? $fbt['base_price']) : (float)$fbt['base_price'];
+              $isDefaultVarOutOfStock = $hasVariants 
+                  ? ((int)($defaultVariant['stock_quantity'] ?? 0) <= 0) 
+                  : $isFbtOutOfStock;
+              ?>
+              <div class="fbt-item-card <?= $isDefaultVarOutOfStock ? 'is-out-of-stock' : '' ?>" 
+                   data-product-id="<?= $fbtId ?>" 
+                   data-product-title="<?= htmlspecialchars($fbtTitle, ENT_QUOTES, 'UTF-8') ?>" 
+                   data-base-price="<?= $defaultPrice ?>" 
+                   data-current-price="<?= $defaultPrice ?>" 
+                   data-product-img="<?= asset($fbtImg) ?>" 
+                   data-out-of-stock="<?= $isDefaultVarOutOfStock ? '1' : '0' ?>" 
+                   data-parent-out-of-stock="<?= $isFbtOutOfStock ? '1' : '0' ?>" 
+                   data-has-variants="<?= $hasVariants ? '1' : '0' ?>"
+                   data-selected-variant-id="<?= $defaultVariant ? ($defaultVariant['id'] ?? '') : '' ?>"
+                   data-selected-variant-name="<?= $defaultVariant ? htmlspecialchars($defaultVariant['variant_name'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>"
+                   data-variants='<?= htmlspecialchars(json_encode($fbt['variants'] ?? []), ENT_QUOTES, 'UTF-8') ?>'>
+                <div class="fbt-item-header">
+                  <label class="fbt-custom-checkbox-wrap" title="<?= $isDefaultVarOutOfStock ? 'This product is out of stock' : '' ?>">
+                    <input type="checkbox" class="fbt-item-checkbox" data-product-id="<?= $fbtId ?>" <?= $isDefaultVarOutOfStock ? 'disabled' : '' ?>>
+                    <span class="fbt-checkbox-custom">
+                      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </span>
+                  </label>
+
+                  <a href="<?= url('product/' . urlencode($fbtSlug)) ?>" class="fbt-item-img-link" title="<?= htmlspecialchars($fbtTitle) ?>">
+                    <img src="<?= asset($fbtImg) ?>" alt="<?= htmlspecialchars($fbtTitle) ?>" class="fbt-item-img" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
+                  </a>
+
+                  <div class="fbt-item-meta">
+                    <a href="<?= url('product/' . urlencode($fbtSlug)) ?>" class="fbt-item-title" title="<?= htmlspecialchars($fbtTitle) ?>">
+                      <?= htmlspecialchars($fbtTitle) ?>
+                    </a>
+                    <div class="fbt-item-price-row">
+                      <span class="fbt-price-display"><?= $hasVariants && $defaultPrice > 0 ? '$' . number_format($defaultPrice, 2) : $fbt['price_display'] ?></span>
+                      <?php if ($isDefaultVarOutOfStock): ?>
+                        <span class="fbt-badge-out">Out of stock</span>
+                      <?php endif; ?>
+                    </div>
+
+                    <?php if ($hasVariants && !empty($fbtOptions)): ?>
+                      <button type="button" class="fbt-toggle-options-btn" data-target="fbt-options-<?= $fbtId ?>" aria-expanded="false">
+                        <span>OPTIONS</span>
+                        <svg class="fbt-toggle-chevron" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
+                <?php if ($hasVariants && !empty($fbtOptions)): ?>
+                  <!-- Options Popover/Card with Custom Dropdowns -->
+                  <div class="fbt-options-popover" id="fbt-options-<?= $fbtId ?>" style="display: none;">
+                    <?php foreach ($fbtOptions as $optGroup): ?>
+                      <?php 
+                      $currPartVal = $defaultParts[$optGroup['index']] ?? ($optGroup['values'][0] ?? '');
+                      ?>
+                      <div class="fbt-opt-group" data-opt-index="<?= $optGroup['index'] ?>">
+                        <div class="fbt-opt-label">
+                          <?= htmlspecialchars(strtoupper($optGroup['name'])) ?>: <span class="req">*</span>
+                        </div>
+                        <div class="custom-variant-select fbt-custom-select" data-option-index="<?= $optGroup['index'] ?>" tabindex="0" role="combobox" aria-expanded="false">
+                          <div class="custom-variant-trigger">
+                            <span class="custom-variant-current-val"><?= htmlspecialchars($currPartVal) ?></span>
+                            <div class="custom-variant-chevron" aria-hidden="true">
+                              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
+                            </div>
+                          </div>
+
+                          <div class="custom-variant-menu" role="listbox">
+                            <?php foreach ($optGroup['values'] as $vIdx => $val): ?>
+                              <?php
+                              $valHasStock = false;
+                              if (!empty($fbt['variants'])) {
+                                foreach ($fbt['variants'] as $fv) {
+                                  $fParts = array_map('trim', explode(' / ', $fv['variant_name']));
+                                  $partVal = $fParts[$optGroup['index']] ?? ($optGroup['index'] === 0 ? $fv['variant_name'] : '');
+                                  if ($partVal === $val && (int)($fv['stock_quantity'] ?? 0) > 0) {
+                                    $valHasStock = true;
+                                    break;
+                                  }
+                                }
+                              }
+                              $isOptOutOfStock = !$valHasStock;
+                              $isActive = ($val === $currPartVal);
+                              ?>
+                              <div 
+                                class="custom-variant-item <?= $isActive ? 'is-selected' : '' ?> <?= $isOptOutOfStock ? 'is-disabled' : '' ?>" 
+                                data-value="<?= htmlspecialchars($val) ?>"
+                                role="option"
+                                aria-selected="<?= $isActive ? 'true' : 'false' ?>"
+                              >
+                                <span class="item-text"><?= htmlspecialchars($val) ?></span>
+                                <?php if ($isOptOutOfStock): ?>
+                                  <span class="item-badge-out">Out of stock</span>
+                                <?php endif; ?>
+                              </div>
+                            <?php endforeach; ?>
+                          </div>
+
+                          <!-- Hidden select for holding value -->
+                          <select class="fbt-dropdown-select d-none" style="display: none;" data-option-index="<?= $optGroup['index'] ?>">
+                            <?php foreach ($optGroup['values'] as $vIdx => $val): ?>
+                              <option value="<?= htmlspecialchars($val) ?>" <?= ($val === $currPartVal) ? 'selected' : '' ?>><?= htmlspecialchars($val) ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                      </div>
+                    <?php endforeach; ?>
+
+                    <!-- Quantity Counter inside options -->
+                    <div class="fbt-opt-qty-group">
+                      <span class="fbt-opt-qty-label">QUANTITY:</span>
+                      <div class="fbt-qty-box">
+                        <button type="button" class="fbt-qty-control btn-minus" aria-label="Decrease quantity">&minus;</button>
+                        <input type="number" class="fbt-qty-num" value="1" min="1" max="99" readonly>
+                        <button type="button" class="fbt-qty-control btn-plus" aria-label="Increase quantity">&plus;</button>
+                      </div>
+                    </div>
+                  </div>
+                <?php else: ?>
+                  <input type="hidden" class="fbt-qty-num" value="1">
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <!-- Add Selected to Cart Action Bar (Hidden by default until customer checks an item) -->
+          <div class="fbt-action-footer" style="display: none;">
+            <button type="button" class="btn-fbt-add-all" id="btnFbtAddToCart">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <span class="btn-fbt-label">Add selected to cart</span>
+              <span class="fbt-btn-dot">&bull;</span>
+              <span class="fbt-btn-total-price">$0.00</span>
+            </button>
+          </div>
+        </div>
+        <?php endif; ?>
 
       </div>
 

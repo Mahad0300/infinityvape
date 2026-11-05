@@ -71,7 +71,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <?php if (!empty($tagPosts)): ?>
             <?php foreach ($tagPosts as $tPost): 
               $tSlug = !empty($tPost['slug']) ? $tPost['slug'] : $tPost['id'];
-              $tUrl = url('blog-detail?slug=' . urlencode($tSlug));
+              $tUrl = url('blog/' . urlencode($tSlug));
               $tImg = !empty($tPost['featured_image_url']) ? $tPost['featured_image_url'] : 'assets/images/blog-1.jpg';
               if (!preg_match('~^(https?://|//|#)~i', $tImg)) {
                   $tImg = url($tImg);
@@ -89,7 +89,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     <a href="<?= htmlspecialchars($tUrl) ?>"><?= htmlspecialchars($tPost['title']) ?></a>
                   </h2>
                   <div class="tag-post-meta">
-                    <span class="meta-author">New Vape</span>
+                    <span class="meta-author"><?= htmlspecialchars(!empty($tPost['author_name']) ? $tPost['author_name'] : 'Infinity Vape Shop') ?></span>
                     <span class="meta-separator">|</span>
                     <span class="meta-date"><?= htmlspecialchars(blog_time_display($tPost['published_at'] ?? '')) ?></span>
                   </div>

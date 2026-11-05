@@ -43,87 +43,126 @@ include dirname(__DIR__) . '/includes/header.php';
     <!-- LEFT MAIN COLUMN -->
     <div class="form-main-col" style="display: flex; flex-direction: column; gap: 24px;">
       
-      <!-- Card: Blog Title & Slug -->
-      <div class="admin-card" style="padding: 24px;">
-        <div class="admin-form-group">
-          <label class="admin-form-label" style="font-weight: 700; font-size: 14px;">Blog Title <span style="color:#ef4444;">*</span></label>
-          <input 
-            type="text" 
-            name="title" 
-            id="blogTitleInput" 
-            class="admin-form-input" 
-            placeholder="e.g. Can You Refill a Foger Vape? Everything Explained" 
-            required
-            style="font-size: 16px; padding: 12px 14px;"
-          >
-        </div>
-
-        <div class="admin-form-group" style="margin-bottom: 0;">
-          <label class="admin-form-label" style="font-size: 13px;">URL Handle (Slug)</label>
-          <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc;">
-            <span style="padding: 0 12px; color: #64748b; font-size: 13px; font-weight: 500; border-right: 1px solid #e2e8f0;">/blog/</span>
+      <!-- Card: Blog Title -->
+      <div class="admin-card">
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-0">
+            <label class="admin-form-label" style="font-weight: 700; font-size: 14px;">Blog Title <span style="color:#ef4444;">*</span></label>
             <input 
               type="text" 
-              name="slug" 
-              id="blogSlugInput" 
+              name="title" 
+              id="blogTitleInput" 
               class="admin-form-input" 
-              placeholder="can-you-refill-foger-vape" 
-              style="border: none; border-radius: 0; background: #ffffff;"
+              placeholder="e.g. Can You Refill a Foger Vape? Everything Explained" 
+              required
+              style="font-size: 16px; padding: 12px 14px;"
             >
           </div>
-          <small style="color: #94a3b8; font-size: 12px; margin-top: 4px; display: block;">Auto-generated from title. Unique lowercase letters, numbers, and hyphens only.</small>
         </div>
       </div>
 
-      <!-- Card: Content Body -->
-      <div class="admin-card" style="padding: 24px;">
-        <div class="admin-form-group" style="margin-bottom: 0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label class="admin-form-label" style="font-weight: 700; font-size: 14px; margin: 0;">Article Content (HTML / Text)</label>
-            <span style="font-size: 12px; color: #64748b;">Supports rich paragraphs, headings and lists</span>
+      <!-- Card: Article Content Body -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <h2 class="admin-card-title">Article Content</h2>
+            <p class="form-help-text">Comprehensive rich text article content, headings, images, and guidelines displayed on the storefront.</p>
           </div>
-          <textarea 
-            name="content" 
-            id="blogContentInput" 
-            class="admin-form-textarea" 
-            rows="14" 
-            placeholder="<p>Write your detailed article content here...</p>" 
-            style="font-family: monospace; font-size: 13.5px; line-height: 1.6;"
-          ></textarea>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-0">
+            <div class="rich-text-editor">
+              <div class="rte-toolbar">
+                <select class="rte-format-select" title="Heading Size / Paragraph">
+                  <option value="p">Paragraph</option>
+                  <option value="h1">Heading 1 (H1)</option>
+                  <option value="h2">Heading 2 (H2)</option>
+                  <option value="h3">Heading 3 (H3)</option>
+                  <option value="h4">Heading 4 (H4)</option>
+                  <option value="h5">Heading 5 (H5)</option>
+                  <option value="h6">Heading 6 (H6)</option>
+                </select>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="bold" title="Bold"><strong>B</strong></button>
+                <button type="button" data-command="italic" title="Italic"><em>I</em></button>
+                <button type="button" data-command="underline" title="Underline"><u>U</u></button>
+                <button type="button" data-command="highlight" title="Highlight Text" class="rte-btn-highlight"><span class="highlight-swatch"></span> Highlight</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="insertUnorderedList" title="Bullet List">• Bullets</button>
+                <button type="button" data-command="insertOrderedList" title="Numbered List">1. Numbers</button>
+
+                <div class="rte-divider"></div>
+
+                <button type="button" data-command="createLink" title="Insert Link">🔗 Link</button>
+                <button type="button" data-command="unlink" title="Remove Link">Unlink</button>
+                <button type="button" data-command="removeFormat" title="Clear Formatting">Tx Clear</button>
+              </div>
+              <div class="rte-editor-content" id="blogContentEditor" contenteditable="true" data-placeholder="Write your detailed article content, headings, and guidelines here..." style="min-height: 280px;"></div>
+              <textarea name="content" id="blogContentInput" style="display:none;"></textarea>
+            </div>
+            <p class="form-help-text mt-xs">Use the toolbar to choose Heading 1 to 6 or Paragraph, Bold, Italic, Underline, Highlight, Bullets, Numbers, and Links.</p>
+          </div>
         </div>
       </div>
 
-      <!-- Card: SEO & Search Engine Listing Preview -->
-      <div class="admin-card" style="padding: 24px;">
-        <div style="margin-bottom: 18px;">
-          <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">Search Engine Listing</h3>
-          <p style="font-size: 13px; color: #64748b; margin: 0;">Preview and customize how this article appears on Google and social media.</p>
-        </div>
-
-        <div class="admin-form-group">
-          <div style="display: flex; justify-content: space-between;">
-            <label class="admin-form-label">SEO Page Title</label>
-            <span id="seoTitleCount" style="font-size: 12px; color: #94a3b8;">0 / 70</span>
+      <!-- Card: Search Engine Listing (SEO) -->
+      <div class="admin-card">
+        <div class="admin-card-header d-flex justify-between align-center">
+          <div>
+            <h2 class="admin-card-title">Search Engine Listing (SEO)</h2>
+            <p class="form-help-text">Optimize title, meta description, and URL handle for Google search ranking.</p>
           </div>
-          <input type="text" name="seo_title" id="seoTitleInput" class="admin-form-input" placeholder="SEO Title" maxlength="70">
+          <button type="button" id="toggleSeoBtn" class="btn-admin btn-admin-secondary btn-admin-sm">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <span>Edit website SEO</span>
+          </button>
         </div>
+        <div class="admin-card-body">
+          
+          <!-- SEO Editable Inputs -->
+          <div id="seoFieldsContainer" class="seo-fields-container active">
+            
+            <div class="admin-form-group">
+              <label for="seoTitleInput" class="admin-form-label">SEO Meta Title</label>
+              <input type="text" id="seoTitleInput" name="seo_title" class="admin-form-input" placeholder="Enter custom SEO title" maxlength="70">
+              <div class="char-counter"><span id="seoTitleCount">0</span> of 70 characters used</div>
+            </div>
 
-        <div class="admin-form-group">
-          <div style="display: flex; justify-content: space-between;">
-            <label class="admin-form-label">Meta Description</label>
-            <span id="seoDescCount" style="font-size: 12px; color: #94a3b8;">0 / 320</span>
-          </div>
-          <textarea name="seo_description" id="seoDescInput" class="admin-form-textarea" rows="3" placeholder="Summary snippet for search engine rankings..." maxlength="320"></textarea>
-        </div>
+            <div class="admin-form-group">
+              <label for="seoDescInput" class="admin-form-label">SEO Meta Description</label>
+              <textarea id="seoDescInput" name="seo_description" class="admin-form-textarea" rows="3" placeholder="Enter meta description for search engines..." maxlength="320"></textarea>
+              <div class="char-counter"><span id="seoDescCount">0</span> of 320 characters used</div>
+            </div>
 
-        <!-- Google SERP Live Snippet -->
-        <div class="seo-preview-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-top: 14px;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            <span><?= url() ?> &rsaquo; blog &rsaquo; <span id="previewSlug">post-handle</span></span>
+            <div class="admin-form-group mb-0">
+              <label for="blogSlugInput" class="admin-form-label">URL Handle / Slug</label>
+              <div class="input-prefix-container">
+                <span class="prefix">.../blog/</span>
+                <input type="text" id="blogSlugInput" name="slug" placeholder="can-you-refill-foger-vape">
+              </div>
+              <p class="form-help-text mt-xs">Auto-generated from title. Unique lowercase letters, numbers, and hyphens only.</p>
+            </div>
+
           </div>
-          <div id="previewTitle" style="font-size: 16px; font-weight: 600; color: #1e40af; margin-bottom: 4px; line-height: 1.3;">Article Title</div>
-          <div id="previewDesc" style="font-size: 13px; color: #475569; line-height: 1.45;">Write a concise meta description to see live snippet preview here.</div>
+
+          <!-- Live Google Search Preview Card -->
+          <div class="seo-preview-box">
+            <div class="seo-preview-header">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <span>Infinity Vape Shop</span>
+            </div>
+            <div class="seo-preview-url" id="previewUrl">www.infinityvapeshop.com/blog/<span id="previewSlug">post-handle</span></div>
+            <div class="seo-preview-title" id="previewTitle">Article Title</div>
+            <div class="seo-preview-desc" id="previewDesc">Write a concise meta description to see live snippet preview here.</div>
+          </div>
+
         </div>
       </div>
 
@@ -203,7 +242,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div class="admin-form-group" style="margin-bottom: 0;">
           <label class="admin-form-label" style="font-size: 12px;">Tags (comma separated)</label>
           <input type="text" name="tags" class="admin-form-input" placeholder="Disposables, Vaping Guides, News">
-          <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Author will automatically be published as <strong>New Vape</strong>.</small>
+          <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Author will automatically be published as <strong>Infinity Vape Shop</strong>.</small>
         </div>
       </div>
     </div>

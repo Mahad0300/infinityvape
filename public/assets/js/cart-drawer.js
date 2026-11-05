@@ -58,6 +58,24 @@
   }
 
   /**
+   * Add Multiple Items to Cart in a Single Operation
+   */
+  function addMultiple(items) {
+    if (!Array.isArray(items) || items.length === 0) return;
+    const cart = getCart();
+    items.forEach(product => {
+      const existingIndex = cart.findIndex((item) => item.id === product.id);
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity += (product.quantity || 1);
+      } else {
+        cart.push(product);
+      }
+    });
+    saveCart(cart);
+    openDrawer();
+  }
+
+  /**
    * Update Item Quantity
    */
   function updateQty(id, delta) {
@@ -388,6 +406,7 @@
     close: closeDrawer,
     get: getCart,
     add: addItem,
+    addMultiple: addMultiple,
     clear: function () {
       saveCart([]);
     }

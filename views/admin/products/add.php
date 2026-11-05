@@ -498,6 +498,53 @@ $collections = !empty($allCols) ? array_column($allCols, 'name') : ['E-Liquids',
         </div>
       </div>
 
+      <!-- 7. Frequently Bought Together (Optional - Max 4) -->
+      <div class="admin-card">
+        <div class="admin-card-header d-flex justify-between align-center">
+          <div>
+            <h2 class="admin-card-title">Frequently Bought Together (Cross-Sell Bundle)</h2>
+            <p class="form-help-text">Choose up to 4 companion products to recommend together on this product's page.</p>
+          </div>
+          <span id="fbtCounterBadge" style="font-size: 12px; font-weight: 700; background: #f1f5f9; color: var(--color-primary-navy); padding: 4px 10px; border-radius: 9999px; border: 1px solid #e2e8f0;">
+            <span id="fbtSelectedCount">0</span> / 4 Selected
+          </span>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-form-group mb-sm">
+            <input type="text" id="fbtSearchInput" class="admin-form-input" placeholder="Search catalog by product name or SKU..." autocomplete="off">
+          </div>
+
+          <div id="fbtProductList" style="max-height: 290px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; padding: 6px;">
+            <?php if (!empty($all_products)): ?>
+              <?php foreach ($all_products as $pItem): ?>
+                <?php
+                $pStock = (int)($pItem['stock_quantity'] ?? 0);
+                $pIsOut = ($pStock <= 0) || (strtolower(str_replace(' ', '_', $pItem['stock_status'] ?? '')) === 'out_of_stock');
+                ?>
+                <label class="fbt-product-row" data-search="<?= htmlspecialchars(strtolower($pItem['title'] . ' ' . $pItem['sku'])) ?>" style="display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s ease; border-bottom: 1px solid #f1f5f9;">
+                  <input type="checkbox" name="frequently_bought_together[]" value="<?= $pItem['id'] ?>" class="fbt-checkbox" style="width: 17px; height: 17px; accent-color: var(--color-accent-orange); cursor: pointer; flex-shrink: 0;">
+                  <img src="<?= asset($pItem['img'] ?? 'assets/images/no-image.svg') ?>" alt="<?= htmlspecialchars($pItem['title']) ?>" style="width: 38px; height: 38px; object-fit: contain; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; flex-shrink: 0;" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 600; font-size: 13px; color: var(--color-primary-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($pItem['title']) ?></div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                      SKU: <?= htmlspecialchars($pItem['sku'] ?: 'N/A') ?> &bull; <strong style="color: #0f172a;">$<?= number_format((float)($pItem['base_price'] ?? 0), 2) ?></strong>
+                      <?php if ($pIsOut): ?>
+                        <span style="font-size: 10px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Out of stock</span>
+                      <?php else: ?>
+                        <span style="font-size: 10px; font-weight: 600; color: #059669; margin-left: 6px;">(<?= $pStock ?> in stock)</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </label>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <div style="padding: 24px; text-align: center; color: #94a3b8; font-size: 13px;">No other products available in catalog.</div>
+            <?php endif; ?>
+          </div>
+          <p class="form-help-text mt-xs">Maximum 4 products can be selected. Customers will be able to configure options and add them all with 1-click.</p>
+        </div>
+      </div>
+
       <!-- 8. Search Engine Listing (SEO) Card -->
       <div class="admin-card">
         <div class="admin-card-header d-flex justify-between align-center">
@@ -760,6 +807,68 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   updateFaqBadges();
+
+  // --- Frequently Bought Together (FBT) Selector Logic ---
+  const fbtCheckboxes = document.querySelectorAll('.fbt-checkbox');
+  const fbtCounter = document.getElementById('fbtSelectedCount');
+  const MAX_FBT = 4;
+
+  function updateFbtState() {
+    const checked = document.querySelectorAll('.fbt-checkbox:checked');
+    const count = checked.length;
+    if (fbtCounter) fbtCounter.textContent = count;
+
+    fbtCheckboxes.forEach(cb => {
+      const row = cb.closest('.fbt-product-row');
+      if (cb.checked) {
+        if (row) row.style.backgroundColor = '#fdfbf7';
+        cb.disabled = false;
+        if (row) {
+          row.style.opacity = '1';
+          row.style.cursor = 'pointer';
+        }
+      } else {
+        if (row) row.style.backgroundColor = '';
+        if (count >= MAX_FBT) {
+          cb.disabled = true;
+          if (row) {
+            row.style.opacity = '0.45';
+            row.style.cursor = 'not-allowed';
+          }
+        } else {
+          cb.disabled = false;
+          if (row) {
+            row.style.opacity = '1';
+            row.style.cursor = 'pointer';
+          }
+        }
+      }
+    });
+  }
+
+  fbtCheckboxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      const checked = document.querySelectorAll('.fbt-checkbox:checked');
+      if (checked.length > MAX_FBT) {
+        this.checked = false;
+        alert('You can select a maximum of 4 products for Frequently Bought Together.');
+      }
+      updateFbtState();
+    });
+  });
+
+  const fbtSearch = document.getElementById('fbtSearchInput');
+  if (fbtSearch) {
+    fbtSearch.addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      document.querySelectorAll('.fbt-product-row').forEach(row => {
+        const searchTxt = row.getAttribute('data-search') || '';
+        row.style.display = (q === '' || searchTxt.includes(q)) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  updateFbtState();
 });
 window.APP_BASE_URL = <?= json_encode(base_url()) ?>;
 </script>
