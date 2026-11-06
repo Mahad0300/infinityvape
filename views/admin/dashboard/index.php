@@ -1,5 +1,5 @@
 <?php
-$page_title = 'Dashboard';
+$page_title = 'Admin Dashboard';
 $current_admin_page = 'dashboard';
 $page_script = 'dashboard.js';
 include dirname(__DIR__) . '/includes/header.php';
@@ -9,11 +9,11 @@ include dirname(__DIR__) . '/includes/header.php';
 <div class="page-title-bar">
   <div class="page-heading-group">
     <h1>Admin Dashboard</h1>
-    <p class="page-subtitle">Welcome back! Here is what's happening in your vape store today.</p>
+    <p class="page-subtitle">Real-time store performance, catalog metrics, and fulfillment queue.</p>
   </div>
   <div class="page-actions-group">
     <a href="<?= url('admin/add-product') ?>" class="btn-admin btn-admin-primary">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
@@ -28,14 +28,14 @@ include dirname(__DIR__) . '/includes/header.php';
   <!-- 1. Total Revenue -->
   <div class="stat-card">
     <div class="stat-info">
-      <span class="stat-label">Total Revenue</span>
-      <div class="stat-value">$18,492.50</div>
+      <span class="stat-label">Total Revenue (Paid)</span>
+      <div class="stat-value"><?= $metrics['total_revenue'] ?? '$0.00' ?></div>
       <span class="stat-trend up">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
           <polyline points="17 6 23 6 23 12"></polyline>
         </svg>
-        <span>+14.8% vs last month</span>
+        <span>Live store gross receipts</span>
       </span>
     </div>
     <div class="stat-icon-wrap green">
@@ -50,13 +50,13 @@ include dirname(__DIR__) . '/includes/header.php';
   <div class="stat-card">
     <div class="stat-info">
       <span class="stat-label">Total Orders</span>
-      <div class="stat-value">342</div>
+      <div class="stat-value"><?= number_format($metrics['total_orders'] ?? 0) ?></div>
       <span class="stat-trend up">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
           <polyline points="17 6 23 6 23 12"></polyline>
         </svg>
-        <span>+8.2% new orders</span>
+        <span><?= (int)($metrics['pending_orders'] ?? 0) ?> awaiting fulfillment</span>
       </span>
     </div>
     <div class="stat-icon-wrap blue">
@@ -71,10 +71,10 @@ include dirname(__DIR__) . '/includes/header.php';
   <!-- 3. Active Products -->
   <div class="stat-card">
     <div class="stat-info">
-      <span class="stat-label">Active Products</span>
-      <div class="stat-value">20</div>
+      <span class="stat-label">Published Catalog</span>
+      <div class="stat-value"><?= number_format($metrics['published_products'] ?? 0) ?></div>
       <span class="stat-trend up">
-        <span>In 9 Collections</span>
+        <span>In <?= (int)($metrics['total_collections'] ?? 0) ?> Collections</span>
       </span>
     </div>
     <div class="stat-icon-wrap purple">
@@ -89,14 +89,14 @@ include dirname(__DIR__) . '/includes/header.php';
   <!-- 4. Total Customers -->
   <div class="stat-card">
     <div class="stat-info">
-      <span class="stat-label">Customers</span>
-      <div class="stat-value">1,248</div>
+      <span class="stat-label">Registered Customers</span>
+      <div class="stat-value"><?= number_format($metrics['total_customers'] ?? 0) ?></div>
       <span class="stat-trend up">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
           <polyline points="17 6 23 6 23 12"></polyline>
         </svg>
-        <span>+24 verified (21+)</span>
+        <span><?= (int)($metrics['verified_customers'] ?? 0) ?> verified (21+)</span>
       </span>
     </div>
     <div class="stat-icon-wrap orange">
@@ -116,7 +116,7 @@ include dirname(__DIR__) . '/includes/header.php';
   
   <!-- Left Side: Recent Orders Table -->
   <div class="admin-card">
-    <div class="admin-card-header">
+    <div class="admin-card-header d-flex justify-between align-center">
       <h2 class="admin-card-title">Recent Orders</h2>
       <a href="<?= url('admin/orders') ?>" class="btn-admin btn-admin-secondary btn-admin-sm">View All Orders</a>
     </div>
@@ -130,125 +130,51 @@ include dirname(__DIR__) . '/includes/header.php';
               <th>Date</th>
               <th>Total</th>
               <th>Status</th>
-              <th>Action</th>
+              <th class="text-right">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>#VH-104820</strong></td>
-              <td>
-                <div class="table-customer-cell">
-                  <div class="table-customer-avatar">JD</div>
-                  <div>
-                    <strong>John Doe</strong>
-                    <div class="table-sub-email">johndoe@gmail.com</div>
-                  </div>
-                </div>
-              </td>
-              <td>Sep 21, 2026</td>
-              <td><strong>$52.99</strong></td>
-              <td><span class="badge-status badge-completed">Completed</span></td>
-              <td>
-                <a href="<?= url('admin/order-detail') ?>?id=104820" class="btn-icon-only" title="View Order Details">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>#VH-104819</strong></td>
-              <td>
-                <div class="table-customer-cell">
-                  <div class="table-customer-avatar">MS</div>
-                  <div>
-                    <strong>Michael Smith</strong>
-                    <div class="table-sub-email">msmith@yahoo.com</div>
-                  </div>
-                </div>
-              </td>
-              <td>Sep 21, 2026</td>
-              <td><strong>$39.99</strong></td>
-              <td><span class="badge-status badge-processing">Processing</span></td>
-              <td>
-                <a href="<?= url('admin/order-detail') ?>?id=104819" class="btn-icon-only" title="View Order Details">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>#VH-104818</strong></td>
-              <td>
-                <div class="table-customer-cell">
-                  <div class="table-customer-avatar">EW</div>
-                  <div>
-                    <strong>Emily Watson</strong>
-                    <div class="table-sub-email">emily.w@outlook.com</div>
-                  </div>
-                </div>
-              </td>
-              <td>Sep 20, 2026</td>
-              <td><strong>$84.50</strong></td>
-              <td><span class="badge-status badge-shipped">Shipped</span></td>
-              <td>
-                <a href="<?= url('admin/order-detail') ?>?id=104818" class="btn-icon-only" title="View Order Details">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>#VH-104817</strong></td>
-              <td>
-                <div class="table-customer-cell">
-                  <div class="table-customer-avatar">DK</div>
-                  <div>
-                    <strong>David Kim</strong>
-                    <div class="table-sub-email">david.kim@gmail.com</div>
-                  </div>
-                </div>
-              </td>
-              <td>Sep 20, 2026</td>
-              <td><strong>$17.99</strong></td>
-              <td><span class="badge-status badge-pending">Pending</span></td>
-              <td>
-                <a href="<?= url('admin/order-detail') ?>?id=104817" class="btn-icon-only" title="View Order Details">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </td>
-            </tr>
-            <tr>
-              <td><strong>#VH-104816</strong></td>
-              <td>
-                <div class="table-customer-cell">
-                  <div class="table-customer-avatar">SL</div>
-                  <div>
-                    <strong>Sarah Lopez</strong>
-                    <div class="table-sub-email">slopez@icloud.com</div>
-                  </div>
-                </div>
-              </td>
-              <td>Sep 19, 2026</td>
-              <td><strong>$112.40</strong></td>
-              <td><span class="badge-status badge-completed">Completed</span></td>
-              <td>
-                <a href="<?= url('admin/order-detail') ?>?id=104816" class="btn-icon-only" title="View Order Details">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </a>
-              </td>
-            </tr>
+            <?php if (!empty($recent_orders)): ?>
+              <?php foreach ($recent_orders as $ord): ?>
+                <tr>
+                  <td>
+                    <a href="<?= url('admin/order-detail') ?>?id=<?= htmlspecialchars($ord['id']) ?>" class="table-order-id-link">
+                      #<?= htmlspecialchars($ord['id']) ?>
+                    </a>
+                  </td>
+                  <td>
+                    <div class="table-customer-cell">
+                      <div class="table-customer-avatar"><?= htmlspecialchars($ord['initials']) ?></div>
+                      <div>
+                        <strong><?= htmlspecialchars($ord['customer']) ?></strong>
+                        <div class="table-sub-email"><?= htmlspecialchars($ord['email']) ?></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><?= htmlspecialchars($ord['date']) ?></td>
+                  <td><strong><?= htmlspecialchars($ord['total']) ?></strong></td>
+                  <td>
+                    <span class="badge-status <?= $ord['badge_class'] ?>">
+                      <?= htmlspecialchars($ord['status']) ?>
+                    </span>
+                  </td>
+                  <td class="text-right">
+                    <a href="<?= url('admin/order-detail') ?>?id=<?= htmlspecialchars($ord['id']) ?>" class="btn-icon-only" title="View Order Details">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="6" class="text-center" style="padding: 32px; color: #64748b;">
+                  No orders recorded yet. As orders are placed in the storefront, they will appear here live.
+                </td>
+              </tr>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>
@@ -257,56 +183,40 @@ include dirname(__DIR__) . '/includes/header.php';
 
   <!-- Right Side: Top Selling Products -->
   <div class="admin-card">
-    <div class="admin-card-header">
+    <div class="admin-card-header d-flex justify-between align-center">
       <h2 class="admin-card-title">Top Selling Products</h2>
       <a href="<?= url('admin/products') ?>" class="btn-admin btn-admin-secondary btn-admin-sm">Catalog</a>
     </div>
     <div class="admin-card-body">
       <div class="info-list-group">
         
-        <div class="info-list-item">
-          <div class="table-product-cell">
-            <img src="../assets/images/product-1.webp" alt="Juice Head Salt" class="table-product-thumb">
-            <div class="table-product-info">
-              <span class="table-product-title">Juice Head Salt 50K Bundle</span>
-              <span class="table-product-meta">148 sold • $29.99</span>
+        <?php if (!empty($top_products)): ?>
+          <?php foreach ($top_products as $tp): 
+            $sold = (int)($tp['total_sold'] ?? 0);
+            $rev = (float)($tp['total_revenue'] ?? 0);
+            $basePrice = (float)($tp['base_price'] ?? 0);
+            $pImg = !empty($tp['featured_image']) ? asset($tp['featured_image']) : asset('assets/images/product-1.webp');
+          ?>
+            <div class="info-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+              <div class="table-product-cell" style="display: flex; align-items: center; gap: 12px;">
+                <img src="<?= $pImg ?>" alt="<?= htmlspecialchars($tp['product_title']) ?>" class="table-product-thumb" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0;" onerror="this.src='<?= asset('assets/images/vape-image.webp') ?>';">
+                <div class="table-product-info">
+                  <span class="table-product-title" style="font-weight: 600; font-size: 13.5px; color: #0f172a; display: block;">
+                    <?= htmlspecialchars($tp['product_title']) ?>
+                  </span>
+                  <span class="table-product-meta" style="font-size: 12px; color: #64748b;">
+                    <?= $sold > 0 ? "{$sold} sold • " : "In Catalog • " ?>$<?= number_format($basePrice, 2) ?>
+                  </span>
+                </div>
+              </div>
+              <div class="info-list-val <?= $rev > 0 ? 'text-success' : '' ?>" style="font-weight: 700; font-size: 13.5px;">
+                <?= $rev > 0 ? '+$' . number_format($rev, 2) : '$' . number_format($basePrice, 2) ?>
+              </div>
             </div>
-          </div>
-          <div class="info-list-val text-success">+$4,438.52</div>
-        </div>
-
-        <div class="info-list-item">
-          <div class="table-product-cell">
-            <img src="../assets/images/most-popular-1.webp" alt="Geek Bar Pulse" class="table-product-thumb">
-            <div class="table-product-info">
-              <span class="table-product-title">Geek Bar Pulse 15K</span>
-              <span class="table-product-meta">215 sold • $14.99</span>
-            </div>
-          </div>
-          <div class="info-list-val text-success">+$3,222.85</div>
-        </div>
-
-        <div class="info-list-item">
-          <div class="table-product-cell">
-            <img src="../assets/images/most-popular-2.webp" alt="GB Pulse 2" class="table-product-thumb">
-            <div class="table-product-info">
-              <span class="table-product-title">GB Pulse 2 25K</span>
-              <span class="table-product-meta">110 sold • $17.99</span>
-            </div>
-          </div>
-          <div class="info-list-val text-success">+$1,978.90</div>
-        </div>
-
-        <div class="info-list-item">
-          <div class="table-product-cell">
-            <img src="../assets/images/most-popular-3.webp" alt="Voopoo Drag S2" class="table-product-thumb">
-            <div class="table-product-info">
-              <span class="table-product-title">Voopoo Drag S2 Pod Kit</span>
-              <span class="table-product-meta">48 sold • $39.99</span>
-            </div>
-          </div>
-          <div class="info-list-val text-success">+$1,919.52</div>
-        </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-center" style="padding: 24px; color: #64748b; font-size: 13px;">No product sales activity logged yet.</p>
+        <?php endif; ?>
 
       </div>
     </div>

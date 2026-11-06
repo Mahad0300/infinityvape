@@ -407,6 +407,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
             <option 
               value="<?= htmlspecialchars($variant['variant_name']) ?>" 
+              data-variant-id="<?= (int)$variant['id'] ?>"
               data-price="<?= number_format($vPrice, 2, '.', '') ?>"
               data-compare-price="<?= $vCompare ? number_format($vCompare, 2, '.', '') : '' ?>"
               data-sku="<?= htmlspecialchars($vSku) ?>"
@@ -535,6 +536,8 @@ include dirname(__DIR__) . '/includes/header.php';
             type="button" 
             class="btn-product-add-cart <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
             id="btnProductAddToCart"
+            data-product-id="<?= (int)$product['id'] ?>"
+            data-variant-id="<?= !empty($defaultVariant['id']) ? (int)$defaultVariant['id'] : '' ?>"
             <?= $isOutOfStock ? 'disabled' : '' ?>
           >
             <?= $isOutOfStock ? 'Out of Stock' : 'Add to cart' ?>
@@ -546,6 +549,8 @@ include dirname(__DIR__) . '/includes/header.php';
           type="button" 
           class="btn-product-buy-now <?= $isOutOfStock ? 'is-disabled' : '' ?>" 
           id="btnProductBuyNow"
+          data-product-id="<?= (int)$product['id'] ?>"
+          data-variant-id="<?= !empty($defaultVariant['id']) ? (int)$defaultVariant['id'] : '' ?>"
           <?= $isOutOfStock ? 'disabled' : '' ?>
         >
           Buy it now

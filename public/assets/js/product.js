@@ -702,6 +702,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Sync hidden select for cart-drawer & external scripts
     if (flavorSelect) {
       flavorSelect.value = variant.variant_name;
+      flavorSelect.dataset.selectedVariantId = variant.id || '';
+    }
+
+    const btnAddToCart = document.getElementById('btnProductAddToCart');
+    const btnBuyNow = document.getElementById('btnProductBuyNow');
+    if (btnAddToCart) {
+      if (variant.id) btnAddToCart.dataset.variantId = variant.id;
+      if (variant.product_id) btnAddToCart.dataset.productId = variant.product_id;
+    }
+    if (btnBuyNow) {
+      if (variant.id) btnBuyNow.dataset.variantId = variant.id;
+      if (variant.product_id) btnBuyNow.dataset.productId = variant.product_id;
     }
 
     const priceSection = document.querySelector('.product-price-section');
@@ -1071,24 +1083,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const price = parseFloat(priceStr) || 17.99;
       const flavor = flavorEl && flavorEl.value ? flavorEl.value : '';
       const image = imgEl ? imgEl.getAttribute('src') : 'assets/images/vape-image.webp';
-      const id = (title + (flavor ? '-' + flavor : '')).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const productId = btnBuyNow.dataset.productId ? parseInt(btnBuyNow.dataset.productId, 10) : 0;
+      const variantId = btnBuyNow.dataset.variantId ? parseInt(btnBuyNow.dataset.variantId, 10) : (flavorEl && flavorEl.dataset.selectedVariantId ? parseInt(flavorEl.dataset.selectedVariantId, 10) : null);
+      const id = variantId ? `${productId}-${variantId}` : `${productId}`;
+
+      const checkoutUrl = (window.APP_BASE_URL || '').replace(/\/+$/, '') + '/checkout';
 
       const cartInstance = window.InfinityCart || window.NewVapeCart;
-      if (cartInstance) {
+      if (cartInstance && typeof cartInstance.add === 'function') {
         cartInstance.add({
+          product_id: productId,
+          variant_id: variantId,
           id: id,
           title: title,
           price: price,
           quantity: addedQty,
           flavor: flavor,
           image: image
+        }, function () {
+          window.location.href = checkoutUrl;
         });
+      } else {
+        window.location.href = checkoutUrl;
       }
-
-      setTimeout(() => {
-        // Leverages <base href="..."> defined in <head> for universal root & subfolder compatibility
-        window.location.href = 'checkout';
-      }, 350);
     });
   }
 
@@ -1748,9 +1765,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const flavor = card.dataset.selectedVariantName || '';
             const imgEl = card.querySelector('.fbt-item-img');
             const img = imgEl ? imgEl.src : (card.getAttribute('data-product-img') || '');
-            const id = (title + (flavor ? '-' + flavor : '')).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            const pId = parseInt(card.dataset.productId, 10) || 0;
+            const vId = card.dataset.selectedVariantId ? parseInt(card.dataset.selectedVariantId, 10) : null;
+            const id = vId ? `${pId}-${vId}` : `${pId}`;
 
             itemsToAdd.push({
+              product_id: pId,
+              variant_id: vId,
               id: id,
               title: title,
               price: price,

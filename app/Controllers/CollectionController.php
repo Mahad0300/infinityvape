@@ -12,7 +12,7 @@ class CollectionController extends Controller
      */
     public function index()
     {
-        $slug = $_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? null)));
+        $slug = $_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? 'all')));
         return $this->show($slug);
     }
 
@@ -21,8 +21,11 @@ class CollectionController extends Controller
      */
     public function show($slug = null)
     {
-        $slug = $slug ?? ($_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? 'disposable'))));
-        $slug = trim(strtolower($slug));
+        $slug = $slug ?? ($_GET['slug'] ?? ($_GET['cat'] ?? ($_GET['collection'] ?? ($_GET['c'] ?? 'all'))));
+        $slug = trim(strtolower((string)$slug));
+        if ($slug === 'collections' || $slug === 'collection' || empty($slug)) {
+            $slug = 'all';
+        }
 
         // Handle 'all' or 'shop'
         $isAll = ($slug === 'all' || $slug === 'shop' || empty($slug));

@@ -130,18 +130,18 @@ class Customer extends Model
             // Joined date formatting
             $customer['joined'] = !empty($customer['created_at']) 
                 ? date('F j, Y', strtotime($customer['created_at'])) 
-                : 'September 12, 2026';
+                : 'Recent Member';
 
             // DOB and age
-            if (!empty($customer['birth_date'])) {
+            if (!empty($customer['birth_date']) && $customer['birth_date'] !== '0000-00-00') {
                 $dob = new \DateTime($customer['birth_date']);
                 $now = new \DateTime();
                 $age = $now->diff($dob)->y;
                 $customer['dob'] = date('F j, Y', strtotime($customer['birth_date'])) . " (Age: {$age})";
                 $customer['age'] = $age;
             } else {
-                $customer['dob'] = 'March 14, 1994 (Age: 32)';
-                $customer['age'] = 32;
+                $customer['dob'] = !empty($customer['age_verified']) ? '21+ Confirmed' : 'Not recorded';
+                $customer['age'] = !empty($customer['age_verified']) ? 21 : null;
             }
 
             $customer['verify_method'] = 'AgeChecker.Net (Instant Database Match)';

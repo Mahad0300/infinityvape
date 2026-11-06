@@ -1303,6 +1303,29 @@ class Product extends Model
     }
 
     /**
+     * Find a single variant by its ID
+     */
+    public static function findVariant($variantId)
+    {
+        $db = self::getDB();
+        if (!$db || empty($variantId)) return null;
+
+        try {
+            $stmt = $db->prepare("SELECT * FROM product_variants WHERE id = ? LIMIT 1");
+            $stmt->execute([(int)$variantId]);
+            $variant = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($variant) {
+                $variant['full_image_url'] = !empty($variant['image_url']) ? asset($variant['image_url']) : '';
+                return $variant;
+            }
+        } catch (\Exception $e) {
+            error_log("Product::findVariant error: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
      * Dynamic Related Products ("You May Also Like")
      */
     public static function getRelatedProducts($productId, $brandId = null, $collectionId = null, $limit = 6)

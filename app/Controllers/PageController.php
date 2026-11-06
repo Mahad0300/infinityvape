@@ -149,6 +149,12 @@ class PageController extends Controller
                         $stmt = $db->prepare('SELECT * FROM orders WHERE (order_number = ? OR id = ?) AND LOWER(customer_email) = LOWER(?) LIMIT 1');
                         $stmt->execute([$orderNumber, $orderNumber, $customerEmail]);
                         $tracking_result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+                        if ($tracking_result) {
+                            $stmtItems = $db->prepare("SELECT oi.*, p.slug as product_slug, p.featured_image FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ?");
+                            $stmtItems->execute([$tracking_result['id']]);
+                            $tracking_result['items'] = $stmtItems->fetchAll(\PDO::FETCH_ASSOC);
+                        }
                     } catch (\Exception $e) {
                     }
                 }

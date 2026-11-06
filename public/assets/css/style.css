@@ -8433,6 +8433,58 @@ body.cart-drawer-open {
   }
 }
 
+/* Floating Cart Notification Toast */
+.cart-toast-notice {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  max-width: 380px;
+  padding: 14px 18px;
+  background-color: #1e293b;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+  pointer-events: none;
+}
+
+.cart-toast-notice.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.cart-toast-notice.error {
+  background-color: #dc2626;
+  border-left: 4px solid #991b1b;
+}
+
+.cart-toast-notice.warning {
+  background-color: #d97706;
+  border-left: 4px solid #92400e;
+}
+
+.cart-toast-notice.success {
+  background-color: #10b981;
+  border-left: 4px solid #065f46;
+}
+
+.cart-qty-btn.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
 /* ==========================================================================
    SECURE CHECKOUT PAGE (checkout.php) & ORDER SUCCESS CONFIRMATION MODAL
    Matching vaporhatch clean high-converting e-commerce design

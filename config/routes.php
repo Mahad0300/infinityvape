@@ -23,8 +23,26 @@ return [
     'brands.php'           => [\App\Controllers\BrandController::class, 'index'],
     'product'              => [\App\Controllers\ProductController::class, 'index'],
     'product.php'          => [\App\Controllers\ProductController::class, 'index'],
+
+    // Cart API Routes
+    'cart/items'           => [\App\Controllers\CartController::class, 'items'],
+    'cart/items.php'       => [\App\Controllers\CartController::class, 'items'],
+    'cart/add'             => [\App\Controllers\CartController::class, 'add'],
+    'cart/add.php'         => [\App\Controllers\CartController::class, 'add'],
+    'cart/add-multiple'    => [\App\Controllers\CartController::class, 'addMultiple'],
+    'cart/add-multiple.php'=> [\App\Controllers\CartController::class, 'addMultiple'],
+    'cart/update'          => [\App\Controllers\CartController::class, 'update'],
+    'cart/update.php'      => [\App\Controllers\CartController::class, 'update'],
+    'cart/remove'          => [\App\Controllers\CartController::class, 'remove'],
+    'cart/remove.php'      => [\App\Controllers\CartController::class, 'remove'],
+    'cart/clear'           => [\App\Controllers\CartController::class, 'clear'],
+    'cart/clear.php'       => [\App\Controllers\CartController::class, 'clear'],
+
     'checkout'             => [\App\Controllers\CheckoutController::class, 'index'],
     'checkout.php'         => [\App\Controllers\CheckoutController::class, 'index'],
+    'checkout/process'     => [\App\Controllers\CheckoutController::class, 'process'],
+    'checkout/apply-coupon'=> [\App\Controllers\CheckoutController::class, 'applyCoupon'],
+    'checkout/remove-coupon'=>[\App\Controllers\CheckoutController::class, 'removeCoupon'],
     'my-account'           => [\App\Controllers\AccountController::class, 'index'],
     'my-account.php'       => [\App\Controllers\AccountController::class, 'index'],
     'account/login'        => [\App\Controllers\AccountController::class, 'login'],
@@ -113,6 +131,9 @@ return [
     'admin/orders.php'     => [\App\Controllers\Admin\OrderController::class, 'index'],
     'admin/order-detail'   => [\App\Controllers\Admin\OrderController::class, 'detail'],
     'admin/order-detail.php'=>[\App\Controllers\Admin\OrderController::class, 'detail'],
+    'admin/orders/update-status' => [\App\Controllers\Admin\OrderController::class, 'updateStatus'],
+    'admin/orders/update'  => [\App\Controllers\Admin\OrderController::class, 'updateStatus'],
+    'admin/order/update-status' => [\App\Controllers\Admin\OrderController::class, 'updateStatus'],
     'admin/customers'      => [\App\Controllers\Admin\CustomerController::class, 'index'],
     'admin/customers.php'  => [\App\Controllers\Admin\CustomerController::class, 'index'],
     'admin/customer-detail'=> [\App\Controllers\Admin\CustomerController::class, 'detail'],
@@ -170,4 +191,17 @@ return [
     'admin/reviews/update'                    => [\App\Controllers\Admin\ReviewController::class, 'update'],
     'admin/reviews/status'                    => [\App\Controllers\Admin\ReviewController::class, 'updateStatus'],
     'admin/reviews/delete'                    => [\App\Controllers\Admin\ReviewController::class, 'delete'],
+
+    // Admin Coupons & Discounts CRUD
+    'admin/coupons'                           => [\App\Controllers\Admin\CouponController::class, 'index'],
+    'admin/coupons.php'                       => [\App\Controllers\Admin\CouponController::class, 'index'],
+    'admin/coupons/store'                     => [\App\Controllers\Admin\CouponController::class, 'store'],
+    'admin/coupons/update'                    => [\App\Controllers\Admin\CouponController::class, 'update'],
+    'admin/coupons/toggle'                    => [\App\Controllers\Admin\CouponController::class, 'toggle'],
+    'admin/coupons/delete'                    => [\App\Controllers\Admin\CouponController::class, 'delete'],
+
+    // Admin Store & Checkout Settings
+    'admin/settings'                          => [\App\Controllers\Admin\SettingController::class, 'index'],
+    'admin/settings.php'                      => [\App\Controllers\Admin\SettingController::class, 'index'],
+    'admin/settings/save'                     => [\App\Controllers\Admin\SettingController::class, 'save'],
 ];

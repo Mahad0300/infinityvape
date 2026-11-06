@@ -1,18 +1,23 @@
 /**
- * INFINITY VAPE SHOP - SECURE CHECKOUT PAGE JAVASCRIPT (assets/js/checkout.js)
- * High-converting checkout logic matching vaporhatch:
- * - Dynamic cart rendering from localStorage with default fallbacks
- * - Live shipping method calculation ($5.99, $14.99, FREE)
- * - Payment tabs (Credit Card & Apple Pay)
- * - Billing address toggle
- * - Credit card formatting
- * - Coupon code discount application
- * - Strict field and 21+ age verification validation
- * - Instant Thank You confirmation popup modal
+ * INFINITY VAPE SHOP - DYNAMIC PRODUCTION CHECKOUT JAVASCRIPT (assets/js/checkout.js)
+ * Fully connected to MariaDB backend order processing, atomic transactions,
+ * live stock decrement, coupon engine, and sandbox test checkout.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
+
+  // Universal API Base URL
+  function getApiBaseUrl() {
+    if (window.APP_BASE_URL && typeof window.APP_BASE_URL === 'string') {
+      return window.APP_BASE_URL.replace(/\/+$/, '');
+    }
+    const baseEl = document.querySelector('base');
+    if (baseEl && baseEl.href) {
+      return baseEl.href.replace(/\/+$/, '');
+    }
+    return window.location.origin;
+  }
 
   // DOM Elements
   const checkoutForm = document.getElementById('checkoutMainForm');
@@ -50,130 +55,92 @@ document.addEventListener('DOMContentLoaded', function () {
   const contentCreditCard = document.getElementById('contentCreditCard');
   const contentApplePay = document.getElementById('contentApplePay');
 
-  // Billing address radios
-  const billingRadios = document.querySelectorAll('input[name="billingAddressType"]');
-  const differentBillingForm = document.getElementById('differentBillingForm');
-
-  // Base state values
-  let currentSubtotal = 44.98;
+  // Dynamic Base Values (initialized from PHP rendered markup)
+  const summaryTotalsList = document.querySelector('.summary-totals-list');
+  let currentSubtotal = summaryTotalsList && summaryTotalsList.dataset.subtotal ? parseFloat(summaryTotalsList.dataset.subtotal) : 0;
+  let taxRate = summaryTotalsList && summaryTotalsList.dataset.taxRate ? (parseFloat(summaryTotalsList.dataset.taxRate) / 100) : 0.045;
+  let freeThreshold = summaryTotalsList && summaryTotalsList.dataset.freeThreshold ? parseFloat(summaryTotalsList.dataset.freeThreshold) : 150.00;
   let currentDiscount = 0;
-  let currentShipping = 5.99;
-  const taxRate = 0.045; // 4.5%
+  let currentShipping = (currentSubtotal >= freeThreshold) ? 0.00 : 5.99;
+  let selectedMethodName = (currentSubtotal >= freeThreshold) ? 'Free Ground Shipping' : 'Standard Ground Shipping';
 
-  // Escape HTML helper
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  // Check initial active radio
+  const activeShippingRadio = document.querySelector('input[name="shippingMethod"]:checked');
+  if (activeShippingRadio) {
+    currentShipping = parseFloat(activeShippingRadio.value) || 0;
+    selectedMethodName = activeShippingRadio.getAttribute('data-name') || selectedMethodName;
   }
 
-  // 1. Load Cart Items from LocalStorage
-  function loadCartItems() {
-    try {
-      const stored = localStorage.getItem('infinity_cart_items') || localStorage.getItem('newvape_cart_items');
-      const cart = stored ? JSON.parse(stored) : [];
-
-      if (Array.isArray(cart) && cart.length > 0) {
-        let calculatedSubtotal = 0;
-        let totalItems = 0;
-
-        itemsListEl.innerHTML = cart
-          .map(item => {
-            const qty = parseInt(item.quantity, 10) || 1;
-            const price = parseFloat(item.price) || 0;
-            const lineTotal = price * qty;
-            calculatedSubtotal += lineTotal;
-            totalItems += qty;
-
-            const imgSrc = item.image || 'assets/images/product-1.webp';
-            const title = item.title || item.name || 'Vape Product';
-            const meta = item.flavor || item.variant || 'Standard Edition';
-
-            return `
-              <div class="checkout-item-row" data-price="${price.toFixed(2)}">
-                <div class="checkout-item-thumb">
-                  <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(title)}" loading="lazy">
-                  <span class="checkout-item-qty-badge">${qty}</span>
-                </div>
-                <div class="checkout-item-info">
-                  <h4 class="checkout-item-title">${escapeHtml(title)}</h4>
-                  <div class="checkout-item-meta">${escapeHtml(meta)}</div>
-                </div>
-                <div class="checkout-item-price">$${lineTotal.toFixed(2)}</div>
-              </div>
-            `;
-          })
-          .join('');
-
-        currentSubtotal = calculatedSubtotal;
-        if (itemsCountEl) {
-          itemsCountEl.textContent = `(${totalItems} ${totalItems === 1 ? 'item' : 'items'})`;
-        }
-        return;
-      }
-    } catch (e) {
-      console.warn('Error reading cart from localStorage', e);
+  // 1. Recalculate Totals Helper
+  function recalculateCheckout() {
+    const discountedSubtotal = Math.max(0, currentSubtotal - currentDiscount);
+    
+    // Auto free shipping if threshold met and not pickup
+    let effectiveShipping = currentShipping;
+    if (currentSubtotal >= freeThreshold && selectedMethodName.indexOf('Express') === -1 && selectedMethodName.indexOf('Pickup') === -1) {
+      effectiveShipping = 0.00;
     }
 
-    // Default Fallback (matches vaporhatch)
-    currentSubtotal = 44.98;
-    if (itemsCountEl) itemsCountEl.textContent = '(2 items)';
+    const calculatedTax = Math.round(discountedSubtotal * taxRate * 100) / 100;
+    const finalTotal = Math.round((discountedSubtotal + effectiveShipping + calculatedTax) * 100) / 100;
+
+    if (subtotalEl) subtotalEl.textContent = `$${currentSubtotal.toFixed(2)}`;
+
+    if (discountRow && discountEl) {
+      if (currentDiscount > 0) {
+        discountRow.style.display = 'flex';
+        discountEl.textContent = `-$${currentDiscount.toFixed(2)}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+    }
+
+    if (shippingFeeEl) {
+      if (effectiveShipping === 0) {
+        shippingFeeEl.textContent = 'FREE';
+        shippingFeeEl.classList.add('text-success');
+      } else {
+        shippingFeeEl.textContent = `$${effectiveShipping.toFixed(2)}`;
+        shippingFeeEl.classList.remove('text-success');
+      }
+    }
+
+    if (taxEl) taxEl.textContent = `$${calculatedTax.toFixed(2)}`;
+    if (grandTotalEl) grandTotalEl.textContent = `$${finalTotal.toFixed(2)}`;
+    if (btnOrderPriceTotal) btnOrderPriceTotal.textContent = `$${finalTotal.toFixed(2)}`;
   }
 
   // 2. Shipping Method Selection
   const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
-  shippingRadios.forEach(radio => {
+  shippingRadios.forEach((radio) => {
     radio.addEventListener('change', function () {
-      document.querySelectorAll('.shipping-method-option').forEach(opt => opt.classList.remove('active'));
-      
+      document.querySelectorAll('.shipping-method-option').forEach((opt) => opt.classList.remove('active'));
+
       const parentOption = this.closest('.shipping-method-option');
       if (parentOption) parentOption.classList.add('active');
 
       currentShipping = parseFloat(this.value) || 0;
-      const methodName = this.getAttribute('data-name') || 'Standard Shipping';
-      
-      if (shippingLabelEl) shippingLabelEl.textContent = methodName;
-      if (shippingFeeEl) {
-        shippingFeeEl.textContent = currentShipping === 0 ? 'FREE' : '$' + currentShipping.toFixed(2);
-        if (currentShipping === 0) {
-          shippingFeeEl.classList.add('text-success');
-        } else {
-          shippingFeeEl.classList.remove('text-success');
-        }
-      }
+      selectedMethodName = this.getAttribute('data-name') || 'Standard Ground Shipping';
 
-      if (modalDeliveryEstimate) {
-        if (currentShipping === 0) {
-          modalDeliveryEstimate.textContent = 'Ready within 2 hours (In-Store Pickup)';
-        } else if (currentShipping >= 10) {
-          modalDeliveryEstimate.textContent = '1-2 Business Days (Express Priority)';
-        } else {
-          modalDeliveryEstimate.textContent = '3-5 Business Days (Standard Ground)';
-        }
-      }
+      if (shippingLabelEl) shippingLabelEl.textContent = selectedMethodName;
 
       recalculateCheckout();
     });
   });
 
   // 3. Payment Method Switcher
-  paymentRadios.forEach(radio => {
+  paymentRadios.forEach((radio) => {
     radio.addEventListener('change', function () {
       if (this.value === 'credit_card') {
         if (tabCreditCard) tabCreditCard.classList.add('active');
         if (tabApplePay) tabApplePay.classList.remove('active');
         if (contentCreditCard) contentCreditCard.style.display = 'block';
         if (contentApplePay) contentApplePay.style.display = 'none';
-        if (modalPaymentType) modalPaymentType.textContent = 'Credit Card (Ending in 4242)';
       } else if (this.value === 'apple_pay') {
         if (tabCreditCard) tabCreditCard.classList.remove('active');
         if (tabApplePay) tabApplePay.classList.add('active');
         if (contentCreditCard) contentCreditCard.style.display = 'none';
         if (contentApplePay) contentApplePay.style.display = 'block';
-        if (modalPaymentType) modalPaymentType.textContent = 'Apple Pay / Express Wallet';
       }
     });
   });
@@ -186,120 +153,100 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // 4. Billing Address Toggle
-  billingRadios.forEach(radio => {
-    radio.addEventListener('change', function () {
-      if (this.value === 'different') {
-        if (differentBillingForm) differentBillingForm.style.display = 'block';
-      } else {
-        if (differentBillingForm) differentBillingForm.style.display = 'none';
+  // 4. Coupon Code Engine
+  if (btnApplyCoupon && couponInput) {
+    btnApplyCoupon.addEventListener('click', function () {
+      const code = couponInput.value.trim();
+      if (!code) {
+        alert('Please enter a coupon code.');
+        return;
       }
+
+      btnApplyCoupon.disabled = true;
+      btnApplyCoupon.textContent = 'Applying...';
+
+      fetch(`${getApiBaseUrl()}/checkout/apply-coupon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ code: code })
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          btnApplyCoupon.disabled = false;
+          btnApplyCoupon.textContent = 'Apply';
+
+          if (data.success) {
+            currentDiscount = parseFloat(data.discount) || 0;
+            if (couponSuccessPill) {
+              couponSuccessPill.style.display = 'flex';
+              const textEl = document.getElementById('couponSuccessText');
+              if (textEl) {
+                textEl.innerHTML = `Code <strong>${escapeHtml(data.coupon_code)}</strong> applied (${data.formatted_discount})`;
+              }
+            }
+            recalculateCheckout();
+          } else {
+            alert(data.message || 'Invalid coupon code.');
+          }
+        })
+        .catch((err) => {
+          btnApplyCoupon.disabled = false;
+          btnApplyCoupon.textContent = 'Apply';
+          console.error('Coupon apply error:', err);
+          alert('Network error while applying coupon.');
+        });
     });
-  });
+  }
+
+  if (btnRemoveCoupon) {
+    btnRemoveCoupon.addEventListener('click', function () {
+      fetch(`${getApiBaseUrl()}/checkout/remove-coupon`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then((res) => res.json())
+        .then(() => {
+          currentDiscount = 0;
+          if (couponSuccessPill) couponSuccessPill.style.display = 'none';
+          if (couponInput) couponInput.value = '';
+          recalculateCheckout();
+        });
+    });
+  }
 
   // 5. Card Formatting Helpers
   const ccNumberInput = document.getElementById('ccNumber');
   if (ccNumberInput) {
     ccNumberInput.addEventListener('input', function (e) {
-      const val = e.target.value.replace(/\D/g, '');
-      const formatted = val.match(/.{1,4}/g)?.join(' ') || val;
-      e.target.value = formatted.substring(0, 19);
+      let val = e.target.value.replace(/\D/g, '').substring(0, 16);
+      let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+      e.target.value = formatted;
     });
   }
 
   const ccExpiryInput = document.getElementById('ccExpiry');
   if (ccExpiryInput) {
     ccExpiryInput.addEventListener('input', function (e) {
-      const val = e.target.value.replace(/\D/g, '');
+      let val = e.target.value.replace(/\D/g, '').substring(0, 4);
       if (val.length >= 2) {
-        e.target.value = val.substring(0, 2) + ' / ' + val.substring(2, 4);
-      } else {
-        e.target.value = val;
+        val = val.substring(0, 2) + ' / ' + val.substring(2);
       }
+      e.target.value = val;
     });
   }
 
-  // 6. Promo Code Application
-  if (btnApplyCoupon && couponInput) {
-    btnApplyCoupon.addEventListener('click', function () {
-      applyCouponCode();
-    });
-
-    couponInput.addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        applyCouponCode();
-      }
+  const ccCvcInput = document.getElementById('ccCvc');
+  if (ccCvcInput) {
+    ccCvcInput.addEventListener('input', function (e) {
+      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
     });
   }
 
-  function applyCouponCode() {
-    const code = couponInput.value.trim().toUpperCase();
-    if (!code) {
-      alert('Please enter a promo or coupon code.');
-      return;
-    }
-
-    // Apply 10% discount
-    currentDiscount = currentSubtotal * 0.10;
-    if (discountRow) discountRow.style.display = 'flex';
-    if (discountEl) discountEl.textContent = '-$' + currentDiscount.toFixed(2);
-    if (couponSuccessPill) {
-      couponSuccessPill.innerHTML = `<span>Code <strong>${escapeHtml(code)}</strong> applied (-$${currentDiscount.toFixed(2)})</span><button type="button" class="btn-remove-coupon" id="btnRemoveCoupon">&times;</button>`;
-      couponSuccessPill.style.display = 'inline-flex';
-      
-      const newBtnRemove = document.getElementById('btnRemoveCoupon');
-      if (newBtnRemove) {
-        newBtnRemove.addEventListener('click', removeCouponCode);
-      }
-    }
-    
-    couponInput.value = '';
-    couponInput.disabled = true;
-    btnApplyCoupon.disabled = true;
-
-    recalculateCheckout();
-  }
-
-  function removeCouponCode() {
-    currentDiscount = 0;
-    if (discountRow) discountRow.style.display = 'none';
-    if (couponSuccessPill) couponSuccessPill.style.display = 'none';
-    
-    if (couponInput) {
-      couponInput.disabled = false;
-      couponInput.value = '';
-    }
-    if (btnApplyCoupon) btnApplyCoupon.disabled = false;
-
-    recalculateCheckout();
-  }
-
-  if (btnRemoveCoupon) {
-    btnRemoveCoupon.addEventListener('click', removeCouponCode);
-  }
-
-  // 7. Recalculate Totals
-  function recalculateCheckout() {
-    const taxable = Math.max(0, currentSubtotal - currentDiscount);
-    const tax = taxable * taxRate;
-    const grandTotal = taxable + currentShipping + tax;
-
-    if (subtotalEl) subtotalEl.textContent = '$' + currentSubtotal.toFixed(2);
-    if (taxEl) taxEl.textContent = '$' + tax.toFixed(2);
-    if (grandTotalEl) grandTotalEl.textContent = '$' + grandTotal.toFixed(2);
-    if (btnOrderPriceTotal) btnOrderPriceTotal.textContent = '$' + grandTotal.toFixed(2);
-    if (modalTotalPaid) modalTotalPaid.textContent = '$' + grandTotal.toFixed(2);
-  }
-
-  // 8. Order Placement & Form Validation
-  if (checkoutForm) {
-    checkoutForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      validateAndSubmitOrder();
-    });
-  }
-
+  // 6. Submit Order Handler
   if (btnPlaceOrder) {
     btnPlaceOrder.addEventListener('click', function (e) {
       e.preventDefault();
@@ -310,15 +257,15 @@ document.addEventListener('DOMContentLoaded', function () {
   function validateAndSubmitOrder(paymentOverride) {
     let isValid = true;
     const requiredInputs = checkoutForm ? checkoutForm.querySelectorAll('input[required], select[required]') : [];
-    
+
     // Clear previous errors
-    requiredInputs.forEach(input => {
+    requiredInputs.forEach((input) => {
       input.classList.remove('has-error');
-      const errorMsg = input.parentElement.querySelector('.field-error-msg');
+      const errorMsg = input.parentElement ? input.parentElement.querySelector('.field-error-msg') : null;
       if (errorMsg) errorMsg.style.display = 'none';
     });
 
-    // Check age verification checkbox
+    // Check age verification checkbox (Must be 21+)
     const ageCheck = document.getElementById('ageVerificationCheck');
     const ageError = document.getElementById('ageErrorMsg');
     if (ageCheck && !ageCheck.checked) {
@@ -333,12 +280,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Validate email format
     const emailInput = document.getElementById('checkoutEmail');
-    if (emailInput && emailInput.value.trim()) {
+    if (emailInput) {
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(emailInput.value.trim())) {
+      if (!emailInput.value.trim() || !emailPattern.test(emailInput.value.trim())) {
         isValid = false;
         emailInput.classList.add('has-error');
-        const errorMsg = emailInput.parentElement.querySelector('.field-error-msg');
+        const errorMsg = emailInput.parentElement ? emailInput.parentElement.querySelector('.field-error-msg') : null;
         if (errorMsg) {
           errorMsg.textContent = 'Please enter a valid email address.';
           errorMsg.style.display = 'block';
@@ -346,9 +293,8 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    // Check required inputs
-    requiredInputs.forEach(input => {
-      // If Apple Pay is chosen, ignore credit card validation
+    // Check other required inputs
+    requiredInputs.forEach((input) => {
       if (selectedPayment === 'apple_pay' && (input.id === 'ccNumber' || input.id === 'ccName' || input.id === 'ccExpiry' || input.id === 'ccCvc')) {
         return;
       }
@@ -356,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!input.value.trim()) {
         isValid = false;
         input.classList.add('has-error');
-        const errorMsg = input.parentElement.querySelector('.field-error-msg');
+        const errorMsg = input.parentElement ? input.parentElement.querySelector('.field-error-msg') : null;
         if (errorMsg) errorMsg.style.display = 'block';
       }
     });
@@ -369,45 +315,90 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    // Submit Simulation
-    if (btnPlaceOrder) {
-      btnPlaceOrder.disabled = true;
-      btnPlaceOrder.innerHTML = `
-        <span class="btn-order-text">Processing Order...</span>
-      `;
-    }
+    // Assemble payload for backend order processing
+    const payload = {
+      email: emailInput ? emailInput.value.trim() : '',
+      firstName: document.getElementById('shippingFirstName')?.value.trim() || '',
+      lastName: document.getElementById('shippingLastName')?.value.trim() || '',
+      address1: document.getElementById('shippingAddress1')?.value.trim() || '',
+      address2: document.getElementById('shippingAddress2')?.value.trim() || '',
+      city: document.getElementById('shippingCity')?.value.trim() || '',
+      state: document.getElementById('shippingState')?.value.trim() || '',
+      zip: document.getElementById('shippingZip')?.value.trim() || '',
+      phone: document.getElementById('shippingPhone')?.value.trim() || '',
+      shippingMethod: currentShipping.toFixed(2),
+      deliveryMethodName: selectedMethodName,
+      paymentType: selectedPayment,
+      ageVerification: ageCheck ? ageCheck.checked : true
+    };
 
-    setTimeout(() => {
-      // Generate Order confirmation number
-      const randomId = Math.floor(100000 + Math.random() * 900000);
-      if (modalOrderNumber) {
-        modalOrderNumber.textContent = `#INF-${randomId}`;
-      }
+    const originalBtnHtml = btnPlaceOrder.innerHTML;
+    btnPlaceOrder.disabled = true;
+    btnPlaceOrder.innerHTML = `
+      <span class="btn-order-text">Processing Order...</span>
+    `;
 
-      // Clear Cart from localStorage
-      try {
-        localStorage.removeItem('infinity_cart_items');
-        localStorage.removeItem('newvape_cart_items');
-      } catch (e) {}
+    fetch(`${getApiBaseUrl()}/checkout/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        btnPlaceOrder.disabled = false;
+        btnPlaceOrder.innerHTML = originalBtnHtml;
 
-      // Update cart count badges in header
-      const cartBadges = document.querySelectorAll('.cart-count-badge, .header-cart-badge, .cart-count, .cart-counter');
-      cartBadges.forEach(badge => {
-        badge.textContent = '';
-        badge.style.display = 'none';
-        badge.setAttribute('data-count', '0');
-        badge.classList.add('is-empty');
+        if (data.success) {
+          // Clear client cart cache
+          try {
+            localStorage.removeItem('infinity_cart_items');
+            localStorage.removeItem('newvape_cart_items');
+          } catch (e) {}
+
+          // Update header badges
+          const headerBadges = document.querySelectorAll('.header-cart-badge, .cart-drawer-count-badge');
+          headerBadges.forEach((badge) => {
+            badge.textContent = '0';
+            badge.style.display = 'none';
+            badge.setAttribute('data-count', '0');
+          });
+
+          // Populate Confirmation Modal
+          if (modalOrderNumber) modalOrderNumber.textContent = data.order_number;
+          if (modalPaymentType) modalPaymentType.textContent = data.payment_method + (data.test_mode ? ' (Sandbox Test)' : '');
+          if (modalDeliveryEstimate) modalDeliveryEstimate.textContent = data.delivery_estimate;
+          if (modalTotalPaid) modalTotalPaid.textContent = data.total;
+
+          // Display Confirmation Modal
+          if (successModal) {
+            successModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+          }
+        } else {
+          alert(data.message || 'Unable to place order. Please review your details.');
+        }
+      })
+      .catch((err) => {
+        btnPlaceOrder.disabled = false;
+        btnPlaceOrder.innerHTML = originalBtnHtml;
+        console.error('Order process error:', err);
+        alert('Network error while processing order. Please try again.');
       });
-
-      // Display Confirmation Modal
-      if (successModal) {
-        successModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      }
-    }, 800);
   }
 
-  // Initialize
-  loadCartItems();
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Run initial recalculation
   recalculateCheckout();
 });

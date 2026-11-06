@@ -2,91 +2,90 @@
 namespace App\Models;
 
 use App\Core\Model;
+use PDO;
 
 class Order extends Model
 {
-    protected static $defaultOrders = [
-        [
-            'id' => '104820',
-            'date' => 'Sep 21, 2026',
-            'customer' => 'John Doe',
-            'email' => 'johndoe@gmail.com',
-            'total' => '$52.99',
-            'payment_status' => 'Paid',
-            'fulfillment_status' => 'Fulfilled',
-            'items' => '2 items',
-            'delivery_status' => 'Delivered',
-            'delivery_method' => 'Standard'
-        ],
-        [
-            'id' => '104819',
-            'date' => 'Sep 21, 2026',
-            'customer' => 'Michael Smith',
-            'email' => 'msmith@yahoo.com',
-            'total' => '$39.99',
-            'payment_status' => 'Paid',
-            'fulfillment_status' => 'Unfulfilled',
-            'items' => '1 item',
-            'delivery_status' => 'In Transit',
-            'delivery_method' => 'Express'
-        ],
-        [
-            'id' => '104818',
-            'date' => 'Sep 20, 2026',
-            'customer' => 'Emily Watson',
-            'email' => 'emily.w@outlook.com',
-            'total' => '$84.50',
-            'payment_status' => 'Paid',
-            'fulfillment_status' => 'Fulfilled',
-            'items' => '3 items',
-            'delivery_status' => 'Out for Delivery',
-            'delivery_method' => 'Standard'
-        ],
-        [
-            'id' => '104817',
-            'date' => 'Sep 20, 2026',
-            'customer' => 'David Kim',
-            'email' => 'david.kim@gmail.com',
-            'total' => '$17.99',
-            'payment_status' => 'Pending',
-            'fulfillment_status' => 'Unfulfilled',
-            'items' => '1 item',
-            'delivery_status' => 'Pending',
-            'delivery_method' => 'Standard'
-        ],
-        [
-            'id' => '104816',
-            'date' => 'Sep 19, 2026',
-            'customer' => 'Sarah Lopez',
-            'email' => 'sarah.l@gmail.com',
-            'total' => '$62.40',
-            'payment_status' => 'Paid',
-            'fulfillment_status' => 'Fulfilled',
-            'items' => '2 items',
-            'delivery_status' => 'Delivered',
-            'delivery_method' => 'Standard'
-        ]
-    ];
-
+    /**
+     * Get all orders formatted for Admin display
+     */
     public static function all()
     {
         $db = self::getDB();
         if ($db) {
             try {
-                $stmt = $db->query("SELECT * FROM orders ORDER BY id DESC");
-                $results = $stmt->fetchAll();
-                if (!empty($results)) return $results;
+                $stmt = $db->query("SELECT o.*, 
+                    (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) as item_count 
+                    FROM orders o 
+                    ORDER BY o.id DESC");
+                $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!empty($results)) {
+                    $formatted = [];
+                    foreach ($results as $r) {
+                        $count = (int)($r['item_count'] ?? 1);
+                        $formatted[] = [
+                            'id'                 => $r['order_number'] ?: (string)$r['id'],
+                            'db_id'              => $r['id'],
+                            'date'               => date('M d, Y', strtotime($r['created_at'])),
+                            'customer'           => $r['customer_name'] ?: trim(($r['customer_first_name'] ?? '') . ' ' . ($r['customer_last_name'] ?? '')),
+                            'email'              => $r['customer_email'],
+                            'phone'              => $r['customer_phone'] ?? '',
+                            'total'              => '$' . number_format((float)$r['total_amount'], 2),
+                            'subtotal'           => '$' . number_format((float)$r['subtotal'], 2),
+                            'shipping_cost'      => '$' . number_format((float)$r['shipping_cost'], 2),
+                            'tax_amount'         => '$' . number_format((float)$r['tax_amount'], 2),
+                            'discount_amount'    => '$' . number_format((float)$r['discount_amount'], 2),
+                            'payment_status'     => ucfirst($r['payment_status'] ?? 'Pending'),
+                            'payment_method'     => ucwords(str_replace('_', ' ', $r['payment_method'] ?? 'credit_card')),
+                            'fulfillment_status' => ucfirst($r['fulfillment_status'] ?? 'Unfulfilled'),
+                            'items'              => $count . ' ' . ($count === 1 ? 'item' : 'items'),
+                            'delivery_status'    => ucwords(str_replace('_', ' ', $r['delivery_status'] ?: ($r['shipping_status'] ?: 'pending'))),
+                            'delivery_method'    => $r['delivery_method'] ?: 'Standard Ground',
+                            'shipping_address'   => $r['shipping_address'] ?? ''
+                        ];
+                    }
+                    return $formatted;
+                }
             } catch (\Exception $e) {}
         }
-        return self::$defaultOrders;
+
+        return [];
     }
 
+    /**
+     * Find single order with items
+     */
     public static function find($id)
     {
-        $items = self::all();
-        foreach ($items as $item) {
-            if ($item['id'] == $id) return $item;
+        $db = self::getDB();
+        if ($db) {
+            try {
+                $stmt = $db->prepare("SELECT * FROM orders WHERE id = :id OR order_number = :num LIMIT 1");
+                $stmt->execute([':id' => $id, ':num' => $id]);
+                $order = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($order) {
+                    $stmtItems = $db->prepare("SELECT oi.*, p.slug as product_slug, p.featured_image 
+                                               FROM order_items oi 
+                                               LEFT JOIN products p ON p.id = oi.product_id 
+                                               WHERE oi.order_id = :oid");
+                    $stmtItems->execute([':oid' => $order['id']]);
+                    $order['items_list'] = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+
+                    // Formatted fields for display
+                    $order['formatted_total'] = '$' . number_format((float)$order['total_amount'], 2);
+                    $order['formatted_subtotal'] = '$' . number_format((float)$order['subtotal'], 2);
+                    $order['formatted_shipping'] = '$' . number_format((float)$order['shipping_cost'], 2);
+                    $order['formatted_tax'] = '$' . number_format((float)$order['tax_amount'], 2);
+                    $order['formatted_discount'] = '$' . number_format((float)$order['discount_amount'], 2);
+                    $order['date'] = date('M d, Y h:i A', strtotime($order['created_at']));
+
+                    return $order;
+                }
+            } catch (\Exception $e) {}
         }
-        return $items[0] ?? null;
+
+        return null;
     }
 }

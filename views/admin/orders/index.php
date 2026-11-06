@@ -5,152 +5,7 @@ $page_script = 'orders.js';
 include dirname(__DIR__) . '/includes/header.php';
 
 // Orders Data Master List
-$orders = [
-  [
-    'id' => '104820',
-    'date' => 'Sep 21, 2026',
-    'customer' => 'John Doe',
-    'email' => 'johndoe@gmail.com',
-    'total' => '$52.99',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '2 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104819',
-    'date' => 'Sep 21, 2026',
-    'customer' => 'Michael Smith',
-    'email' => 'msmith@yahoo.com',
-    'total' => '$39.99',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Unfulfilled',
-    'items' => '1 item',
-    'delivery_status' => 'In Transit',
-    'delivery_method' => 'Express'
-  ],
-  [
-    'id' => '104818',
-    'date' => 'Sep 20, 2026',
-    'customer' => 'Emily Watson',
-    'email' => 'emily.w@outlook.com',
-    'total' => '$84.50',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '3 items',
-    'delivery_status' => 'Out for Delivery',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104817',
-    'date' => 'Sep 20, 2026',
-    'customer' => 'David Kim',
-    'email' => 'david.kim@gmail.com',
-    'total' => '$17.99',
-    'payment_status' => 'Pending',
-    'fulfillment_status' => 'Unfulfilled',
-    'items' => '1 item',
-    'delivery_status' => 'Pending',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104816',
-    'date' => 'Sep 19, 2026',
-    'customer' => 'Sarah Lopez',
-    'email' => 'slopez@icloud.com',
-    'total' => '$112.40',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '4 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Express'
-  ],
-  [
-    'id' => '104815',
-    'date' => 'Sep 19, 2026',
-    'customer' => 'Robert Johnson',
-    'email' => 'rjohnson@gmail.com',
-    'total' => '$45.98',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '2 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104814',
-    'date' => 'Sep 18, 2026',
-    'customer' => 'Jessica Brown',
-    'email' => 'jessica.b@gmail.com',
-    'total' => '$29.99',
-    'payment_status' => 'Refunded',
-    'fulfillment_status' => 'Unfulfilled',
-    'items' => '1 item',
-    'delivery_status' => 'Cancelled',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104813',
-    'date' => 'Sep 18, 2026',
-    'customer' => 'Alexander White',
-    'email' => 'alex.white@gmail.com',
-    'total' => '$62.50',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '2 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Express'
-  ],
-  [
-    'id' => '104812',
-    'date' => 'Sep 17, 2026',
-    'customer' => 'Emma Davis',
-    'email' => 'emma.davis@gmail.com',
-    'total' => '$94.20',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '3 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Standard'
-  ],
-  [
-    'id' => '104811',
-    'date' => 'Sep 17, 2026',
-    'customer' => 'Daniel Martinez',
-    'email' => 'daniel.m@gmail.com',
-    'total' => '$34.50',
-    'payment_status' => 'Partially Paid',
-    'fulfillment_status' => 'Partially Fulfilled',
-    'items' => '2 items',
-    'delivery_status' => 'In Transit',
-    'delivery_method' => 'Express'
-  ],
-  [
-    'id' => '104810',
-    'date' => 'Sep 16, 2026',
-    'customer' => 'Sophia Taylor',
-    'email' => 'sophia.t@gmail.com',
-    'total' => '$125.00',
-    'payment_status' => 'Paid',
-    'fulfillment_status' => 'Fulfilled',
-    'items' => '5 items',
-    'delivery_status' => 'Delivered',
-    'delivery_method' => 'Express'
-  ],
-  [
-    'id' => '104809',
-    'date' => 'Sep 16, 2026',
-    'customer' => 'James Wilson',
-    'email' => 'jwilson@outlook.com',
-    'total' => '$48.30',
-    'payment_status' => 'Pending',
-    'fulfillment_status' => 'Unfulfilled',
-    'items' => '2 items',
-    'delivery_status' => 'Pending',
-    'delivery_method' => 'Standard'
-  ]
-];
+$orders = isset($orders) && !empty($orders) ? $orders : [];
 ?>
 
 <!-- Title & Action Bar -->
@@ -275,16 +130,23 @@ $orders = [
 
               <!-- Delivery Status -->
               <td>
-                <?php if ($o['delivery_status'] === 'Delivered'): ?>
+                <?php 
+                  $normStatus = strtolower(trim($o['delivery_status'] ?? 'pending'));
+                  if ($normStatus === 'delivered'): 
+                ?>
                   <span class="badge-status badge-delivered">Delivered</span>
-                <?php elseif ($o['delivery_status'] === 'In Transit'): ?>
+                <?php elseif ($normStatus === 'in transit' || $normStatus === 'in_transit'): ?>
                   <span class="badge-status badge-in-transit">In Transit</span>
-                <?php elseif ($o['delivery_status'] === 'Out for Delivery'): ?>
+                <?php elseif ($normStatus === 'out for delivery' || $normStatus === 'out_for_delivery'): ?>
                   <span class="badge-status badge-out-for-delivery">Out for Delivery</span>
-                <?php elseif ($o['delivery_status'] === 'Pending'): ?>
-                  <span class="badge-status badge-pending">Pending</span>
-                <?php else: ?>
+                <?php elseif ($normStatus === 'shipped'): ?>
+                  <span class="badge-status badge-shipped">Shipped</span>
+                <?php elseif ($normStatus === 'confirmed' || $normStatus === 'processing'): ?>
+                  <span class="badge-status badge-paid" style="background:#ecfdf5; color:#059669; border-color:#a7f3d0;"><?= htmlspecialchars(ucwords($normStatus)) ?></span>
+                <?php elseif ($normStatus === 'cancelled'): ?>
                   <span class="badge-status badge-cancelled">Cancelled</span>
+                <?php else: ?>
+                  <span class="badge-status badge-pending">Pending</span>
                 <?php endif; ?>
               </td>
 
