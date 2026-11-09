@@ -75,7 +75,8 @@ $orders = isset($orders) && !empty($orders) ? $orders : [];
           </tr>
         </thead>
         <tbody>
-          <?php foreach ($orders as $o): ?>
+          <?php if (!empty($orders)): ?>
+            <?php foreach ($orders as $o): ?>
             <tr>
               <!-- Order ID (Click opens order-detail.php) -->
               <td>
@@ -156,6 +157,13 @@ $orders = isset($orders) && !empty($orders) ? $orders : [];
               </td>
             </tr>
           <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="9" class="text-center p-xl text-muted">
+                No customer orders found in the database.
+              </td>
+            </tr>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>

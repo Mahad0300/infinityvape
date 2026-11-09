@@ -24,8 +24,13 @@ class CustomerController extends AdminController
 
     public function detail()
     {
-        // Default to ID 2 (first customer) if not provided, since ID 1 is superadmin
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 2;
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($id <= 0) {
+            set_flash('error', 'Customer ID is required.');
+            $this->redirect('admin/customers');
+            return;
+        }
+
         $customer = Customer::find($id);
 
         if (!$customer) {

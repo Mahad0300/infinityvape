@@ -15,6 +15,11 @@ class App
         session_init();
         $uri = $this->resolveUri();
 
+        // Automatic Storefront Visitor Tracking
+        if (class_exists('\\App\\Models\\Analytics')) {
+            \App\Models\Analytics::trackCurrentRequest('/' . ltrim($uri, '/'));
+        }
+
         // Check exact route match
         if (isset($this->routes[$uri])) {
             return $this->dispatch($this->routes[$uri]);

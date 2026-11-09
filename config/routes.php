@@ -204,4 +204,11 @@ return [
     'admin/settings'                          => [\App\Controllers\Admin\SettingController::class, 'index'],
     'admin/settings.php'                      => [\App\Controllers\Admin\SettingController::class, 'index'],
     'admin/settings/save'                     => [\App\Controllers\Admin\SettingController::class, 'save'],
+
+    // Admin E-Commerce Analytics & Reports
+    'admin/analytics'                         => [\App\Controllers\Admin\AnalyticsController::class, 'index'],
+    'admin/analytics.php'                     => [\App\Controllers\Admin\AnalyticsController::class, 'index'],
+
+    // Front-End Telemetry Beacon API
+    'api/analytics/event'                     => [\App\Controllers\AnalyticsApiController::class, 'recordEvent'],
 ];

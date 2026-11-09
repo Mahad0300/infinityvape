@@ -20,10 +20,17 @@ class OrderController extends AdminController
 
     public function detail()
     {
-        $id = $_GET['id'] ?? '104820';
+        $id = trim($_GET['id'] ?? '');
+        if (empty($id)) {
+            set_flash('error', 'Order ID is required.');
+            $this->redirect('admin/orders');
+            return;
+        }
+
         $order = Order::find($id);
 
         if (!$order) {
+            set_flash('error', 'The requested order was not found.');
             $this->redirect('admin/orders');
             return;
         }

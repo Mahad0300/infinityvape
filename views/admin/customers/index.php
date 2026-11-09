@@ -60,7 +60,7 @@ $customers = $customers ?? \App\Models\Customer::all();
           <?php if (!empty($customers)): ?>
             <?php foreach ($customers as $c): ?>
               <?php 
-                $loc = !empty($c['location']) ? $c['location'] : ((!empty($c['city']) && !empty($c['state'])) ? ($c['city'] . ', ' . $c['state']) : 'Oklahoma City, OK');
+                $loc = !empty($c['location']) ? $c['location'] : ((!empty($c['city']) && !empty($c['state'])) ? ($c['city'] . ', ' . $c['state']) : 'Not set yet');
               ?>
               <tr class="customer-row" 
                   data-name="<?= htmlspecialchars(strtolower($c['name'])) ?>" 

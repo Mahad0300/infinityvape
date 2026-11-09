@@ -274,6 +274,9 @@ $formatFooterUrl = function($link) {
   <!-- Global Cart Drawer JavaScript -->
   <script src="assets/js/cart-drawer.js?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/cart-drawer.js') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/cart-drawer.js') : time() ?>"></script>
 
+  <!-- Customer Telemetry & E-Commerce Tracker -->
+  <script src="<?= asset('assets/js/tracker.js') ?>"></script>
+
   <!-- Global JavaScript -->
   <script src="assets/js/main.js?v=1.0.0"></script>
 

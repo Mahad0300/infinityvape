@@ -48,6 +48,11 @@ class CheckoutController extends Controller
     {
         $cart = Cart::getCart();
         $totals = Cart::totals();
+
+        if (class_exists('\\App\\Models\\Analytics')) {
+            \App\Models\Analytics::recordEvent('/checkout', 'checkout_start', 'Reached Checkout Page', 1);
+        }
+
         $settings = $this->getSettings();
 
         $taxRate = isset($settings['tax_rate_percent']) ? (float)$settings['tax_rate_percent'] : 4.50;
@@ -508,6 +513,11 @@ class CheckoutController extends Controller
 
             // Commit Transaction
             $db->commit();
+
+            // Record Analytics Order Completed Funnel Event
+            if (class_exists('\\App\\Models\\Analytics')) {
+                \App\Models\Analytics::recordEvent('/checkout', 'order_complete', 'Order #' . $orderNumber, (int)$orderId);
+            }
 
             // Clear Session Cart and Coupon
             Cart::clear();

@@ -5,6 +5,12 @@ $current_admin_page = 'orders';
 $page_script = 'order-detail.js';
 include dirname(__DIR__) . '/includes/header.php';
 
+if (empty($order)) {
+    echo '<div class="admin-card"><div class="admin-card-body text-center p-xl"><h3>Order Not Found</h3><p class="text-muted">The requested order could not be found in the database.</p><a href="' . url('admin/orders') . '" class="btn-admin btn-admin-primary mt-md">Back to Orders</a></div></div>';
+    include dirname(__DIR__) . '/includes/footer.php';
+    return;
+}
+
 $custName = $order['customer_name'] ?? trim(($order['customer_first_name'] ?? '') . ' ' . ($order['customer_last_name'] ?? ''));
 if (empty($custName)) {
     $custName = 'Guest Customer';

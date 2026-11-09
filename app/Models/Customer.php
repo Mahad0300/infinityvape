@@ -5,14 +5,6 @@ use App\Core\Model;
 
 class Customer extends Model
 {
-    protected static $defaultCustomers = [
-        ['id' => 2, 'name' => 'John Doe', 'email' => 'johndoe@gmail.com', 'orders' => '14 orders', 'orders_count' => 14, 'spent' => '$842.50', 'location' => 'Austin, TX', 'city' => 'Austin', 'state' => 'TX', 'verified' => true, 'status' => 'active'],
-        ['id' => 3, 'name' => 'Michael Smith', 'email' => 'msmith@yahoo.com', 'orders' => '5 orders', 'orders_count' => 5, 'spent' => '$219.00', 'location' => 'Miami, FL', 'city' => 'Miami', 'state' => 'FL', 'verified' => true, 'status' => 'active'],
-        ['id' => 4, 'name' => 'Emily Watson', 'email' => 'emily.w@outlook.com', 'orders' => '8 orders', 'orders_count' => 8, 'spent' => '$492.20', 'location' => 'Denver, CO', 'city' => 'Denver', 'state' => 'CO', 'verified' => true, 'status' => 'active'],
-        ['id' => 5, 'name' => 'David Kim', 'email' => 'david.kim@gmail.com', 'orders' => '1 order', 'orders_count' => 1, 'spent' => '$18.49', 'location' => 'Seattle, WA', 'city' => 'Seattle', 'state' => 'WA', 'verified' => true, 'status' => 'active'],
-        ['id' => 6, 'name' => 'Sarah Lopez', 'email' => 'sarah.l@gmail.com', 'orders' => '9 orders', 'orders_count' => 9, 'spent' => '$512.00', 'location' => 'Los Angeles, CA', 'city' => 'Los Angeles', 'state' => 'CA', 'verified' => true, 'status' => 'active']
-    ];
-
     /**
      * Fetch all customers with their location, order count, and total spent
      */
@@ -93,7 +85,7 @@ class Customer extends Model
                 error_log("Customer::all error: " . $e->getMessage());
             }
         }
-        return self::$defaultCustomers;
+        return [];
     }
 
     /**
@@ -108,10 +100,6 @@ class Customer extends Model
 
         $db = self::getDB();
         if (!$db) {
-            $items = self::$defaultCustomers;
-            foreach ($items as $item) {
-                if ($item['id'] == $id) return $item;
-            }
             return null;
         }
 

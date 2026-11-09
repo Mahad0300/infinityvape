@@ -6,8 +6,14 @@ include dirname(__DIR__) . '/includes/header.php';
 
 // If $customer is not set by controller, load dynamically from model
 if (!isset($customer) || empty($customer)) {
-    $cust_id = isset($_GET['id']) ? (int)$_GET['id'] : 2;
-    $customer = \App\Models\Customer::find($cust_id);
+    $cust_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    $customer = $cust_id > 0 ? \App\Models\Customer::find($cust_id) : null;
+}
+
+if (!$customer) {
+    echo '<div class="admin-card"><div class="admin-card-body text-center p-xl"><h3>Customer Profile Not Found</h3><p class="text-muted">The requested customer could not be found in the database.</p><a href="' . url('admin/customers') . '" class="btn-admin btn-admin-primary mt-md">Back to Customers Directory</a></div></div>';
+    include dirname(__DIR__) . '/includes/footer.php';
+    return;
 }
 
 // Ensure avatar initials

@@ -58,6 +58,9 @@ class CartController extends Controller
         }
 
         $result = Cart::add($productId, $variantId, $quantity);
+        if (!empty($result['success']) && class_exists('\\App\\Models\\Analytics')) {
+            \App\Models\Analytics::recordEvent('/cart', 'cart_add', 'Product #' . $productId, $quantity);
+        }
         $status = $result['success'] ? 200 : 400;
 
         return $this->json($result, $status);
