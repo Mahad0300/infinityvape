@@ -135,8 +135,10 @@ $formatNavUrl = function($link) {
   <?php endif; ?>
   <meta property="og:site_name" content="Infinity Vape Shop">
   <base href="<?php echo function_exists('base_url') ? rtrim(base_url(), '/') . '/' : ''; ?>">
+  <meta name="csrf-token" content="<?php echo function_exists('csrf_token') ? e(csrf_token()) : ''; ?>">
   <script>
     window.APP_BASE_URL = "<?php echo function_exists('base_url') ? rtrim(base_url(), '/') : ''; ?>";
+    window.APP_CSRF_TOKEN = "<?php echo function_exists('csrf_token') ? e(csrf_token()) : ''; ?>";
   </script>
   
   <?php if (!empty($page_schema)): ?>

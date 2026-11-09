@@ -169,8 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 3. Add to Cart Feedback (Cart Drawer Handles Actual Cart Addition & Drawer Open)
+  // 3. Add to Cart & Buy Now Buttons (Cart Drawer Handles Actual Cart Addition & Drawer Open)
   const btnAddToCart = document.getElementById('btnProductAddToCart');
+  const btnBuyNow = document.getElementById('btnProductBuyNow');
 
   if (btnAddToCart) {
     btnAddToCart.addEventListener('click', (e) => {
@@ -705,8 +706,6 @@ document.addEventListener('DOMContentLoaded', () => {
       flavorSelect.dataset.selectedVariantId = variant.id || '';
     }
 
-    const btnAddToCart = document.getElementById('btnProductAddToCart');
-    const btnBuyNow = document.getElementById('btnProductBuyNow');
     if (btnAddToCart) {
       if (variant.id) btnAddToCart.dataset.variantId = variant.id;
       if (variant.product_id) btnAddToCart.dataset.productId = variant.product_id;
@@ -777,8 +776,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Update Stock Status & Buttons
     const stockStatusWrap = document.querySelector('.product-stock-status');
     const stockTextEl = document.querySelector('.product-stock-status .stock-text');
-    const btnAddToCart = document.getElementById('btnProductAddToCart');
-    const btnBuyNow = document.getElementById('btnProductBuyNow');
 
     if (stockStatusWrap && stockTextEl && !isNaN(vStock)) {
       if (vStock <= 0) {
@@ -1060,7 +1057,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 4. Buy It Now Action Feedback & Instant Checkout
-  const btnBuyNow = document.getElementById('btnProductBuyNow');
   if (btnBuyNow) {
     btnBuyNow.addEventListener('click', (e) => {
       e.preventDefault();

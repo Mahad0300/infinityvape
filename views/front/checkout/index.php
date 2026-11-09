@@ -96,6 +96,7 @@ $loggedUser = $currentUser ?? null;
       <!-- Left Column: Checkout Forms & Steps -->
       <div class="checkout-main-column">
         <form id="checkoutMainForm" class="checkout-form" onsubmit="return false;" novalidate>
+          <?= csrf_field() ?>
           
           <!-- STEP 1: Contact Information -->
           <div class="checkout-section-card">

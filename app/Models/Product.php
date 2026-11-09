@@ -7,65 +7,48 @@ use PDO;
 class Product extends Model
 {
     /**
-     * Safely clear and drop legacy dummy badge columns from database and ensure schema
+     * Safely sync parent product stock_quantity & stock_status from variants for a specific product
+     */
+    public static function syncProductStock(int $productId): void
+    {
+        if ($productId <= 0) return;
+        $db = self::getDB();
+        if (!$db) return;
+
+        try {
+            $sumStmt = $db->prepare("SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = ?");
+            $sumStmt->execute([$productId]);
+            $total = $sumStmt->fetchColumn();
+
+            if ($total !== false && $total !== null) {
+                $totalStock = (int)$total;
+                $status = ($totalStock <= 0) ? 'Out of Stock' : (($totalStock < 15) ? 'Low Stock' : 'In Stock');
+                $upd = $db->prepare("UPDATE products SET stock_quantity = ?, stock_status = ? WHERE id = ?");
+                $upd->execute([$totalStock, $status, $productId]);
+            }
+        } catch (\Exception $e) {
+            error_log("Product::syncProductStock error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Safely clear and drop legacy dummy badge columns from database (guarded to run at most once)
      */
     public static function cleanUnwantedBadges()
     {
+        static $hasRun = false;
+        if ($hasRun) return;
+        $hasRun = true;
+
         $db = self::getDB();
-        if ($db) {
-            try {
-                $check = $db->query("SHOW COLUMNS FROM products LIKE 'badge_text'");
-                if ($check && $check->fetch()) {
-                    $db->exec("ALTER TABLE products DROP COLUMN badge_text, DROP COLUMN badge_type");
-                }
-            } catch (\Exception $e) {
-                try {
-                    $db->exec("UPDATE products SET badge_text = NULL, badge_type = NULL WHERE badge_text IS NOT NULL OR badge_type IS NOT NULL");
-                } catch (\Exception $e2) {}
+        if (!$db) return;
+
+        try {
+            $check = $db->query("SHOW COLUMNS FROM products LIKE 'badge_text'");
+            if ($check && $check->fetch()) {
+                $db->exec("ALTER TABLE products DROP COLUMN badge_text, DROP COLUMN badge_type");
             }
-
-            // Ensure related_posts_content column exists in products table
-            try {
-                $checkCol = $db->query("SHOW COLUMNS FROM products LIKE 'related_posts_content'");
-                if ($checkCol && !$checkCol->fetch()) {
-                    $db->exec("ALTER TABLE products ADD COLUMN related_posts_content LONGTEXT NULL AFTER long_desc");
-                }
-            } catch (\Exception $e) {}
-
-            // Clean up any old dummy test FAQs
-            try {
-                $db->exec("DELETE FROM product_faqs WHERE question LIKE '%deliver up to%' OR answer LIKE '%delivered by%' OR answer LIKE '%scratch-off%'");
-            } catch (\Exception $e) {}
-
-            // Automatically sync stock_quantity and stock_status for products with variants
-            try {
-                $db->exec("UPDATE products p
-                           JOIN (
-                               SELECT product_id, SUM(stock_quantity) AS total_variant_stock
-                               FROM product_variants
-                               GROUP BY product_id
-                           ) pv ON p.id = pv.product_id
-                           SET p.stock_quantity = pv.total_variant_stock,
-                               p.stock_status = CASE 
-                                   WHEN pv.total_variant_stock <= 0 THEN 'Out of Stock'
-                                   WHEN pv.total_variant_stock < 15 THEN 'Low Stock'
-                                   ELSE 'In Stock'
-                               END");
-            } catch (\Exception $e) {}
-
-            // Automatically sync reviews_count and rating_avg with approved product_reviews
-            try {
-                $db->exec("UPDATE products p
-                           LEFT JOIN (
-                               SELECT product_id, COUNT(*) AS approved_count, AVG(rating) AS avg_rating
-                               FROM product_reviews
-                               WHERE status = 'approved'
-                               GROUP BY product_id
-                           ) pr ON p.id = pr.product_id
-                           SET p.reviews_count = COALESCE(pr.approved_count, 0),
-                               p.rating_avg = COALESCE(ROUND(pr.avg_rating, 2), 0.00)");
-            } catch (\Exception $e) {}
-        }
+        } catch (\Exception $e) {}
     }
 
     /**
@@ -73,7 +56,6 @@ class Product extends Model
      */
     public static function all()
     {
-        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
@@ -114,7 +96,6 @@ class Product extends Model
      */
     public static function find($id)
     {
-        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
@@ -170,7 +151,6 @@ class Product extends Model
      */
     public static function newArrivals($limit = 10)
     {
-        self::cleanUnwantedBadges();
         $db = self::getDB();
         if ($db) {
             try {
@@ -266,7 +246,6 @@ class Product extends Model
      */
     public static function getCollectionProducts($slugOrId = null, array $filters = [])
     {
-        self::cleanUnwantedBadges();
         $db = self::getDB();
         if (!$db) return [];
 

@@ -12,6 +12,7 @@ class App
 
     public function run()
     {
+        session_init();
         $uri = $this->resolveUri();
 
         // Check exact route match

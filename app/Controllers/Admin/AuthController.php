@@ -18,6 +18,14 @@ class AuthController extends Controller
                 $this->redirect('admin/login');
             }
 
+            // Check Rate Limit (5 attempts per 15 minutes)
+            $lockSeconds = check_rate_limit('admin_login', 5, 900);
+            if ($lockSeconds > 0) {
+                $mins = max(1, (int)ceil($lockSeconds / 60));
+                set_flash('error', "Too many failed login attempts. Please wait {$mins} minute(s) before trying again.");
+                $this->redirect('admin/login');
+            }
+
             $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
@@ -27,8 +35,10 @@ class AuthController extends Controller
             }
 
             if (AdminAuth::attempt($email, $password)) {
+                clear_rate_limit('admin_login');
                 $this->redirect('admin/dashboard');
             } else {
+                hit_rate_limit('admin_login', 5, 900);
                 set_flash('error', 'Invalid admin credentials or account inactive.');
                 $this->redirect('admin/login');
             }

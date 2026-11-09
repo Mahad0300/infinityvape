@@ -58,6 +58,13 @@ class AccountController extends Controller
 
         $isJson = $this->isJsonRequest();
 
+        // Check Rate Limit (5 attempts per 15 minutes)
+        $lockSeconds = check_rate_limit('customer_login', 5, 900);
+        if ($lockSeconds > 0) {
+            $mins = max(1, (int)ceil($lockSeconds / 60));
+            return $this->respondError("Too many failed login attempts. Please wait {$mins} minute(s) before trying again.", 429, $isJson);
+        }
+
         // CSRF Verification
         if (!verify_csrf_token($token)) {
             return $this->respondError('Session expired. Please refresh the page and try again.', 403, $isJson);
@@ -68,6 +75,7 @@ class AccountController extends Controller
         }
 
         if (CustomerAuth::attempt($email, $password)) {
+            clear_rate_limit('customer_login');
             $user = CustomerAuth::user();
             $message = 'Welcome back, ' . htmlspecialchars($user['first_name'] ?: 'Customer') . '!';
             set_flash('success', $message);
@@ -99,6 +107,7 @@ class AccountController extends Controller
             } catch (\Exception $e) {}
         }
 
+        hit_rate_limit('customer_login', 5, 900);
         return $this->respondError('Invalid email address or password. Please try again.', 401, $isJson);
     }
 

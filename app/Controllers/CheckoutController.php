@@ -194,6 +194,15 @@ class CheckoutController extends Controller
     {
         $payload = $this->getPayload();
 
+        // 0. CSRF Token Verification
+        $token = $payload['_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
+        if (!verify_csrf_token($token)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Your security session has expired. Please refresh the page and try again.'
+            ], 403);
+        }
+
         // 1. Validate Form Fields
         $email = trim((string)($payload['email'] ?? ''));
         $firstName = trim((string)($payload['firstName'] ?? $payload['first_name'] ?? ''));

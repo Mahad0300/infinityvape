@@ -100,6 +100,22 @@ if (!function_exists('redirect')) {
 if (!function_exists('session_init')) {
     function session_init() {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+                || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+                || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+            if (PHP_VERSION_ID >= 70300) {
+                session_set_cookie_params([
+                    'lifetime' => 0,
+                    'path'     => '/',
+                    'domain'   => '',
+                    'secure'   => $isHttps,
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]);
+            } else {
+                session_set_cookie_params(0, '/; samesite=Lax', '', $isHttps, true);
+            }
             @session_start();
         }
     }
@@ -243,5 +259,111 @@ if (!function_exists('blog_time_display')) {
     }
 }
 
+if (!function_exists('get_client_ip')) {
+    function get_client_ip() {
+        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'] 
+            ?? $_SERVER['HTTP_X_FORWARDED_FOR'] 
+            ?? $_SERVER['REMOTE_ADDR'] 
+            ?? '127.0.0.1';
 
+        if (strpos($ip, ',') !== false) {
+            $parts = explode(',', $ip);
+            $ip = trim($parts[0]);
+        }
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '127.0.0.1';
+    }
+}
 
+if (!function_exists('check_rate_limit')) {
+    /**
+     * Check if client exceeded rate limit.
+     * Returns 0 if allowed, or remaining lock seconds if locked.
+     */
+    function check_rate_limit(string $action, int $maxAttempts = 5, int $decaySeconds = 900): int {
+        $ip = get_client_ip();
+        $key = md5($action . '_' . $ip);
+        $dir = dirname(dirname(__DIR__)) . '/storage/framework/cache/rate_limits';
+        $file = $dir . '/' . $key . '.json';
+
+        if (!file_exists($file)) {
+            return 0;
+        }
+
+        $data = @json_decode(@file_get_contents($file), true);
+        if (!is_array($data)) {
+            return 0;
+        }
+
+        $now = time();
+        $lockedUntil = (int)($data['locked_until'] ?? 0);
+        if ($lockedUntil > $now) {
+            return ($lockedUntil - $now);
+        }
+
+        // If decay window expired since first attempt, reset
+        $firstAttempt = (int)($data['first_attempt'] ?? 0);
+        if (($now - $firstAttempt) > $decaySeconds) {
+            @unlink($file);
+            return 0;
+        }
+
+        return 0;
+    }
+}
+
+if (!function_exists('hit_rate_limit')) {
+    /**
+     * Increment failed attempt count and lock if threshold reached.
+     */
+    function hit_rate_limit(string $action, int $maxAttempts = 5, int $decaySeconds = 900): void {
+        $ip = get_client_ip();
+        $key = md5($action . '_' . $ip);
+        $dir = dirname(dirname(__DIR__)) . '/storage/framework/cache/rate_limits';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $file = $dir . '/' . $key . '.json';
+
+        $now = time();
+        $attempts = 1;
+        $firstAttempt = $now;
+
+        if (file_exists($file)) {
+            $data = @json_decode(@file_get_contents($file), true);
+            if (is_array($data)) {
+                if (($now - (int)($data['first_attempt'] ?? 0)) < $decaySeconds) {
+                    $attempts = ((int)($data['attempts'] ?? 0)) + 1;
+                    $firstAttempt = (int)($data['first_attempt'] ?? $now);
+                }
+            }
+        }
+
+        $lockedUntil = 0;
+        if ($attempts >= $maxAttempts) {
+            $lockedUntil = $now + $decaySeconds;
+        }
+
+        $record = [
+            'attempts'      => $attempts,
+            'first_attempt' => $firstAttempt,
+            'locked_until'  => $lockedUntil,
+            'updated_at'    => $now
+        ];
+
+        @file_put_contents($file, json_encode($record), LOCK_EX);
+    }
+}
+
+if (!function_exists('clear_rate_limit')) {
+    /**
+     * Clear rate limit on successful login.
+     */
+    function clear_rate_limit(string $action): void {
+        $ip = get_client_ip();
+        $key = md5($action . '_' . $ip);
+        $file = dirname(dirname(__DIR__)) . '/storage/framework/cache/rate_limits/' . $key . '.json';
+        if (file_exists($file)) {
+            @unlink($file);
+        }
+    }
+}

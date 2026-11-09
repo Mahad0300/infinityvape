@@ -19,6 +19,15 @@ document.addEventListener('DOMContentLoaded', function () {
     return window.location.origin;
   }
 
+  // Get CSRF Token Helper
+  function getCsrfToken() {
+    const input = document.querySelector('input[name="_token"]');
+    if (input && input.value) return input.value;
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
+    return window.APP_CSRF_TOKEN || '';
+  }
+
   // DOM Elements
   const checkoutForm = document.getElementById('checkoutMainForm');
   const btnPlaceOrder = document.getElementById('btnPlaceOrder');
@@ -74,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 1. Recalculate Totals Helper
   function recalculateCheckout() {
     const discountedSubtotal = Math.max(0, currentSubtotal - currentDiscount);
-    
+
     // Auto free shipping if threshold met and not pickup
     let effectiveShipping = currentShipping;
     if (currentSubtotal >= freeThreshold && selectedMethodName.indexOf('Express') === -1 && selectedMethodName.indexOf('Pickup') === -1) {
@@ -316,7 +325,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Assemble payload for backend order processing
+    const csrfToken = getCsrfToken();
     const payload = {
+      _token: csrfToken,
       email: emailInput ? emailInput.value.trim() : '',
       firstName: document.getElementById('shippingFirstName')?.value.trim() || '',
       lastName: document.getElementById('shippingLastName')?.value.trim() || '',
@@ -343,7 +354,8 @@ document.addEventListener('DOMContentLoaded', function () {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': csrfToken
       },
       body: JSON.stringify(payload)
     })
@@ -357,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
           try {
             localStorage.removeItem('infinity_cart_items');
             localStorage.removeItem('newvape_cart_items');
-          } catch (e) {}
+          } catch (e) { }
 
           // Update header badges
           const headerBadges = document.querySelectorAll('.header-cart-badge, .cart-drawer-count-badge');
