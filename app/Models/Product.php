@@ -149,9 +149,10 @@ class Product extends Model
             $stmt->execute(array_values($cleaned));
             $products = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Re-order by original $cleaned IDs
+            // Re-order by original $cleaned IDs and attach variants
             $map = [];
             foreach ($products as $p) {
+                $p['variants'] = self::getVariants($p['id'], $p);
                 $map[$p['id']] = $p;
             }
             $ordered = [];

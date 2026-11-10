@@ -12532,13 +12532,109 @@ body.cart-drawer-open {
   margin: 0 0 14px 0;
 }
 
+/* Variation Picker */
+.showcase-variant-picker-wrap {
+  margin: 10px 0 16px 0;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.showcase-variant-picker-wrap.sm {
+  margin: 8px 0 12px 0;
+  padding: 8px 10px;
+}
+
+.showcase-variant-picker-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.showcase-variant-picker-label .label-heading {
+  font-weight: 700;
+  color: #082142;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 11px;
+}
+
+.showcase-selected-variant-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f25c27;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.showcase-variant-select-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.showcase-variant-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 34px 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #082142;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.showcase-variant-select.sm {
+  padding: 7px 28px 7px 10px;
+  font-size: 12px;
+}
+
+.showcase-variant-select:hover {
+  border-color: #f25c27;
+}
+
+.showcase-variant-select:focus {
+  border-color: #f25c27;
+  box-shadow: 0 0 0 3px rgba(242, 92, 39, 0.15);
+}
+
+.showcase-variant-select .opt-out-of-stock {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.showcase-select-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+.showcase-select-chevron.sm {
+  right: 8px;
+}
+
+/* Bottom Action Bar: Price & Purchase Controls */
 .showcase-bottom-action-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -12572,39 +12668,164 @@ body.cart-drawer-open {
   border-radius: 6px;
 }
 
-.btn-showcase-buy {
+/* Purchase Controls */
+.showcase-purchase-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Quantity Stepper */
+.showcase-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 44px;
+}
+
+.btn-qty-step {
+  width: 32px;
+  height: 100%;
+  background: #f8fafc;
+  border: none;
+  color: #082142;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-qty-step:hover {
+  background: #edf2f9;
+  color: #f25c27;
+}
+
+.btn-qty-step:active {
+  background: #e2e8f0;
+}
+
+.showcase-qty-input {
+  width: 36px;
+  height: 100%;
+  border: none;
+  background: #ffffff;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #082142;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.showcase-qty-input::-webkit-outer-spin-button,
+.showcase-qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Add to Cart Button */
+.btn-showcase-add-cart {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   background: linear-gradient(135deg, #f25c27 0%, #db4915 100%);
   color: #ffffff;
-  padding: 12px 24px;
+  padding: 0 22px;
+  height: 44px;
   border-radius: 10px;
+  border: none;
   font-size: 14px;
   font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 14px rgba(242, 92, 39, 0.35);
+  white-space: nowrap;
 }
 
-.btn-showcase-buy:hover {
+.btn-showcase-add-cart:hover:not(:disabled) {
   background: linear-gradient(135deg, #db4915 0%, #c2410c 100%);
   transform: translateY(-2px);
-  color: #ffffff;
   box-shadow: 0 8px 22px rgba(242, 92, 39, 0.45);
+  color: #ffffff;
 }
 
-.btn-showcase-buy.btn-sm {
-  padding: 10px 18px;
+.btn-showcase-add-cart:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-showcase-add-cart.is-loading {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.btn-showcase-add-cart.is-added {
+  background: #10b981 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
+  color: #ffffff !important;
+}
+
+.btn-showcase-add-cart.btn-sm {
+  height: 38px;
+  padding: 0 14px;
   font-size: 13px;
-  width: 100%;
+  flex: 1;
+}
+
+/* Quick Details Link */
+.btn-showcase-view-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 44px;
+  padding: 0 14px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  color: #082142;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-showcase-view-link:hover {
+  border-color: #082142;
+  background: #082142;
+  color: #ffffff;
+}
+
+.btn-showcase-view-link.sm {
+  height: 38px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.showcase-compare-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .showcase-trust-strip {
   display: flex;
   gap: 16px;
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 11.5px;
   font-weight: 600;
   color: #64748b;
@@ -12720,7 +12941,7 @@ body.cart-drawer-open {
 }
 
 .showcase-price-box.sm {
-  margin: 6px 0 14px 0;
+  margin: 6px 0 12px 0;
 }
 
 .showcase-price-box.sm .showcase-current-price {
@@ -12742,7 +12963,11 @@ body.cart-drawer-open {
     flex-direction: column;
     align-items: stretch;
   }
-  .btn-showcase-buy {
+  .showcase-purchase-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-showcase-add-cart {
     width: 100%;
   }
   .showcase-grid-two {
