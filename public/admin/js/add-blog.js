@@ -328,6 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const products = window.AVAILABLE_PRODUCTS || [];
     const id1 = initialIds[0] ? String(initialIds[0]) : '';
     const id2 = initialIds[1] ? String(initialIds[1]) : '';
+    const hasSlot2 = Boolean(id2);
 
     let options1Html = `<option value="">-- None --</option>`;
     let options2Html = `<option value="">-- None --</option>`;
@@ -361,9 +362,10 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="section-block-body">
         <div class="showcase-guidance-note">
-          Select <strong>1 product</strong> for a Spotlight Hero card, or <strong>2 products</strong> for a Side-by-Side Comparison Grid. (Limit: strictly 2 products maximum per showcase block).
+          Select <strong>1 product</strong> for a Spotlight Hero card, or click <strong>+ Add 2nd Product</strong> to create a Side-by-Side Comparison Grid. (Limit: strictly 2 products maximum per showcase block).
         </div>
-        <div class="showcase-builder-grid">
+
+        <div class="showcase-builder-grid ${hasSlot2 ? 'is-comparison' : ''}">
           <!-- Slot 1 -->
           <div class="showcase-slot-card" data-slot="1">
             <div class="slot-header">
@@ -375,16 +377,26 @@ document.addEventListener('DOMContentLoaded', () => {
             </select>
           </div>
 
-          <!-- Slot 2 -->
-          <div class="showcase-slot-card" data-slot="2">
+          <!-- Slot 2 (Hidden by default unless id2 exists or user clicks '+') -->
+          <div class="showcase-slot-card slot-card-2" data-slot="2" style="${hasSlot2 ? '' : 'display:none;'}">
             <div class="slot-header">
               <span class="slot-badge secondary">Product 2 (Optional)</span>
-              <span class="slot-mode-text">Option 2 Comparison</span>
+              <button type="button" class="btn-remove-slot2" title="Remove 2nd Product">
+                ✕ Remove
+              </button>
             </div>
             <select class="admin-form-select slot-product-select" data-slot="2" style="display:none;">
               ${options2Html}
             </select>
           </div>
+        </div>
+
+        <!-- + Add 2nd Product for Comparison Toggle Button -->
+        <div class="slot2-toggle-bar" style="${hasSlot2 ? 'display:none;' : ''}">
+          <button type="button" class="btn-toggle-slot2-add">
+            <span class="plus-icon-circle">+</span>
+            <span>Add 2nd Product for Comparison (Optional)</span>
+          </button>
         </div>
 
         <div class="showcase-status-indicator">
@@ -435,15 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
 
-      <!-- Slot 2 Optional Prompt Button -->
-      ${slotNum === 2 ? `
-      <div class="slot-prompt-wrap" style="display:none;">
-        <button type="button" class="btn-prompt-add-two">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span>+ Add 2nd Product for Side-by-Side Comparison</span>
-        </button>
-      </div>` : ''}
-
       <!-- Selected Product Card -->
       <div class="slot-chosen-card" style="display:none;">
         <div class="chosen-thumb-col">
@@ -481,8 +484,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const countEl = widget.querySelector('.slot-dropdown-count');
     const brandChips = widget.querySelectorAll('.slot-brand-chip');
     const resultsList = widget.querySelector('.slot-results-list');
-    const promptWrap = widget.querySelector('.slot-prompt-wrap');
-    const promptBtn = widget.querySelector('.btn-prompt-add-two');
     const chosenCard = widget.querySelector('.slot-chosen-card');
     const chosenImg = widget.querySelector('.chosen-img');
     const chosenBrand = widget.querySelector('.chosen-brand-badge');
@@ -576,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
       syncDisplay();
     }
 
-    function syncDisplay(userInteracted = false) {
+    function syncDisplay() {
       const id = String(sel.value || '');
       if (id) {
         const p = getProductById(id);
@@ -593,7 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           chosenCard.style.display = 'flex';
           searchWrap.style.display = 'none';
-          if (promptWrap) promptWrap.style.display = 'none';
           slotCard.classList.add('has-product');
           return;
         }
@@ -602,20 +602,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // No product chosen
       chosenCard.style.display = 'none';
       slotCard.classList.remove('has-product');
-
-      if (slotNum === 2 && otherSel && otherSel.value && !userInteracted) {
-        if (promptWrap) promptWrap.style.display = 'block';
-        searchWrap.style.display = 'none';
-      } else {
-        if (promptWrap) promptWrap.style.display = 'none';
-        searchWrap.style.display = 'block';
-      }
+      searchWrap.style.display = 'block';
     }
 
     searchInput.addEventListener('focus', openDropdown);
-    searchInput.addEventListener('input', () => {
-      openDropdown();
-    });
+    searchInput.addEventListener('input', openDropdown);
 
     if (searchClear) {
       searchClear.addEventListener('click', () => {
@@ -636,18 +627,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    if (promptBtn) {
-      promptBtn.addEventListener('click', () => {
-        syncDisplay(true);
-        searchInput.focus();
-        openDropdown();
-      });
-    }
-
     if (btnChange) {
       btnChange.addEventListener('click', () => {
         chosenCard.style.display = 'none';
-        if (promptWrap) promptWrap.style.display = 'none';
         searchWrap.style.display = 'block';
         searchInput.value = '';
         searchInput.focus();
@@ -660,6 +642,9 @@ document.addEventListener('DOMContentLoaded', () => {
         sel.value = '';
         sel.dispatchEvent(new Event('change'));
         syncDisplay();
+        if (slotNum === 2 && typeof slotCard._onRemoveSlot2 === 'function') {
+          slotCard._onRemoveSlot2();
+        }
       });
     }
 
@@ -677,6 +662,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     syncDisplay();
     slotCard._syncSearchable = syncDisplay;
+    slotCard._focusInput = () => {
+      searchInput.focus();
+      openDropdown();
+    };
   }
 
   function initShowcaseEvents(block) {
@@ -684,11 +673,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const sel2 = block.querySelector('.slot-product-select[data-slot="2"]');
     const slotCard1 = block.querySelector('.showcase-slot-card[data-slot="1"]');
     const slotCard2 = block.querySelector('.showcase-slot-card[data-slot="2"]');
+    const grid = block.querySelector('.showcase-builder-grid');
+    const toggleBar = block.querySelector('.slot2-toggle-bar');
+    const btnToggleSlot2 = block.querySelector('.btn-toggle-slot2-add');
+    const btnRemoveSlot2 = block.querySelector('.btn-remove-slot2');
     const pill = block.querySelector('.showcase-status-pill');
     const text = block.querySelector('.showcase-status-text');
 
     setupSearchableSlot(slotCard1, 1, sel1, sel2, updateShowcaseState);
     setupSearchableSlot(slotCard2, 2, sel2, sel1, updateShowcaseState);
+
+    function hideSlot2() {
+      sel2.value = '';
+      sel2.dispatchEvent(new Event('change'));
+      if (grid) grid.classList.remove('is-comparison');
+      if (slotCard2) slotCard2.style.display = 'none';
+      if (toggleBar) toggleBar.style.display = '';
+    }
+
+    function showSlot2() {
+      if (grid) grid.classList.add('is-comparison');
+      if (slotCard2) slotCard2.style.display = '';
+      if (toggleBar) toggleBar.style.display = 'none';
+      if (slotCard2 && typeof slotCard2._focusInput === 'function') {
+        setTimeout(slotCard2._focusInput, 50);
+      }
+    }
+
+    if (slotCard2) {
+      slotCard2._onRemoveSlot2 = hideSlot2;
+    }
+
+    if (btnToggleSlot2) {
+      btnToggleSlot2.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSlot2();
+      });
+    }
+
+    if (btnRemoveSlot2) {
+      btnRemoveSlot2.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideSlot2();
+      });
+    }
 
     function updateShowcaseState() {
       const v1 = sel1 ? sel1.value : '';
@@ -696,6 +724,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (slotCard1 && slotCard1._syncSearchable) slotCard1._syncSearchable();
       if (slotCard2 && slotCard2._syncSearchable) slotCard2._syncSearchable();
+
+      // If slot 2 has a value, ensure it is shown
+      if (v2) {
+        if (grid) grid.classList.add('is-comparison');
+        if (slotCard2) slotCard2.style.display = '';
+        if (toggleBar) toggleBar.style.display = 'none';
+      }
 
       // Disable selected product from other slot to prevent duplicate
       if (sel2) {
