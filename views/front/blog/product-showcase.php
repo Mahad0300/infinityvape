@@ -147,7 +147,6 @@ $count = count($products);
         $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
         $stockStatus = !empty($prod['stock_status']) ? $prod['stock_status'] : 'In Stock';
         $isInStock = (strtolower($stockStatus) !== 'out of stock');
-        $optionLabel = ($idx === 0) ? 'Option 1 • Top Pick' : 'Option 2 • Alternative';
         $specPuffs = !empty($prod['spec_puffs']) ? $prod['spec_puffs'] : '';
         $variants = !empty($prod['variants']) && is_array($prod['variants']) ? $prod['variants'] : [];
         $hasVariants = !empty($variants);
@@ -173,11 +172,6 @@ $count = count($products);
 
           <!-- Middle Info Column -->
           <div class="compact-info-col">
-            <!-- Top Meta Row -->
-            <div class="compact-meta-row">
-              <span class="compact-editorial-tag <?= ($idx === 0) ? 'primary' : 'alt' ?>"><?= $optionLabel ?></span>
-            </div>
-
             <!-- Product Title -->
             <h4 class="compact-title-text">
               <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
