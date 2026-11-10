@@ -166,7 +166,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <?php if (!empty($post['content'])): 
             $contentHtml = $post['content'];
             $contentHtml = preg_replace_callback(
-                '/\[product_showcase\s+ids=["\']([^"\']+)["\']\s*\]/i',
+                '/(?:<p[^>]*>\s*)?\[product_showcase\s+ids=(?:&quot;|["\']?)([^"\'&\]\s]+)(?:&quot;|["\']?)\s*\](?:\s*<\/p>)?/i',
                 function ($matches) {
                     $rawIds = explode(',', $matches[1]);
                     $cleanIds = array_slice(array_filter(array_map('intval', $rawIds)), 0, 2);

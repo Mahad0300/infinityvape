@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const shortcodeRegex = /\[product_showcase\s+ids=["']([^"']+)["']\s*\]/gi;
+    const shortcodeRegex = /\[product_showcase\s+ids=(?:&quot;|["']?)([^"'&\]\s]+)(?:&quot;|["']?)\s*\]/gi;
     let lastIndex = 0;
     let match;
     let sectionsFound = 0;
