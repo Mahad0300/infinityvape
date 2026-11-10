@@ -203,7 +203,7 @@ $formatNavUrl = function($link) {
 
         <!-- Brand Logo -->
         <a href="<?= url() ?>" class="site-logo-link" aria-label="Homepage">
-          <img src="assets/images/logo.svg" alt="Infinity Vape Shop" class="site-logo-img">
+          <img src="infinityvapeshoplogo.jpg" alt="Infinity Vape Shop" class="site-logo-img">
         </a>
 
         <!-- Search Bar -->

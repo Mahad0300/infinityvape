@@ -61,51 +61,64 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
       </div>
 
-      <!-- Card: Article Content Body -->
-      <div class="admin-card">
-        <div class="admin-card-header">
+      <!-- Card: Modular Article Sections Builder -->
+      <div class="admin-card blog-sections-card" id="blogSectionsCard">
+        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h2 class="admin-card-title">Article Content</h2>
-            <p class="form-help-text">Comprehensive rich text article content, headings, images, and guidelines displayed on the storefront.</p>
+            <h2 class="admin-card-title">Article Content &amp; Sections</h2>
+            <p class="form-help-text">Build your blog with modular sections. Add rich text write-ups or inline product spotlights in any order.</p>
+          </div>
+          <div class="section-top-actions" style="display: flex; gap: 8px;">
+            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm btn-add-richtext-top">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ Add Text Block</span>
+            </button>
+            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm btn-add-showcase-top" style="border-color: #6366f1; color: #4f46e5; background: #f5f3ff;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span>+ Add Product Showcase</span>
+            </button>
           </div>
         </div>
-        <div class="admin-card-body">
-          <div class="admin-form-group mb-0">
-            <div class="rich-text-editor">
-              <div class="rte-toolbar">
-                <select class="rte-format-select" title="Heading Size / Paragraph">
-                  <option value="p">Paragraph</option>
-                  <option value="h1">Heading 1 (H1)</option>
-                  <option value="h2">Heading 2 (H2)</option>
-                  <option value="h3">Heading 3 (H3)</option>
-                  <option value="h4">Heading 4 (H4)</option>
-                  <option value="h5">Heading 5 (H5)</option>
-                  <option value="h6">Heading 6 (H6)</option>
-                </select>
-
-                <div class="rte-divider"></div>
-
-                <button type="button" data-command="bold" title="Bold"><strong>B</strong></button>
-                <button type="button" data-command="italic" title="Italic"><em>I</em></button>
-                <button type="button" data-command="underline" title="Underline"><u>U</u></button>
-                <button type="button" data-command="highlight" title="Highlight Text" class="rte-btn-highlight"><span class="highlight-swatch"></span> Highlight</button>
-
-                <div class="rte-divider"></div>
-
-                <button type="button" data-command="insertUnorderedList" title="Bullet List">• Bullets</button>
-                <button type="button" data-command="insertOrderedList" title="Numbered List">1. Numbers</button>
-
-                <div class="rte-divider"></div>
-
-                <button type="button" data-command="createLink" title="Insert Link">🔗 Link</button>
-                <button type="button" data-command="unlink" title="Remove Link">Unlink</button>
-                <button type="button" data-command="removeFormat" title="Clear Formatting">Tx Clear</button>
-              </div>
-              <div class="rte-editor-content" id="blogContentEditor" contenteditable="true" data-placeholder="Write your detailed article content, headings, and guidelines here..." style="min-height: 280px;"></div>
-              <textarea name="content" id="blogContentInput" style="display:none;"></textarea>
-            </div>
-            <p class="form-help-text mt-xs">Use the toolbar to choose Heading 1 to 6 or Paragraph, Bold, Italic, Underline, Highlight, Bullets, Numbers, and Links.</p>
+        <div class="admin-card-body" style="padding: 16px 20px;">
+          <!-- Sections List Container -->
+          <div id="blogSectionsContainer" class="blog-sections-container">
+            <!-- Dynamic section items inserted here by JS -->
           </div>
+
+          <!-- Bottom Add Section Banner -->
+          <div class="blog-add-section-toolbar">
+            <span class="add-section-prompt">Choose next block to add:</span>
+            <div class="add-section-buttons">
+              <button type="button" class="btn-add-section-card btn-add-richtext">
+                <div class="add-sec-icon text-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div class="add-sec-info">
+                  <strong>+ Rich Text Content</strong>
+                  <span>Headings, paragraphs, bold, lists &amp; links</span>
+                </div>
+              </button>
+              <button type="button" class="btn-add-section-card btn-add-showcase">
+                <div class="add-sec-icon prod-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </div>
+                <div class="add-sec-info">
+                  <strong>+ Product Showcase</strong>
+                  <span>Spotlight (1 product) or Comparison (Max 2)</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hidden master compiled content textarea -->
+          <textarea name="content" id="blogContentInput" style="display:none;"></textarea>
         </div>
       </div>
 
@@ -144,7 +157,7 @@ include dirname(__DIR__) . '/includes/header.php';
             <div class="admin-form-group mb-0">
               <label for="blogSlugInput" class="admin-form-label">URL Handle / Slug</label>
               <div class="input-prefix-container">
-                <span class="prefix">.../blog/</span>
+                <span class="prefix">.../</span>
                 <input type="text" id="blogSlugInput" name="slug" placeholder="can-you-refill-foger-vape">
               </div>
               <p class="form-help-text mt-xs">Auto-generated from title. Unique lowercase letters, numbers, and hyphens only.</p>
@@ -158,7 +171,7 @@ include dirname(__DIR__) . '/includes/header.php';
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
               <span>Infinity Vape Shop</span>
             </div>
-            <div class="seo-preview-url" id="previewUrl">www.infinityvapeshop.com/blog/<span id="previewSlug">post-handle</span></div>
+            <div class="seo-preview-url" id="previewUrl">www.infinityvapeshop.com/<span id="previewSlug">post-handle</span></div>
             <div class="seo-preview-title" id="previewTitle">Article Title</div>
             <div class="seo-preview-desc" id="previewDesc">Write a concise meta description to see live snippet preview here.</div>
           </div>
@@ -184,15 +197,18 @@ include dirname(__DIR__) . '/includes/header.php';
       <!-- Category Card -->
       <div class="admin-card" style="padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Blog Category</h4>
-          <a href="<?= url('admin/blog-categories') ?>" target="_blank" style="font-size: 12px; color: #5c56e8; text-decoration: none;">+ Manage</a>
+          <h4 style="font-size: 14px; font-weight: 700; margin: 0;">Blog Categories</h4>
+          <a href="<?= url('admin/blog-categories') ?>" target="_blank" style="font-size: 12px; color: #5c56e8; text-decoration: none; font-weight: 600;">+ Manage</a>
         </div>
-        <select name="category_id" class="admin-form-select" style="width: 100%;">
-          <option value="">-- Select Category --</option>
+        <p style="color: #64748b; font-size: 12px; margin: 0 0 10px 0;">Select one or multiple categories for this article:</p>
+        <div class="category-checkbox-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px;">
           <?php foreach ($categories as $cat): ?>
-            <option value="<?= $cat['id'] ?>"><?= e($cat['name']) ?></option>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #334155; cursor: pointer; user-select: none;">
+              <input type="checkbox" name="category_ids[]" value="<?= $cat['id'] ?>" style="width: 16px; height: 16px; accent-color: #5c56e8; cursor: pointer;">
+              <span><?= e($cat['name']) ?></span>
+            </label>
           <?php endforeach; ?>
-        </select>
+        </div>
       </div>
 
       <!-- Featured Image Card -->
@@ -235,16 +251,6 @@ include dirname(__DIR__) . '/includes/header.php';
         ></textarea>
         <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">This summary appears on the homepage blog cards.</small>
       </div>
-
-      <!-- Tags & Organization -->
-      <div class="admin-card" style="padding: 20px;">
-        <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 12px 0;">Tags &amp; Organization</h4>
-        <div class="admin-form-group" style="margin-bottom: 0;">
-          <label class="admin-form-label" style="font-size: 12px;">Tags (comma separated)</label>
-          <input type="text" name="tags" class="admin-form-input" placeholder="Disposables, Vaping Guides, News">
-          <small style="color: #94a3b8; font-size: 12px; margin-top: 6px; display: block;">Author will automatically be published as <strong>Infinity Vape Shop</strong>.</small>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -254,5 +260,10 @@ include dirname(__DIR__) . '/includes/header.php';
     <button type="submit" class="btn-admin btn-admin-primary" style="padding: 0 24px;">Save Blog Post</button>
   </div>
 </form>
+
+<script>
+  window.AVAILABLE_PRODUCTS = <?= json_encode($products ?? []) ?>;
+  window.APP_URL = "<?= rtrim(url(), '/') ?>";
+</script>
 
 <?php include dirname(__DIR__) . '/includes/footer.php'; ?>

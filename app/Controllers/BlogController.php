@@ -18,10 +18,10 @@ class BlogController extends Controller
         $topReviews = BlogPost::getByCategorySlugs(['product-reviews'], 3);
 
         // 3. Flavor Profiles (1 lead card)
-        $flavorProfiles = BlogPost::getByCategorySlugs(['flavors-eliquids', 'flavor-profiles'], 1);
+        $flavorProfiles = BlogPost::getByCategorySlugs(['flavor-profiles'], 1);
 
         // 4. Nicotine Pouches & Hemp Guides (4 grid items)
-        $hempAndPouches = BlogPost::getByCategorySlugs(['nicotine-pouches', 'hemp-cbd'], 4);
+        $hempAndPouches = BlogPost::getByCategorySlugs(['nicotine-pouches-guide', 'eliquid-guide', 'comparisons', 'brand-spotlights'], 4);
 
         // 5. Latest Posts (6 compact items)
         $latestPosts = BlogPost::latest(6);
@@ -31,9 +31,8 @@ class BlogController extends Controller
         $recentPosts = BlogPost::latest(2);
         $popularPosts = BlogPost::latest(3);
         $archiveMonths = BlogPost::getArchiveMonths();
-        $allTags = BlogPost::getAllTags();
 
-        $totalPostsCount = array_sum(array_column($categories, 'post_count')) ?: count($latestPosts);
+        $totalPostsCount = BlogPost::countActive();
 
         $this->render('front.blog.index', [
             'page_title'       => 'Infinity Vape Shop Blog | Vaping Guides, Reviews & Industry News',
@@ -47,8 +46,57 @@ class BlogController extends Controller
             'recentPosts'      => $recentPosts,
             'popularPosts'     => $popularPosts,
             'archiveMonths'    => $archiveMonths,
-            'allTags'          => $allTags,
             'totalPostsCount'  => $totalPostsCount
+        ]);
+    }
+
+    /**
+     * Storefront Blog Category Archive Page
+     */
+    public function category()
+    {
+        $catSlug = trim($_GET['cat'] ?? $_GET['slug'] ?? '');
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = 12;
+
+        if (empty($catSlug)) {
+            redirect('blog');
+            return;
+        }
+
+        $categoryResult = BlogPost::byCategory($catSlug, $page, $perPage);
+        $category = $categoryResult['category'] ?? null;
+
+        if (!$category) {
+            redirect('blog');
+            return;
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        if (!empty($category['slug'])) {
+            $_SESSION['last_blog_category'] = $category['slug'];
+        }
+
+        // Sidebar data (Categories, Recent Posts, Popular Posts, Archive)
+        $categories = BlogPost::getCategories();
+        $recentPosts = BlogPost::latest(3);
+        $popularPosts = BlogPost::latest(3);
+        $archiveMonths = BlogPost::getArchiveMonths();
+        $totalPostsCount = BlogPost::countActive();
+
+        $this->render('front.blog.category', [
+            'page_title'      => htmlspecialchars($category['name']) . ' | Infinity Vape Shop Blog',
+            'page_js'         => 'blog',
+            'category'        => $category,
+            'categoryResult'  => $categoryResult,
+            'posts'           => $categoryResult['data'] ?? [],
+            'categories'      => $categories,
+            'recentPosts'     => $recentPosts,
+            'popularPosts'    => $popularPosts,
+            'archiveMonths'   => $archiveMonths,
+            'totalPostsCount' => $totalPostsCount
         ]);
     }
 
@@ -79,8 +127,9 @@ class BlogController extends Controller
 
         // Related posts based on category
         $relatedPosts = [];
-        if (!empty($post['category_slug'])) {
-            $relatedPosts = BlogPost::getByCategorySlugs([$post['category_slug']], 4);
+        $catSlugs = !empty($post['categories']) ? array_column($post['categories'], 'slug') : (!empty($post['category_slug']) ? [$post['category_slug']] : []);
+        if (!empty($catSlugs)) {
+            $relatedPosts = BlogPost::getByCategorySlugs($catSlugs, 4);
             // Filter out current post and re-index array
             $relatedPosts = array_values(array_filter($relatedPosts, function($p) use ($post) {
                 return $p['id'] != $post['id'];
@@ -95,17 +144,17 @@ class BlogController extends Controller
         $categories = BlogPost::getCategories();
         $recentPosts = BlogPost::latest(2);
         $popularPosts = BlogPost::latest(3);
-        $allTags = BlogPost::getAllTags();
+        $totalPostsCount = BlogPost::countActive();
 
         $this->render('front.blog.detail', [
-            'page_title'   => (!empty($post['meta_title']) ? $post['meta_title'] : $post['title']) . ' | Infinity Vape Shop Blog',
-            'page_js'      => 'blog',
-            'post'         => $post,
-            'relatedPosts' => $relatedPosts,
-            'categories'   => $categories,
-            'recentPosts'  => $recentPosts,
-            'popularPosts' => $popularPosts,
-            'allTags'      => $allTags
+            'page_title'      => (!empty($post['meta_title']) ? $post['meta_title'] : $post['title']) . ' | Infinity Vape Shop Blog',
+            'page_js'         => 'blog',
+            'post'            => $post,
+            'relatedPosts'    => $relatedPosts,
+            'categories'      => $categories,
+            'recentPosts'     => $recentPosts,
+            'popularPosts'    => $popularPosts,
+            'totalPostsCount' => $totalPostsCount
         ]);
     }
 }

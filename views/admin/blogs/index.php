@@ -98,6 +98,10 @@ include dirname(__DIR__) . '/includes/header.php';
         }
         $pubDate = !empty($b['published_at']) ? date('M d, Y', strtotime($b['published_at'])) : date('M d, Y');
         $catName = $b['category_name'] ?? 'General Guides';
+        $catList = array_filter(array_map('trim', explode(',', $catName)));
+        if (empty($catList)) $catList = ['General Guides'];
+        $firstCat = $catList[0];
+        $remainingCats = array_slice($catList, 1);
       ?>
       <div class="admin-blog-card">
         <div class="admin-blog-card-media">
@@ -106,7 +110,12 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         <div class="admin-blog-card-body">
           <div class="admin-blog-meta-row">
-            <span class="admin-blog-category-tag"><?= e($catName) ?></span>
+            <div class="admin-blog-categories-wrap">
+              <span class="admin-blog-category-tag" title="<?= e($firstCat) ?>"><?= e($firstCat) ?></span>
+              <?php if (!empty($remainingCats)): ?>
+                <span class="admin-blog-category-tag admin-blog-cat-more" title="<?= e(implode(', ', $remainingCats)) ?>">+<?= count($remainingCats) ?></span>
+              <?php endif; ?>
+            </div>
             <span class="admin-blog-date"><?= $pubDate ?></span>
           </div>
           <a href="<?= url('admin/blogs/edit?id=' . $b['id']) ?>" class="admin-blog-title-link">
@@ -236,7 +245,16 @@ include dirname(__DIR__) . '/includes/header.php';
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 10px;
+  margin-bottom: 12px;
+  min-height: 24px;
+}
+.admin-blog-categories-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 .admin-blog-category-tag {
   font-size: 11px;
@@ -247,11 +265,33 @@ include dirname(__DIR__) . '/includes/header.php';
   background: #f3f0ff;
   padding: 3px 8px;
   border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 175px;
+  display: inline-block;
+}
+.admin-blog-category-tag.admin-blog-cat-more {
+  background: #ede9fe;
+  color: #4f46e5;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  max-width: none;
+  transition: all 0.15s ease;
+}
+.admin-blog-category-tag.admin-blog-cat-more:hover {
+  background: #ddd6fe;
+  color: #3730a3;
 }
 .admin-blog-date {
   font-size: 12px;
   color: #94a3b8;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .admin-blog-title-link {
   display: flex;

@@ -92,6 +92,79 @@ class Product extends Model
     }
 
     /**
+     * Get published products formatted for Blog Product Showcase selection
+     */
+    public static function getPublishedForBlog()
+    {
+        $db = self::getDB();
+        if (!$db) return [];
+        try {
+            $sql = "SELECT p.id, 
+                           COALESCE(NULLIF(p.title, ''), p.name) AS name, 
+                           p.slug, 
+                           p.base_price, 
+                           p.compare_price, 
+                           p.stock_status, 
+                           COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS featured_image,
+                           b.name AS brand_name
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE p.status = 'published'
+                    ORDER BY p.name ASC";
+            $stmt = $db->query($sql);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Product::getPublishedForBlog error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get products by IDs preserving requested order for Blog Showcase
+     */
+    public static function getByIds(array $ids)
+    {
+        if (empty($ids)) return [];
+        $db = self::getDB();
+        if (!$db) return [];
+        try {
+            $cleaned = array_filter(array_map('intval', $ids));
+            if (empty($cleaned)) return [];
+            $placeholders = implode(',', array_fill(0, count($cleaned), '?'));
+            $sql = "SELECT p.id, 
+                           COALESCE(NULLIF(p.title, ''), p.name) AS name, 
+                           p.slug, 
+                           p.base_price, 
+                           p.compare_price, 
+                           p.stock_status, 
+                           COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS featured_image,
+                           b.name AS brand_name
+                    FROM products p
+                    LEFT JOIN brands b ON p.brand_id = b.id
+                    WHERE p.id IN ($placeholders) AND p.status = 'published'";
+            $stmt = $db->prepare($sql);
+            $stmt->execute(array_values($cleaned));
+            $products = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Re-order by original $cleaned IDs
+            $map = [];
+            foreach ($products as $p) {
+                $map[$p['id']] = $p;
+            }
+            $ordered = [];
+            foreach ($cleaned as $id) {
+                if (isset($map[$id])) {
+                    $ordered[] = $map[$id];
+                }
+            }
+            return $ordered;
+        } catch (\Exception $e) {
+            error_log("Product::getByIds error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Find single product by ID with Brand & Collection relations
      */
     public static function find($id)

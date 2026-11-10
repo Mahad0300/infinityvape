@@ -52,10 +52,10 @@ return [
     'account/save-address' => [\App\Controllers\AccountController::class, 'saveAddress'],
     'blog'                 => [\App\Controllers\BlogController::class, 'index'],
     'blog.php'             => [\App\Controllers\BlogController::class, 'index'],
+    'blog/category'        => [\App\Controllers\BlogController::class, 'category'],
+    'blog-category'        => [\App\Controllers\BlogController::class, 'category'],
     'blog-detail'          => [\App\Controllers\BlogController::class, 'detail'],
     'blog-detail.php'      => [\App\Controllers\BlogController::class, 'detail'],
-    'tag'                  => [\App\Controllers\TagController::class, 'index'],
-    'tag.php'              => [\App\Controllers\TagController::class, 'index'],
 
     // Legal, Policy & Informational Pages
     'page/shipping-policy'     => [\App\Controllers\PageController::class, 'shippingPolicy'],

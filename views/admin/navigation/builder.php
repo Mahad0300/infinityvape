@@ -121,6 +121,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <select id="itemLinkTypeSelect" class="admin-form-select">
             <option value="collection">Collection</option>
             <option value="brand">Brand</option>
+            <option value="blog_category">Blog Category</option>
             <option value="page">Page</option>
             <option value="custom_url" selected>Custom URL</option>
             <option value="text_block">No Link (Text Only)</option>
@@ -162,7 +163,22 @@ include dirname(__DIR__) . '/includes/header.php';
           </select>
         </div>
 
-        <!-- 4. Page Select -->
+        <!-- 4. Blog Category Select -->
+        <div class="admin-form-group" id="groupBlogCategorySelect" style="display: none;">
+          <label class="admin-form-label font-medium" for="itemBlogCategorySelect">Select Blog Category</label>
+          <select id="itemBlogCategorySelect" class="admin-form-select">
+            <option value="">-- Choose Blog Category --</option>
+            <?php if (!empty($entities['blog_categories'])): ?>
+              <?php foreach ($entities['blog_categories'] as $bcat): ?>
+                <option value="<?= (int)$bcat['id'] ?>" data-slug="<?= htmlspecialchars($bcat['slug']) ?>" data-title="<?= htmlspecialchars($bcat['name']) ?>">
+                  <?= htmlspecialchars($bcat['name']) ?>
+                </option>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </select>
+        </div>
+
+        <!-- 5. Page Select -->
         <div class="admin-form-group" id="groupPageSelect" style="display: none;">
           <label class="admin-form-label font-medium" for="itemPageSelect">Select Page</label>
           <select id="itemPageSelect" class="admin-form-select">

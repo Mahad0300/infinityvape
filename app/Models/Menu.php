@@ -387,7 +387,8 @@ class Menu extends Model
         $res = [
             'collections' => [],
             'brands' => [],
-            'pages' => []
+            'pages' => [],
+            'blog_categories' => []
         ];
 
         if (!$db) return $res;
@@ -403,6 +404,9 @@ class Menu extends Model
 
             $pStmt = $db->query("SELECT id, title, slug, custom_url_path FROM pages WHERE is_active = 1 ORDER BY title ASC");
             if ($pStmt) $res['pages'] = $pStmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $bgStmt = $db->query("SELECT id, name, slug FROM blog_categories ORDER BY name ASC");
+            if ($bgStmt) $res['blog_categories'] = $bgStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } catch (\Exception $e) {
             error_log("Menu::getAvailableEntities error: " . $e->getMessage());

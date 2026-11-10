@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const q = searchQuery.trim().toLowerCase();
 
     blogPosts.forEach((post) => {
-      const categories = (post.dataset.category || '').toLowerCase().split(' ');
+      const categories = (post.dataset.category || '').toLowerCase().split(/[,\s]+/);
       const title = (post.dataset.title || post.textContent || '').toLowerCase();
 
       const matchesCat = (currentCategory === 'all') || categories.includes(currentCategory);
@@ -75,23 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Category List Filtering
-  categoryItems.forEach((item) => {
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      categoryItems.forEach((c) => c.classList.remove('active'));
-      item.classList.add('active');
-
-      currentCategory = item.dataset.cat || 'all';
-      filterPosts();
-
-      // Smooth scroll to articles if on mobile
-      const mainCol = document.querySelector('.blog-main-col');
-      if (window.innerWidth < 992 && mainCol) {
-        mainCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
+  // 2. Category links navigate directly to their dedicated category pages (/{category-slug}).
+  // In-page search and clear filter are handled below.
 
   // 3. Clear Filter Button
   if (btnClearFilter) {

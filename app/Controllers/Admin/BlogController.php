@@ -2,6 +2,7 @@
 namespace App\Controllers\Admin;
 
 use App\Models\BlogPost;
+use App\Models\Product;
 
 class BlogController extends AdminController
 {
@@ -38,12 +39,14 @@ class BlogController extends AdminController
     public function create()
     {
         $categories = BlogPost::getCategories();
+        $products   = Product::getPublishedForBlog();
 
         $this->render('admin.blogs.add', [
             'page_title'         => 'Add Blog Post | Vape Store Admin',
             'current_admin_page' => 'blogs',
             'page_script'        => 'add-blog.js',
             'categories'         => $categories,
+            'products'           => $products,
             'error'              => $_GET['error'] ?? null
         ]);
     }
@@ -71,7 +74,7 @@ class BlogController extends AdminController
                 $slug = trim($slug, '-');
             }
 
-            $customUrl = '/blog/' . $slug;
+            $customUrl = '/' . $slug;
 
             $statusVal = $_POST['status'] ?? 'active';
             $isActive = ($statusVal === 'active' || $statusVal === 'visible' || $statusVal === '1') ? 1 : 0;
@@ -96,16 +99,24 @@ class BlogController extends AdminController
                 $featuredImageUrl = trim($_POST['featured_image_url']);
             }
 
+            // Process Categories (Multiple Checkboxes or Single fallback)
+            $catIds = $_POST['category_ids'] ?? $_POST['category_id'] ?? [];
+            if (!is_array($catIds) && $catIds !== '') {
+                $catIds = explode(',', (string)$catIds);
+            }
+            $cleanCatIds = array_filter(array_map('intval', (array)$catIds));
+            $categoryIdsString = !empty($cleanCatIds) ? implode(',', $cleanCatIds) : null;
+
             $data = [
                 'title'              => $title,
                 'slug'               => $slug,
                 'custom_url_path'    => $customUrl,
-                'category_id'        => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
+                'category_id'        => $categoryIdsString,
                 'featured_image_url' => $featuredImageUrl,
                 'author_name'        => 'Infinity Vape Shop',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
-                'tags'               => trim($_POST['tags'] ?? ''),
+                'tags'               => null,
                 'meta_title'         => trim($_POST['seo_title'] ?? $_POST['meta_title'] ?? ''),
                 'meta_desc'          => trim($_POST['seo_description'] ?? $_POST['meta_desc'] ?? ''),
                 'is_active'          => $isActive,
@@ -143,6 +154,7 @@ class BlogController extends AdminController
         }
 
         $categories = BlogPost::getCategories();
+        $products   = Product::getPublishedForBlog();
 
         $this->render('admin.blogs.edit', [
             'page_title'         => 'Edit Blog Post | Vape Store Admin',
@@ -150,6 +162,7 @@ class BlogController extends AdminController
             'page_script'        => 'edit-blog.js',
             'post'               => $post,
             'categories'         => $categories,
+            'products'           => $products,
             'success'            => $_GET['success'] ?? null,
             'error'              => $_GET['error'] ?? null
         ]);
@@ -184,7 +197,7 @@ class BlogController extends AdminController
                 $slug = trim($slug, '-');
             }
 
-            $customUrl = '/blog/' . $slug;
+            $customUrl = '/' . $slug;
 
             $statusVal = $_POST['status'] ?? 'active';
             $isActive = ($statusVal === 'active' || $statusVal === 'visible' || $statusVal === '1') ? 1 : 0;
@@ -209,16 +222,24 @@ class BlogController extends AdminController
                 $featuredImageUrl = trim($_POST['featured_image_url']);
             }
 
+            // Process Categories (Multiple Checkboxes or Single fallback)
+            $catIds = $_POST['category_ids'] ?? $_POST['category_id'] ?? [];
+            if (!is_array($catIds) && $catIds !== '') {
+                $catIds = explode(',', (string)$catIds);
+            }
+            $cleanCatIds = array_filter(array_map('intval', (array)$catIds));
+            $categoryIdsString = !empty($cleanCatIds) ? implode(',', $cleanCatIds) : null;
+
             $data = [
                 'title'              => $title,
                 'slug'               => $slug,
                 'custom_url_path'    => $customUrl,
-                'category_id'        => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
+                'category_id'        => $categoryIdsString,
                 'featured_image_url' => $featuredImageUrl,
                 'author_name'        => 'Infinity Vape Shop',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
-                'tags'               => trim($_POST['tags'] ?? ''),
+                'tags'               => null,
                 'meta_title'         => trim($_POST['seo_title'] ?? $_POST['meta_title'] ?? ''),
                 'meta_desc'          => trim($_POST['seo_description'] ?? $_POST['meta_desc'] ?? ''),
                 'is_active'          => $isActive

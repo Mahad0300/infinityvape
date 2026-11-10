@@ -88,11 +88,11 @@ if (!function_exists('e')) {
 }
 
 if (!function_exists('redirect')) {
-    function redirect($url) {
+    function redirect($url, $statusCode = 302) {
         if (!preg_match('#^https?://#i', $url)) {
             $url = base_url($url);
         }
-        header("Location: $url");
+        header("Location: $url", true, $statusCode);
         exit;
     }
 }

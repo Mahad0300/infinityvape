@@ -23,9 +23,12 @@ class BlogPost extends Model
             }
 
             $stmt = $db->query("
-                SELECT b.*, c.name as category_name, c.slug as category_slug
+                SELECT b.*, 
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                 FROM blog_posts b 
-                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
+                GROUP BY b.id
                 ORDER BY b.published_at DESC
                 LIMIT " . (int)$limit
             );
@@ -53,10 +56,13 @@ class BlogPost extends Model
             }
 
             $stmt = $db->query("
-                SELECT b.*, c.name as category_name, c.slug as category_slug
+                SELECT b.*, 
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                 FROM blog_posts b 
-                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
                 WHERE b.is_active = 1
+                GROUP BY b.id
                 ORDER BY b.published_at DESC, b.id DESC
                 LIMIT " . (int)$limit
             );
@@ -78,10 +84,13 @@ class BlogPost extends Model
         try {
             $placeholders = implode(',', array_fill(0, count($categorySlugs), '?'));
             $sql = "
-                SELECT b.*, c.name as category_name, c.slug as category_slug
+                SELECT b.*, 
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                 FROM blog_posts b 
-                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                INNER JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
                 WHERE b.is_active = 1 AND c.slug IN ($placeholders)
+                GROUP BY b.id
                 ORDER BY b.published_at DESC, b.id DESC
                 LIMIT " . (int)$limit;
             
@@ -96,10 +105,13 @@ class BlogPost extends Model
                 $needed = (int)$limit - count($posts);
 
                 $fallbackSql = "
-                    SELECT b.*, c.name as category_name, c.slug as category_slug
+                    SELECT b.*, 
+                        GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
+                        GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                     FROM blog_posts b 
-                    LEFT JOIN blog_categories c ON b.category_id = c.id 
+                    LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
                     WHERE b.is_active = 1 $excludeSql
+                    GROUP BY b.id
                     ORDER BY b.published_at DESC, b.id DESC
                     LIMIT $needed";
                 $fallbackStmt = $db->query($fallbackSql);
@@ -139,10 +151,13 @@ class BlogPost extends Model
             $total = (int)$countStmt->fetchColumn();
 
             $sql = "
-                SELECT b.*, c.name as category_name, c.slug as category_slug
+                SELECT b.*, 
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name, 
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                 FROM blog_posts b 
-                LEFT JOIN blog_categories c ON b.category_id = c.id 
+                LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
                 $whereSql
+                GROUP BY b.id
                 ORDER BY b.published_at DESC, b.id DESC
                 LIMIT $perPage OFFSET $offset";
             
@@ -160,6 +175,59 @@ class BlogPost extends Model
         } catch (\Exception $e) {
             error_log("BlogPost::byTag() error: " . $e->getMessage());
             return ['data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
+        }
+    }
+
+    /**
+     * Get paginated posts by category slug or ID
+     */
+    public static function byCategory($categorySlugOrId, $page = 1, $perPage = 12)
+    {
+        $db = self::getDB();
+        if (!$db) return ['category' => null, 'data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
+
+        try {
+            $cat = self::findCategory($categorySlugOrId);
+            if (!$cat) {
+                return ['category' => null, 'data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
+            }
+
+            $page = max(1, (int)$page);
+            $perPage = max(1, (int)$perPage);
+            $offset = ($page - 1) * $perPage;
+
+            $catId = (int)$cat['id'];
+
+            $countStmt = $db->prepare("SELECT COUNT(*) FROM blog_posts WHERE (FIND_IN_SET(?, category_id) > 0 OR category_id = ?) AND is_active = 1");
+            $countStmt->execute([$catId, $catId]);
+            $total = (int)$countStmt->fetchColumn();
+
+            $sql = "
+                SELECT b.*, 
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name, 
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
+                FROM blog_posts b 
+                LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
+                WHERE (FIND_IN_SET(?, b.category_id) > 0 OR b.category_id = ?) AND b.is_active = 1
+                GROUP BY b.id
+                ORDER BY b.published_at DESC, b.id DESC
+                LIMIT $perPage OFFSET $offset";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$catId, $catId]);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                'category' => $cat,
+                'data' => $data,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int)ceil($total / $perPage) ?: 1
+            ];
+        } catch (\Exception $e) {
+            error_log("BlogPost::byCategory() error: " . $e->getMessage());
+            return ['category' => null, 'data' => [], 'total' => 0, 'current_page' => 1, 'last_page' => 1];
         }
     }
 
@@ -243,9 +311,8 @@ class BlogPost extends Model
 
         try {
             $isNumeric = is_numeric($idOrSlug);
-            $sql = "SELECT b.*, c.name as category_name, c.slug as category_slug
+            $sql = "SELECT b.*
                     FROM blog_posts b
-                    LEFT JOIN blog_categories c ON b.category_id = c.id
                     WHERE " . ($isNumeric ? "b.id = ?" : "(b.slug = ? OR b.custom_url_path = ?)") . "
                     LIMIT 1";
             $stmt = $db->prepare($sql);
@@ -255,7 +322,31 @@ class BlogPost extends Model
                 $stmt->execute([(string)$idOrSlug, (string)$idOrSlug]);
             }
             $post = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $post ?: null;
+            if (!$post) return null;
+
+            // Fetch attached categories
+            $post['categories'] = [];
+            $post['category_ids'] = [];
+            if (!empty($post['category_id'])) {
+                $rawIds = array_filter(array_map('trim', explode(',', (string)$post['category_id'])));
+                if (!empty($rawIds)) {
+                    $post['category_ids'] = array_map('intval', $rawIds);
+                    $inPlaceholders = implode(',', array_fill(0, count($rawIds), '?'));
+                    $catStmt = $db->prepare("SELECT id, name, slug FROM blog_categories WHERE id IN ($inPlaceholders) ORDER BY name ASC");
+                    $catStmt->execute(array_values($rawIds));
+                    $post['categories'] = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+                }
+            }
+
+            if (!empty($post['categories'])) {
+                $post['category_name'] = implode(', ', array_column($post['categories'], 'name'));
+                $post['category_slug'] = $post['categories'][0]['slug'] ?? 'vaping-guides';
+            } else {
+                $post['category_name'] = 'Vaping Guides';
+                $post['category_slug'] = 'vaping-guides';
+            }
+
+            return $post;
         } catch (\Exception $e) {
             error_log("BlogPost::find() error: " . $e->getMessage());
             return null;
@@ -300,7 +391,8 @@ class BlogPost extends Model
             }
 
             if (!empty($categoryId) && is_numeric($categoryId)) {
-                $where[] = "b.category_id = ?";
+                $where[] = "(FIND_IN_SET(?, b.category_id) > 0 OR b.category_id = ?)";
+                $params[] = (int)$categoryId;
                 $params[] = (int)$categoryId;
             }
 
@@ -313,10 +405,13 @@ class BlogPost extends Model
             $total = (int)$countStmt->fetchColumn();
 
             // Fetch data
-            $sql = "SELECT b.*, c.name as category_name, c.slug as category_slug
+            $sql = "SELECT b.*, 
+                        GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name, 
+                        GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
                     FROM blog_posts b 
-                    LEFT JOIN blog_categories c ON b.category_id = c.id 
+                    LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) 
                     $whereClause
+                    GROUP BY b.id
                     ORDER BY b.published_at DESC, b.id DESC
                     LIMIT $perPage OFFSET $offset";
             $stmt = $db->prepare($sql);
@@ -359,6 +454,16 @@ class BlogPost extends Model
 
             $customUrl = !empty($data['custom_url_path']) ? trim($data['custom_url_path']) : '/blog/' . $slug;
 
+            $catIdVal = null;
+            if (isset($data['category_id']) && $data['category_id'] !== '' && $data['category_id'] !== null) {
+                if (is_array($data['category_id'])) {
+                    $cleaned = array_filter(array_map('intval', $data['category_id']));
+                    $catIdVal = !empty($cleaned) ? implode(',', $cleaned) : null;
+                } else {
+                    $catIdVal = trim((string)$data['category_id']);
+                }
+            }
+
             $sql = "INSERT INTO blog_posts (
                 category_id, author_id, title, slug, custom_url_path,
                 featured_image_url, author_name, excerpt, content,
@@ -371,13 +476,13 @@ class BlogPost extends Model
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
-                ':category_id'        => !empty($data['category_id']) ? (int)$data['category_id'] : null,
+                ':category_id'        => $catIdVal,
                 ':author_id'          => !empty($data['author_id']) ? (int)$data['author_id'] : null,
                 ':title'              => $title,
                 ':slug'               => $slug,
                 ':custom_url_path'    => $customUrl,
                 ':featured_image_url' => !empty($data['featured_image_url']) ? $data['featured_image_url'] : 'assets/images/blog-1.jpg',
-                ':author_name'        => 'New Vape',
+                ':author_name'        => !empty($data['author_name']) ? $data['author_name'] : 'Infinity Vape Shop',
                 ':excerpt'            => $data['excerpt'] ?? '',
                 ':content'            => $data['content'] ?? '',
                 ':tags'               => $data['tags'] ?? '',
@@ -403,6 +508,17 @@ class BlogPost extends Model
         if (!$db) return false;
 
         try {
+            if (array_key_exists('category_id', $data)) {
+                if (is_array($data['category_id'])) {
+                    $cleaned = array_filter(array_map('intval', $data['category_id']));
+                    $data['category_id'] = !empty($cleaned) ? implode(',', $cleaned) : null;
+                } elseif ($data['category_id'] !== null && $data['category_id'] !== '') {
+                    $data['category_id'] = trim((string)$data['category_id']);
+                } else {
+                    $data['category_id'] = null;
+                }
+            }
+
             $fields = [];
             $params = [':id' => (int)$id];
 
@@ -448,6 +564,21 @@ class BlogPost extends Model
     }
 
     /**
+     * Get total count of unique active blog posts
+     */
+    public static function countActive()
+    {
+        $db = self::getDB();
+        if (!$db) return 0;
+        try {
+            return (int)$db->query("SELECT COUNT(*) FROM blog_posts WHERE is_active = 1")->fetchColumn();
+        } catch (\Exception $e) {
+            error_log("BlogPost::countActive() error: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Get all categories with post counts
      */
     public static function getCategories()
@@ -464,10 +595,9 @@ class BlogPost extends Model
             }
 
             $stmt = $db->query("
-                SELECT c.*, COUNT(b.id) as post_count 
+                SELECT c.*, 
+                    (SELECT COUNT(*) FROM blog_posts b WHERE (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id) AND b.is_active = 1) as post_count 
                 FROM blog_categories c 
-                LEFT JOIN blog_posts b ON c.id = b.category_id 
-                GROUP BY c.id
                 ORDER BY c.name ASC
             ");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -553,8 +683,15 @@ class BlogPost extends Model
         if (!$db) return false;
 
         try {
-            // Nullify category_id in posts
-            $db->prepare("UPDATE blog_posts SET category_id = NULL WHERE category_id = ?")->execute([(int)$id]);
+            // Remove deleted category ID from comma-separated category_id in blog_posts
+            $posts = $db->query("SELECT id, category_id FROM blog_posts WHERE (FIND_IN_SET(" . (int)$id . ", category_id) > 0 OR category_id = " . (int)$id . ")")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($posts as $p) {
+                $ids = array_filter(array_map('trim', explode(',', (string)$p['category_id'])));
+                $ids = array_diff($ids, [(string)$id, (int)$id]);
+                $newCatId = !empty($ids) ? implode(',', $ids) : null;
+                $upd = $db->prepare("UPDATE blog_posts SET category_id = ? WHERE id = ?");
+                $upd->execute([$newCatId, $p['id']]);
+            }
             // Delete category
             $stmt = $db->prepare("DELETE FROM blog_categories WHERE id = ?");
             return $stmt->execute([(int)$id]);

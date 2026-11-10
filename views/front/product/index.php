@@ -1008,7 +1008,7 @@ $firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
             <ul class="related-posts-link-list" style="<?= !empty($product['related_posts_content']) ? 'margin-top: 20px;' : '' ?>">
               <?php foreach ($relatedPosts as $post): ?>
               <li>
-                <a href="<?= url('blog/' . urlencode($post['slug'] ?? '')) ?>" class="related-post-link">
+                <a href="<?= url(urlencode($post['slug'] ?? '')) ?>" class="related-post-link">
                   <?= htmlspecialchars($post['title']) ?>
                 </a>
               </li>

@@ -63,16 +63,23 @@ class App
             return $this->dispatch([\App\Controllers\CategoryController::class, 'index']);
         }
 
-        // Dynamic route matching for blog posts (/blog/{slug})
+        // Dynamic route matching for blog posts (/blog/{slug} or /blog/category/{slug})
         if (preg_match('#^blog/(.+)$#', $trimmedUri, $matches)) {
-            $_GET['slug'] = basename($matches[1]);
-            return $this->dispatch([\App\Controllers\BlogController::class, 'detail']);
-        }
-
-        // Dynamic route matching for blog tags (/tag/{slug})
-        if (preg_match('#^tag/(.+)$#', $trimmedUri, $matches)) {
-            $_GET['tag'] = basename($matches[1]);
-            return $this->dispatch([\App\Controllers\TagController::class, 'index']);
+            $blogSlug = basename($matches[1]);
+            if (strpos($trimmedUri, 'blog/category/') === 0) {
+                $_GET['cat'] = $blogSlug;
+                return $this->dispatch([\App\Controllers\BlogController::class, 'category']);
+            }
+            if (class_exists('\\App\\Models\\BlogPost')) {
+                $checkCat = \App\Models\BlogPost::findCategory($blogSlug);
+                if ($checkCat) {
+                    $_GET['cat'] = $checkCat['slug'];
+                    return $this->dispatch([\App\Controllers\BlogController::class, 'category']);
+                }
+            }
+            // 301 Permanent Redirect to clean root URL
+            redirect($blogSlug, 301);
+            return;
         }
 
         // Dynamic route matching for static pages (/pages/{slug} or /page/{slug})
@@ -106,11 +113,39 @@ class App
                 }
             }
         } elseif ($segCount === 1 && !empty($trimmedUri)) {
+            // 1. Check Product Collection
             if (class_exists('\\App\\Models\\Collection')) {
                 $matchedCol = \App\Models\Collection::findBySlug($trimmedUri);
                 if ($matchedCol) {
                     $_GET['slug'] = $trimmedUri;
                     return $this->dispatch([\App\Controllers\CollectionController::class, 'show']);
+                }
+            }
+
+            // 2. Check Blog Category (e.g. /comparisons, /vaping-guides)
+            if (class_exists('\\App\\Models\\BlogPost')) {
+                $matchedBlogCat = \App\Models\BlogPost::findCategory($trimmedUri);
+                if ($matchedBlogCat) {
+                    $_GET['cat'] = $matchedBlogCat['slug'];
+                    return $this->dispatch([\App\Controllers\BlogController::class, 'category']);
+                }
+            }
+
+            // 3. Check Blog Post (e.g. /how-to-fix-burnt-disposable-vape-causes-solutions)
+            if (class_exists('\\App\\Models\\BlogPost')) {
+                $matchedPost = \App\Models\BlogPost::find($trimmedUri);
+                if ($matchedPost) {
+                    $_GET['slug'] = $matchedPost['slug'];
+                    return $this->dispatch([\App\Controllers\BlogController::class, 'detail']);
+                }
+            }
+
+            // 4. Check Brand (e.g. /geek-bar, /lost-mary)
+            if (class_exists('\\App\\Models\\Brand')) {
+                $matchedBrand = \App\Models\Brand::findBySlug($trimmedUri);
+                if ($matchedBrand) {
+                    $_GET['slug'] = $trimmedUri;
+                    return $this->dispatch([\App\Controllers\BrandController::class, 'show']);
                 }
             }
         }

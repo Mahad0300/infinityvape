@@ -21,12 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const customUrlInput = document.getElementById('itemCustomUrlInput');
   const collectionSelect = document.getElementById('itemCollectionSelect');
   const brandSelect = document.getElementById('itemBrandSelect');
+  const blogCategorySelect = document.getElementById('itemBlogCategorySelect');
   const pageSelect = document.getElementById('itemPageSelect');
   const parentSelect = document.getElementById('itemParentSelect');
 
   const groupCustomUrl = document.getElementById('groupCustomUrl');
   const groupCollection = document.getElementById('groupCollectionSelect');
   const groupBrand = document.getElementById('groupBrandSelect');
+  const groupBlogCategory = document.getElementById('groupBlogCategorySelect');
   const groupPage = document.getElementById('groupPageSelect');
   const groupPromoBanner = document.getElementById('groupPromoBanner');
 
@@ -136,6 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
         subtext = 'collection';
       } else if (item.link_type === 'brand') {
         subtext = 'brand';
+      } else if (item.link_type === 'blog_category') {
+        subtext = 'blog_category';
       } else if (item.link_type === 'page') {
         subtext = 'page';
       } else if (item.link_type === 'text_block') {
@@ -299,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (groupCustomUrl) groupCustomUrl.style.display = val === 'custom_url' ? 'block' : 'none';
     if (groupCollection) groupCollection.style.display = val === 'collection' ? 'block' : 'none';
     if (groupBrand) groupBrand.style.display = val === 'brand' ? 'block' : 'none';
+    if (groupBlogCategory) groupBlogCategory.style.display = val === 'blog_category' ? 'block' : 'none';
     if (groupPage) groupPage.style.display = val === 'page' ? 'block' : 'none';
     if (groupPromoBanner) groupPromoBanner.style.display = val === 'promo_banner' ? 'block' : 'none';
   }
@@ -322,6 +327,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const selected = brandSelect.options[brandSelect.selectedIndex];
       if (selected && selected.value) {
         if (!nameInput.value.trim()) nameInput.value = selected.dataset.title || selected.text;
+      }
+    });
+  }
+
+  if (blogCategorySelect) {
+    blogCategorySelect.addEventListener('change', () => {
+      const selected = blogCategorySelect.options[blogCategorySelect.selectedIndex];
+      if (selected && selected.value) {
+        if (!nameInput.value.trim()) nameInput.value = selected.dataset.title || selected.text.trim();
       }
     });
   }
@@ -385,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (customUrlInput) customUrlInput.value = '/';
     if (collectionSelect) collectionSelect.value = '';
     if (brandSelect) brandSelect.value = '';
+    if (blogCategorySelect) blogCategorySelect.value = '';
     if (pageSelect) pageSelect.value = '';
     if (promoLinkInput) promoLinkInput.value = '';
     if (promoTextInput) promoTextInput.value = '';
@@ -440,6 +455,18 @@ document.addEventListener('DOMContentLoaded', () => {
       collectionSelect.value = item.entity_id || '';
     } else if (item.link_type === 'brand' && brandSelect) {
       brandSelect.value = item.entity_id || '';
+    } else if (item.link_type === 'blog_category' && blogCategorySelect) {
+      if (item.entity_id) {
+        blogCategorySelect.value = item.entity_id;
+      } else if (item.link_value) {
+        const cleanSlug = item.link_value.replace(/^\//, '');
+        for (let i = 0; i < blogCategorySelect.options.length; i++) {
+          if (blogCategorySelect.options[i].dataset.slug === cleanSlug) {
+            blogCategorySelect.selectedIndex = i;
+            break;
+          }
+        }
+      }
     } else if (item.link_type === 'page' && pageSelect) {
       if (item.entity_id) {
         pageSelect.value = item.entity_id;
@@ -512,6 +539,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (opt && opt.value) {
           entityId = opt.value;
           linkValue = `/brand/${opt.dataset.slug || ''}`;
+        }
+      } else if (linkType === 'blog_category') {
+        const opt = blogCategorySelect.options[blogCategorySelect.selectedIndex];
+        if (opt && opt.value) {
+          entityId = opt.value;
+          const cleanSlug = (opt.dataset.slug || '').replace(/^\//, '');
+          linkValue = cleanSlug;
         }
       } else if (linkType === 'page') {
         const opt = pageSelect.options[pageSelect.selectedIndex];

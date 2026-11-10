@@ -18,7 +18,7 @@ $totalPostsCount = $totalPostsCount ?? 0;
 if (!function_exists('get_blog_card_url')) {
     function get_blog_card_url($post) {
         $slug = !empty($post['slug']) ? $post['slug'] : ($post['id'] ?? '');
-        return url('blog/' . urlencode($slug));
+        return url(urlencode($slug));
     }
 }
 
@@ -116,7 +116,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   <a href="<?= htmlspecialchars($leadUrl) ?>"><?= htmlspecialchars($leadGuide['title'] ?? '') ?></a>
                 </h3>
                 <div class="blog-meta-row">
-                  <span class="meta-author">New Vape</span>
+                  <span class="meta-author"><?= htmlspecialchars(!empty($leadGuide['author_name']) ? $leadGuide['author_name'] : 'Infinity Vape Shop') ?></span>
                   <span class="meta-separator">|</span>
                   <span class="meta-date"><?= htmlspecialchars(blog_time_display($leadGuide['published_at'] ?? '')) ?></span>
                 </div>
@@ -147,7 +147,7 @@ include dirname(__DIR__) . '/includes/header.php';
                       <a href="<?= htmlspecialchars($sUrl) ?>"><?= htmlspecialchars($sPost['title'] ?? '') ?></a>
                     </h4>
                     <div class="blog-meta-row">
-                      <span class="meta-author">New Vape</span>
+                      <span class="meta-author"><?= htmlspecialchars(!empty($sPost['author_name']) ? $sPost['author_name'] : 'Infinity Vape Shop') ?></span>
                       <span class="meta-separator">|</span>
                       <span class="meta-date"><?= htmlspecialchars(blog_time_display($sPost['published_at'] ?? '')) ?></span>
                     </div>
@@ -187,7 +187,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   <div class="top-review-content">
                     <h3 class="top-review-title"><?= htmlspecialchars($rev['title'] ?? '') ?></h3>
                     <div class="top-review-meta">
-                      <span class="meta-author">New Vape</span>
+                      <span class="meta-author"><?= htmlspecialchars(!empty($rev['author_name']) ? $rev['author_name'] : 'Infinity Vape Shop') ?></span>
                       <span class="meta-separator">|</span>
                       <span class="meta-date"><?= htmlspecialchars(blog_time_display($rev['published_at'] ?? '')) ?></span>
                     </div>
@@ -215,7 +215,7 @@ include dirname(__DIR__) . '/includes/header.php';
             <h2 class="blog-section-heading">Explore Flavor Profiles</h2>
           </div>
 
-          <article class="flavor-lead-card blog-post-item" data-category="<?= htmlspecialchars(strtolower($flavorLead['category_slug'] ?? 'flavors-eliquids')) ?>" data-title="<?= htmlspecialchars(strtolower($flavorLead['title'] ?? '')) ?>">
+          <article class="flavor-lead-card blog-post-item" data-category="<?= htmlspecialchars(strtolower($flavorLead['category_slug'] ?? 'flavor-profiles')) ?>" data-title="<?= htmlspecialchars(strtolower($flavorLead['title'] ?? '')) ?>">
             <a href="<?= htmlspecialchars($fUrl) ?>" class="flavor-lead-media-link" aria-label="<?= htmlspecialchars($flavorLead['title'] ?? '') ?>">
               <img 
                 src="<?= htmlspecialchars($fImg) ?>" 
@@ -230,7 +230,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <a href="<?= htmlspecialchars($fUrl) ?>"><?= htmlspecialchars($flavorLead['title'] ?? '') ?></a>
               </h3>
               <div class="blog-meta-row">
-                <span class="meta-author">New Vape</span>
+                <span class="meta-author"><?= htmlspecialchars(!empty($flavorLead['author_name']) ? $flavorLead['author_name'] : 'Infinity Vape Shop') ?></span>
                 <span class="meta-separator">|</span>
                 <span class="meta-date"><?= htmlspecialchars(blog_time_display($flavorLead['published_at'] ?? '')) ?></span>
               </div>
@@ -265,7 +265,7 @@ include dirname(__DIR__) . '/includes/header.php';
               $hpDate = !empty($hp['published_at']) ? date('M d, Y', strtotime($hp['published_at'])) : date('M d, Y');
               $hpCat = !empty($hp['category_name']) ? $hp['category_name'] : 'Guides';
             ?>
-              <article class="blog-article-card blog-post-item" data-category="<?= htmlspecialchars(strtolower($hp['category_slug'] ?? 'hemp-cbd')) ?>" data-title="<?= htmlspecialchars(strtolower($hp['title'] ?? '')) ?>">
+              <article class="blog-article-card blog-post-item" data-category="<?= htmlspecialchars(strtolower($hp['category_slug'] ?? 'nicotine-pouches-guide')) ?>" data-title="<?= htmlspecialchars(strtolower($hp['title'] ?? '')) ?>">
                 <a href="<?= htmlspecialchars($hpUrl) ?>" class="article-card-thumb-link">
                   <img src="<?= htmlspecialchars($hpImg) ?>" alt="<?= htmlspecialchars($hp['title'] ?? '') ?>" class="article-card-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
                 </a>
@@ -274,7 +274,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     <a href="<?= htmlspecialchars($hpUrl) ?>"><?= htmlspecialchars($hp['title'] ?? '') ?></a>
                   </h3>
                   <div class="blog-meta-row">
-                    <span class="meta-author">New Vape</span>
+                    <span class="meta-author"><?= htmlspecialchars(!empty($hp['author_name']) ? $hp['author_name'] : 'Infinity Vape Shop') ?></span>
                     <span class="meta-separator">|</span>
                     <span class="meta-date"><?= htmlspecialchars(blog_time_display($hp['published_at'] ?? '')) ?></span>
                   </div>
@@ -313,7 +313,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     <a href="<?= htmlspecialchars($lpUrl) ?>"><?= htmlspecialchars($lp['title'] ?? '') ?></a>
                   </h3>
                   <div class="latest-post-meta">
-                    <span class="meta-author">New Vape</span>
+                    <span class="meta-author"><?= htmlspecialchars(!empty($lp['author_name']) ? $lp['author_name'] : 'Infinity Vape Shop') ?></span>
                     <span class="meta-date-read">| <?= htmlspecialchars(blog_time_display($lp['published_at'] ?? '')) ?></span>
                   </div>
                 </div>
@@ -352,19 +352,19 @@ include dirname(__DIR__) . '/includes/header.php';
           </form>
         </div>
 
-        <!-- WIDGET 2: CATEGORIES CARD -->
+        <!-- WIDGET 1: CATEGORIES CARD -->
         <div class="blog-widget blog-card-widget blog-categories-widget">
           <h3 class="blog-widget-title">Categories</h3>
           <ul class="blog-categories-list" id="blogCategoriesList">
-            <li class="category-list-item active" data-cat="all">
-              <a href="javascript:void(0);" class="category-link">
+            <li class="category-list-item active">
+              <a href="<?= url('blog') ?>" class="category-link">
                 <span class="category-name">All Articles</span>
                 <span class="category-count">(<?= (int)$totalPostsCount ?>)</span>
               </a>
             </li>
             <?php foreach ($categories as $cat): ?>
-              <li class="category-list-item" data-cat="<?= htmlspecialchars($cat['slug']) ?>">
-                <a href="javascript:void(0);" class="category-link">
+              <li class="category-list-item">
+                <a href="<?= url($cat['slug']) ?>" class="category-link">
                   <span class="category-name"><?= htmlspecialchars($cat['name']) ?></span>
                   <span class="category-count">(<?= (int)($cat['post_count'] ?? 0) ?>)</span>
                 </a>
@@ -373,7 +373,7 @@ include dirname(__DIR__) . '/includes/header.php';
           </ul>
         </div>
 
-        <!-- WIDGET 3: RECENT POSTS CARD -->
+        <!-- WIDGET 2: RECENT POSTS CARD -->
         <?php if (!empty($recentPosts)): ?>
         <div class="blog-widget blog-card-widget blog-recent-posts-widget">
           <h3 class="blog-widget-title">Recent Posts</h3>
@@ -399,34 +399,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         <?php endif; ?>
 
-        <!-- WIDGET 4: FEATURED POSTS CARD -->
-        <?php 
-          $featWidgetPost = !empty($latestPosts) ? (isset($latestPosts[0]) ? $latestPosts[0] : reset($latestPosts)) : null; 
-        ?>
-        <?php if ($featWidgetPost): 
-          $fwpUrl = get_blog_card_url($featWidgetPost);
-          $fwpImg = get_blog_card_img($featWidgetPost, 'assets/images/blog-1.jpg');
-          $fwpDate = !empty($featWidgetPost['published_at']) ? date('M d, Y', strtotime($featWidgetPost['published_at'])) : date('M d, Y');
-        ?>
-        <div class="blog-widget blog-card-widget blog-featured-post-widget">
-          <h3 class="blog-widget-title">Featured Posts</h3>
-          <ul class="recent-posts-list">
-            <li class="recent-post-item">
-              <a href="<?= htmlspecialchars($fwpUrl) ?>" class="recent-post-thumb-link" aria-label="<?= htmlspecialchars($featWidgetPost['title']) ?>">
-                <img src="<?= htmlspecialchars($fwpImg) ?>" alt="<?= htmlspecialchars($featWidgetPost['title']) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
-              </a>
-              <div class="recent-post-info">
-                <h4 class="recent-post-title">
-                  <a href="<?= htmlspecialchars($fwpUrl) ?>"><?= htmlspecialchars($featWidgetPost['title']) ?></a>
-                </h4>
-                <span class="recent-post-date"><?= htmlspecialchars($fwpDate) ?></span>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <?php endif; ?>
-
-        <!-- WIDGET 5: POPULAR POSTS CARD -->
+        <!-- WIDGET 3: POPULAR POSTS CARD -->
         <?php if (!empty($popularPosts)): ?>
         <div class="blog-widget blog-card-widget blog-popular-posts-widget">
           <h3 class="blog-widget-title">Popular Posts</h3>
@@ -452,7 +425,7 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         <?php endif; ?>
 
-        <!-- WIDGET 6: ARCHIVE CARD -->
+        <!-- WIDGET 4: ARCHIVE CARD -->
         <div class="blog-widget blog-card-widget blog-archive-widget">
           <h3 class="blog-widget-title">Archive</h3>
           <ul class="archive-list">
@@ -468,21 +441,7 @@ include dirname(__DIR__) . '/includes/header.php';
           </ul>
         </div>
 
-        <!-- WIDGET 7: TAGS CARD -->
-        <div class="blog-widget blog-card-widget blog-tags-widget">
-          <h3 class="blog-widget-title">Tags</h3>
-          <div class="blog-tags-cloud">
-            <?php if (!empty($allTags)): ?>
-              <?php foreach ($allTags as $tg): ?>
-                <a href="<?= url('tag?tag=' . urlencode(strtolower(str_replace(' ', '-', $tg)))) ?>" class="blog-tag-pill" data-tag="<?= htmlspecialchars(strtolower(str_replace(' ', '-', $tg))) ?>"><?= htmlspecialchars($tg) ?></a>
-              <?php endforeach; ?>
-            <?php else: ?>
-              <a href="<?= url('tag?tag=puff-count') ?>" class="blog-tag-pill" data-tag="puff-count">Puff Count</a>
-              <a href="<?= url('tag?tag=new-releases') ?>" class="blog-tag-pill" data-tag="new-releases">New Releases</a>
-              <a href="<?= url('tag?tag=vaping-guides') ?>" class="blog-tag-pill" data-tag="vaping-guides">Vaping Guides</a>
-            <?php endif; ?>
-          </div>
-        </div>
+
 
       </aside>
 
