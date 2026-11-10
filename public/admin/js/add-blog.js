@@ -329,8 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const id1 = initialIds[0] ? String(initialIds[0]) : '';
     const id2 = initialIds[1] ? String(initialIds[1]) : '';
 
-    let options1Html = `<option value="">-- Choose 1st Product --</option>`;
-    let options2Html = `<option value="">-- None (Single Product Spotlight) --</option>`;
+    let options1Html = `<option value="">-- None --</option>`;
+    let options2Html = `<option value="">-- None --</option>`;
 
     products.forEach(p => {
       const brand = p.brand_name ? ` (${p.brand_name})` : '';
@@ -370,10 +370,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="slot-badge">Product 1 (Required)</span>
               <span class="slot-mode-text">Spotlight / Option 1</span>
             </div>
-            <select class="admin-form-select slot-product-select" data-slot="1">
+            <select class="admin-form-select slot-product-select" data-slot="1" style="display:none;">
               ${options1Html}
             </select>
-            <div class="slot-product-preview slot-preview-1"></div>
           </div>
 
           <!-- Slot 2 -->
@@ -382,10 +381,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="slot-badge secondary">Product 2 (Optional)</span>
               <span class="slot-mode-text">Option 2 Comparison</span>
             </div>
-            <select class="admin-form-select slot-product-select" data-slot="2">
+            <select class="admin-form-select slot-product-select" data-slot="2" style="display:none;">
               ${options2Html}
             </select>
-            <div class="slot-product-preview slot-preview-2"></div>
           </div>
         </div>
 
@@ -401,47 +399,284 @@ document.addEventListener('DOMContentLoaded', () => {
     return block;
   }
 
-  function renderSlotPreview(slotCard, productId) {
-    const previewEl = slotCard.querySelector('.slot-product-preview');
-    if (!previewEl) return;
+  function setupSearchableSlot(slotCard, slotNum, sel, otherSel, onUpdateState) {
+    if (!slotCard || !sel) return;
 
-    if (!productId) {
-      previewEl.innerHTML = `
-        <div class="slot-empty-state">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-          <span>No product selected</span>
+    const products = window.AVAILABLE_PRODUCTS || [];
+
+    // Extract unique brands for filter chips
+    const brandSet = new Set();
+    products.forEach(p => {
+      if (p.brand_name && p.brand_name.trim()) brandSet.add(p.brand_name.trim());
+    });
+    const uniqueBrands = Array.from(brandSet).sort();
+
+    const widget = document.createElement('div');
+    widget.className = 'slot-searchable-widget';
+    widget.innerHTML = `
+      <!-- Search Input & Dropdown -->
+      <div class="slot-search-wrap">
+        <div class="slot-search-input-wrap">
+          <svg class="slot-search-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="slot-search-input" placeholder="${slotNum === 1 ? 'Search product by name, brand, or flavor...' : 'Search 2nd product for comparison...'}" autocomplete="off">
+          <button type="button" class="slot-search-clear" style="display:none;" title="Clear search">✕</button>
         </div>
-      `;
-      return;
-    }
-
-    const p = getProductById(productId);
-    if (!p) {
-      previewEl.innerHTML = '';
-      return;
-    }
-
-    const imgUrl = resolveProductImg(p.featured_image);
-    const price = `$${parseFloat(p.base_price || 0).toFixed(2)}`;
-    const brand = p.brand_name || 'Brand';
-    const stockStatus = p.stock_status || 'In Stock';
-    const isInStock = (stockStatus.toLowerCase() !== 'out of stock');
-
-    previewEl.innerHTML = `
-      <div class="slot-preview-card">
-        <div class="slot-preview-img-wrap">
-          <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(p.name)}" onerror="this.src='${escapeHtml(window.APP_URL)}/assets/images/no-image.svg';">
-        </div>
-        <div class="slot-preview-details">
-          <span class="slot-preview-brand">${escapeHtml(brand)}</span>
-          <strong class="slot-preview-title" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</strong>
-          <div class="slot-preview-meta">
-            <span class="slot-preview-price">${price}</span>
-            <span class="slot-stock-badge ${isInStock ? 'in' : 'out'}">${escapeHtml(stockStatus)}</span>
+        <div class="slot-dropdown-menu" style="display:none;">
+          <div class="slot-dropdown-header">
+            <span class="slot-dropdown-count">Type to search catalog</span>
+            <span style="font-size:10px;color:#94a3b8;">ESC to close</span>
           </div>
+          ${uniqueBrands.length > 0 ? `
+          <div class="slot-brand-chips-row">
+            <span class="slot-brand-chip active" data-brand="all">All Brands</span>
+            ${uniqueBrands.slice(0, 8).map(b => `<span class="slot-brand-chip" data-brand="${escapeHtml(b)}">${escapeHtml(b)}</span>`).join('')}
+          </div>` : ''}
+          <div class="slot-results-list"></div>
+        </div>
+      </div>
+
+      <!-- Slot 2 Optional Prompt Button -->
+      ${slotNum === 2 ? `
+      <div class="slot-prompt-wrap" style="display:none;">
+        <button type="button" class="btn-prompt-add-two">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>+ Add 2nd Product for Side-by-Side Comparison</span>
+        </button>
+      </div>` : ''}
+
+      <!-- Selected Product Card -->
+      <div class="slot-chosen-card" style="display:none;">
+        <div class="chosen-thumb-col">
+          <img src="" alt="" class="chosen-img" onerror="this.src='${escapeHtml(window.APP_URL)}/assets/images/no-image.svg';">
+        </div>
+        <div class="chosen-info-col">
+          <div class="chosen-top-row">
+            <span class="chosen-brand-badge"></span>
+            <span class="chosen-stock-tag slot-stock-badge in">In Stock</span>
+          </div>
+          <div class="chosen-title-text" title=""></div>
+          <div class="chosen-meta-row">
+            <span class="chosen-price-val"></span>
+          </div>
+        </div>
+        <div class="chosen-actions-col">
+          <button type="button" class="btn-slot-action btn-slot-change" title="Choose another product">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            Change
+          </button>
+          <button type="button" class="btn-slot-action btn-slot-remove" title="Remove product">
+            ✕
+          </button>
         </div>
       </div>
     `;
+
+    slotCard.appendChild(widget);
+
+    // Elements
+    const searchWrap = widget.querySelector('.slot-search-wrap');
+    const searchInput = widget.querySelector('.slot-search-input');
+    const searchClear = widget.querySelector('.slot-search-clear');
+    const dropdown = widget.querySelector('.slot-dropdown-menu');
+    const countEl = widget.querySelector('.slot-dropdown-count');
+    const brandChips = widget.querySelectorAll('.slot-brand-chip');
+    const resultsList = widget.querySelector('.slot-results-list');
+    const promptWrap = widget.querySelector('.slot-prompt-wrap');
+    const promptBtn = widget.querySelector('.btn-prompt-add-two');
+    const chosenCard = widget.querySelector('.slot-chosen-card');
+    const chosenImg = widget.querySelector('.chosen-img');
+    const chosenBrand = widget.querySelector('.chosen-brand-badge');
+    const chosenStock = widget.querySelector('.chosen-stock-tag');
+    const chosenTitle = widget.querySelector('.chosen-title-text');
+    const chosenPrice = widget.querySelector('.chosen-price-val');
+    const btnChange = widget.querySelector('.btn-slot-change');
+    const btnRemove = widget.querySelector('.btn-slot-remove');
+
+    let activeBrandFilter = 'all';
+
+    function renderResults(query = '') {
+      const q = query.toLowerCase().trim();
+      const forbiddenId = otherSel ? String(otherSel.value) : '';
+
+      const filtered = products.filter(p => {
+        if (forbiddenId && String(p.id) === forbiddenId) return false;
+        if (activeBrandFilter !== 'all' && (p.brand_name || '').toLowerCase() !== activeBrandFilter.toLowerCase()) {
+          return false;
+        }
+        if (!q) return true;
+        const nameMatch = (p.name || '').toLowerCase().includes(q);
+        const brandMatch = (p.brand_name || '').toLowerCase().includes(q);
+        const slugMatch = (p.slug || '').toLowerCase().includes(q);
+        return nameMatch || brandMatch || slugMatch;
+      });
+
+      if (countEl) {
+        countEl.textContent = `${filtered.length} product${filtered.length === 1 ? '' : 's'} found`;
+      }
+
+      if (filtered.length === 0) {
+        resultsList.innerHTML = `
+          <div class="slot-no-results">
+            No products matching "<strong>${escapeHtml(query)}</strong>"
+          </div>
+        `;
+        return;
+      }
+
+      const displayList = filtered.slice(0, 35);
+      resultsList.innerHTML = displayList.map(p => {
+        const isSelected = String(p.id) === String(sel.value);
+        const imgUrl = resolveProductImg(p.featured_image);
+        const price = `$${parseFloat(p.base_price || 0).toFixed(2)}`;
+        const brand = p.brand_name || 'Vape';
+        const stockStatus = p.stock_status || 'In Stock';
+        const isInStock = (stockStatus.toLowerCase() !== 'out of stock');
+
+        return `
+          <div class="slot-result-item ${isSelected ? 'selected' : ''}" data-id="${p.id}">
+            <div class="slot-res-thumb">
+              <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(p.name)}" onerror="this.src='${escapeHtml(window.APP_URL)}/assets/images/no-image.svg';">
+            </div>
+            <div class="slot-res-info">
+              <span class="slot-res-brand">${escapeHtml(brand)}</span>
+              <div class="slot-res-title" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+              <div class="slot-res-meta">
+                <span class="slot-res-price">${price}</span>
+                <span class="slot-res-stock ${isInStock ? 'in' : 'out'}">${escapeHtml(stockStatus)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      resultsList.querySelectorAll('.slot-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          selectProduct(id);
+        });
+      });
+    }
+
+    function openDropdown() {
+      renderResults(searchInput.value);
+      dropdown.style.display = 'flex';
+      if (searchClear) searchClear.style.display = searchInput.value ? 'block' : 'none';
+    }
+
+    function closeDropdown() {
+      dropdown.style.display = 'none';
+    }
+
+    function selectProduct(id) {
+      sel.value = id;
+      sel.dispatchEvent(new Event('change'));
+      closeDropdown();
+      searchInput.value = '';
+      if (searchClear) searchClear.style.display = 'none';
+      syncDisplay();
+    }
+
+    function syncDisplay(userInteracted = false) {
+      const id = String(sel.value || '');
+      if (id) {
+        const p = getProductById(id);
+        if (p) {
+          chosenImg.src = resolveProductImg(p.featured_image);
+          chosenBrand.textContent = p.brand_name || 'Vape';
+          chosenTitle.textContent = p.name || 'Product';
+          chosenTitle.title = p.name || 'Product';
+          chosenPrice.textContent = `$${parseFloat(p.base_price || 0).toFixed(2)}`;
+          const stock = p.stock_status || 'In Stock';
+          const isInStock = (stock.toLowerCase() !== 'out of stock');
+          chosenStock.textContent = stock;
+          chosenStock.className = `chosen-stock-tag slot-stock-badge ${isInStock ? 'in' : 'out'}`;
+
+          chosenCard.style.display = 'flex';
+          searchWrap.style.display = 'none';
+          if (promptWrap) promptWrap.style.display = 'none';
+          slotCard.classList.add('has-product');
+          return;
+        }
+      }
+
+      // No product chosen
+      chosenCard.style.display = 'none';
+      slotCard.classList.remove('has-product');
+
+      if (slotNum === 2 && otherSel && otherSel.value && !userInteracted) {
+        if (promptWrap) promptWrap.style.display = 'block';
+        searchWrap.style.display = 'none';
+      } else {
+        if (promptWrap) promptWrap.style.display = 'none';
+        searchWrap.style.display = 'block';
+      }
+    }
+
+    searchInput.addEventListener('focus', openDropdown);
+    searchInput.addEventListener('input', () => {
+      openDropdown();
+    });
+
+    if (searchClear) {
+      searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        searchInput.focus();
+        renderResults('');
+      });
+    }
+
+    brandChips.forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        brandChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeBrandFilter = chip.dataset.brand;
+        renderResults(searchInput.value);
+      });
+    });
+
+    if (promptBtn) {
+      promptBtn.addEventListener('click', () => {
+        syncDisplay(true);
+        searchInput.focus();
+        openDropdown();
+      });
+    }
+
+    if (btnChange) {
+      btnChange.addEventListener('click', () => {
+        chosenCard.style.display = 'none';
+        if (promptWrap) promptWrap.style.display = 'none';
+        searchWrap.style.display = 'block';
+        searchInput.value = '';
+        searchInput.focus();
+        openDropdown();
+      });
+    }
+
+    if (btnRemove) {
+      btnRemove.addEventListener('click', () => {
+        sel.value = '';
+        sel.dispatchEvent(new Event('change'));
+        syncDisplay();
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!slotCard.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+
+    syncDisplay();
+    slotCard._syncSearchable = syncDisplay;
   }
 
   function initShowcaseEvents(block) {
@@ -452,13 +687,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const pill = block.querySelector('.showcase-status-pill');
     const text = block.querySelector('.showcase-status-text');
 
+    setupSearchableSlot(slotCard1, 1, sel1, sel2, updateShowcaseState);
+    setupSearchableSlot(slotCard2, 2, sel2, sel1, updateShowcaseState);
+
     function updateShowcaseState() {
       const v1 = sel1 ? sel1.value : '';
       const v2 = sel2 ? sel2.value : '';
 
-      // Render previews
-      renderSlotPreview(slotCard1, v1);
-      renderSlotPreview(slotCard2, v2);
+      if (slotCard1 && slotCard1._syncSearchable) slotCard1._syncSearchable();
+      if (slotCard2 && slotCard2._syncSearchable) slotCard2._syncSearchable();
 
       // Disable selected product from other slot to prevent duplicate
       if (sel2) {
@@ -471,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (v1 && v2 === v1) {
           sel2.value = '';
-          renderSlotPreview(slotCard2, '');
+          if (slotCard2 && slotCard2._syncSearchable) slotCard2._syncSearchable();
         }
       }
 
