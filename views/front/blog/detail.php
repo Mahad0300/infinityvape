@@ -174,7 +174,11 @@ include dirname(__DIR__) . '/includes/header.php';
                     $products = \App\Models\Product::getByIds($cleanIds);
                     if (empty($products)) return '';
                     ob_start();
-                    include __DIR__ . '/partials/product_showcase.php';
+                    if (file_exists(__DIR__ . '/product-showcase.php')) {
+                        include __DIR__ . '/product-showcase.php';
+                    } elseif (file_exists(__DIR__ . '/product_showcase.php')) {
+                        include __DIR__ . '/product_showcase.php';
+                    }
                     return ob_get_clean();
                 },
                 $contentHtml
