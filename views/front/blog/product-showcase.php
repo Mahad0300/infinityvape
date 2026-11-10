@@ -52,21 +52,6 @@ $count = count($products);
 
       <!-- Middle Info Column -->
       <div class="compact-info-col">
-        <!-- Top Meta Row -->
-        <div class="compact-meta-row">
-          <span class="compact-editorial-tag">★ Featured Product</span>
-          <?php if (!empty($prod['brand_name'])): ?>
-            <span class="compact-brand-badge"><?= htmlspecialchars($prod['brand_name']) ?></span>
-          <?php endif; ?>
-          <span class="compact-stock-badge <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
-            <span class="stock-dot"></span>
-            <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
-          </span>
-          <?php if (!empty($specPuffs)): ?>
-            <span class="compact-spec-pill"><?= htmlspecialchars($specPuffs) ?> Puffs</span>
-          <?php endif; ?>
-        </div>
-
         <!-- Product Title -->
         <h4 class="compact-title-text">
           <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
@@ -191,13 +176,6 @@ $count = count($products);
             <!-- Top Meta Row -->
             <div class="compact-meta-row">
               <span class="compact-editorial-tag <?= ($idx === 0) ? 'primary' : 'alt' ?>"><?= $optionLabel ?></span>
-              <?php if (!empty($prod['brand_name'])): ?>
-                <span class="compact-brand-badge"><?= htmlspecialchars($prod['brand_name']) ?></span>
-              <?php endif; ?>
-              <span class="compact-stock-badge <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
-                <span class="stock-dot"></span>
-                <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
-              </span>
             </div>
 
             <!-- Product Title -->
