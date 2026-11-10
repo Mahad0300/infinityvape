@@ -1,8 +1,8 @@
 <?php
 /**
  * Blog Inline Product Showcase Partial Template
- * Renders 1 Product (Spotlight) or 2 Products (Side-by-side Comparison)
- * With Live Variation Selection & Instant One-Click Add to Cart
+ * Ultra-Compact Editorial Product Showcase & Comparison Card
+ * Styled identically to the Admin Compact Card with live Variant Selector & 1-Click Cart
  *
  * @var array $products
  */
@@ -25,329 +25,249 @@ $count = count($products);
   $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
   $stockStatus = !empty($prod['stock_status']) ? $prod['stock_status'] : 'In Stock';
   $isInStock = (strtolower($stockStatus) !== 'out of stock');
-  $shortDesc = !empty($prod['short_desc']) ? strip_tags($prod['short_desc']) : '';
-  if (strlen($shortDesc) > 160) {
-    $shortDesc = substr($shortDesc, 0, 157) . '...';
-  }
   $specPuffs = !empty($prod['spec_puffs']) ? $prod['spec_puffs'] : '';
-  $specNicotine = !empty($prod['spec_nicotine']) ? $prod['spec_nicotine'] : '';
   $variants = !empty($prod['variants']) && is_array($prod['variants']) ? $prod['variants'] : [];
   $hasVariants = !empty($variants);
   $defaultVariantId = $hasVariants ? ($variants[0]['id'] ?? '') : '';
 ?>
-  <!-- Single Product Spotlight Showcase -->
-  <aside class="blog-inline-showcase single-showcase-wrap my-xl" aria-label="Featured Product Recommendation" data-showcase-container>
-    <div class="showcase-card single-showcase-card" data-product-card="<?= $prod['id'] ?>">
-      <!-- Top Accent Bar -->
-      <div class="showcase-card-header-bar">
-        <div class="showcase-header-left">
-          <span class="showcase-badge-pill">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            Featured Product Recommendation
-          </span>
-          <span class="showcase-editor-pick-tag">Top Pick</span>
+  <!-- Single Product Compact Showcase -->
+  <aside class="blog-inline-showcase single-compact-wrap my-lg" aria-label="Featured Product" data-showcase-container>
+    <div class="showcase-compact-card single-card" data-product-card="<?= $prod['id'] ?>">
+      <!-- Thumbnail Column -->
+      <a href="<?= htmlspecialchars($prodUrl) ?>" class="compact-thumb-link" aria-label="<?= htmlspecialchars($prod['name']) ?>">
+        <div class="compact-thumb-frame">
+          <img 
+            src="<?= htmlspecialchars($prodImg) ?>" 
+            alt="<?= htmlspecialchars($prod['name']) ?>" 
+            class="compact-thumb-img"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
+            data-original-img="<?= htmlspecialchars($prodImg) ?>"
+          >
+          <?php if ($hasDiscount): ?>
+            <span class="compact-discount-pill">-<?= $discountPct ?>%</span>
+          <?php endif; ?>
         </div>
-        <div class="showcase-header-right">
-          <span class="showcase-guarantee-text">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            100% Authentic Device
+      </a>
+
+      <!-- Middle Info Column -->
+      <div class="compact-info-col">
+        <!-- Top Meta Row -->
+        <div class="compact-meta-row">
+          <span class="compact-editorial-tag">★ Featured Product</span>
+          <?php if (!empty($prod['brand_name'])): ?>
+            <span class="compact-brand-badge"><?= htmlspecialchars($prod['brand_name']) ?></span>
+          <?php endif; ?>
+          <span class="compact-stock-badge <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
+            <span class="stock-dot"></span>
+            <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
           </span>
+          <?php if (!empty($specPuffs)): ?>
+            <span class="compact-spec-pill"><?= htmlspecialchars($specPuffs) ?> Puffs</span>
+          <?php endif; ?>
+        </div>
+
+        <!-- Product Title -->
+        <h4 class="compact-title-text">
+          <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
+        </h4>
+
+        <!-- Price & Variant Selection Row -->
+        <div class="compact-sub-row">
+          <div class="compact-price-wrap">
+            <span class="compact-current-price" data-price-display>$<?= number_format($basePrice, 2) ?></span>
+            <?php if ($hasDiscount): ?>
+              <span class="compact-compare-price">$<?= number_format($comparePrice, 2) ?></span>
+            <?php endif; ?>
+          </div>
+
+          <?php if ($hasVariants): ?>
+            <div class="compact-variant-picker-box">
+              <select 
+                class="showcase-variant-select compact-variant-select" 
+                data-prod-id="<?= $prod['id'] ?>"
+                aria-label="Select Flavor or Option"
+              >
+                <?php foreach ($variants as $vIdx => $v): 
+                  $vStock = (int)($v['stock_quantity'] ?? 0);
+                  $isVOutOfStock = ($vStock <= 0);
+                  $vPrice = (float)($v['price'] ?? $basePrice);
+                  $vImg = !empty($v['full_image_url']) ? $v['full_image_url'] : (!empty($v['image_url']) ? url($v['image_url']) : '');
+                ?>
+                  <option 
+                    value="<?= $v['id'] ?>" 
+                    data-price="<?= number_format($vPrice, 2, '.', '') ?>"
+                    data-stock="<?= $vStock ?>"
+                    data-img="<?= htmlspecialchars($vImg) ?>"
+                    data-name="<?= htmlspecialchars($v['variant_name']) ?>"
+                    <?= ($vIdx === 0) ? 'selected' : '' ?>
+                    <?= $isVOutOfStock ? 'class="opt-out-of-stock"' : '' ?>
+                  >
+                    <?= htmlspecialchars($v['variant_name']) ?><?= ($vPrice != $basePrice) ? ' — $' . number_format($vPrice, 2) : '' ?><?= $isVOutOfStock ? ' (OOS)' : '' ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <div class="compact-select-chevron">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+          <?php endif; ?>
         </div>
       </div>
 
-      <div class="showcase-card-inner">
-        <!-- Media Column -->
-        <div class="showcase-media-col">
-          <a href="<?= htmlspecialchars($prodUrl) ?>" class="showcase-img-link" aria-label="<?= htmlspecialchars($prod['name']) ?>">
-            <div class="showcase-img-frame">
-              <img 
-                src="<?= htmlspecialchars($prodImg) ?>" 
-                alt="<?= htmlspecialchars($prod['name']) ?>" 
-                class="showcase-img"
-                loading="lazy"
-                onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
-                data-original-img="<?= htmlspecialchars($prodImg) ?>"
-              >
-              <?php if ($hasDiscount): ?>
-                <span class="showcase-floating-discount">-<?= $discountPct ?>% OFF</span>
-              <?php endif; ?>
-            </div>
-          </a>
+      <!-- Right Action Column -->
+      <div class="compact-actions-col">
+        <!-- Quantity Stepper -->
+        <div class="showcase-qty-stepper compact-qty-stepper">
+          <button type="button" class="btn-qty-step btn-qty-minus" aria-label="Decrease quantity">−</button>
+          <input type="number" class="showcase-qty-input" value="1" min="1" max="99" readonly aria-label="Quantity">
+          <button type="button" class="btn-qty-step btn-qty-plus" aria-label="Increase quantity">+</button>
         </div>
 
-        <!-- Info Column -->
-        <div class="showcase-info-col">
-          <div class="showcase-meta-top">
-            <?php if (!empty($prod['brand_name'])): ?>
-              <span class="showcase-brand-chip"><?= htmlspecialchars($prod['brand_name']) ?></span>
-            <?php endif; ?>
-            
-            <div class="showcase-rating-snippet">
-              <span class="stars-gold">★★★★★</span>
-              <span class="rating-num">4.9</span>
-            </div>
-          </div>
+        <!-- Add to Cart Button -->
+        <button 
+          type="button" 
+          class="btn-showcase-add-cart compact-btn-add" 
+          data-product-id="<?= $prod['id'] ?>"
+          data-variant-id="<?= $defaultVariantId ?>"
+          <?= (!$isInStock) ? 'disabled' : '' ?>
+        >
+          <svg class="cart-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          <span class="btn-cart-text"><?= $isInStock ? 'Add to Cart' : 'Out of Stock' ?></span>
+        </button>
 
-          <h3 class="showcase-product-title">
-            <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
-          </h3>
-
-          <div class="showcase-chips-row">
-            <span class="showcase-stock-tag <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
-              <span class="stock-dot"></span> <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
-            </span>
-            <?php if (!empty($specPuffs)): ?>
-              <span class="showcase-spec-chip">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>
-                <?= htmlspecialchars($specPuffs) ?> Puffs
-              </span>
-            <?php endif; ?>
-            <?php if (!empty($specNicotine)): ?>
-              <span class="showcase-spec-chip">
-                <?= htmlspecialchars($specNicotine) ?>
-              </span>
-            <?php endif; ?>
-          </div>
-
-          <?php if (!empty($shortDesc)): ?>
-            <p class="showcase-short-excerpt"><?= htmlspecialchars($shortDesc) ?></p>
-          <?php endif; ?>
-
-          <!-- VARIATION SELECTOR (If product has variants) -->
-          <?php if ($hasVariants): ?>
-            <div class="showcase-variant-picker-wrap">
-              <div class="showcase-variant-picker-label">
-                <span class="label-heading">Choose Flavor / Option:</span>
-                <span class="showcase-selected-variant-name" data-variant-name-display>
-                  <?= htmlspecialchars($variants[0]['variant_name'] ?? '') ?>
-                </span>
-              </div>
-              <div class="showcase-variant-select-box">
-                <select 
-                  class="showcase-variant-select" 
-                  data-prod-id="<?= $prod['id'] ?>"
-                  aria-label="Select Product Option"
-                >
-                  <?php foreach ($variants as $vIdx => $v): 
-                    $vStock = (int)($v['stock_quantity'] ?? 0);
-                    $isVOutOfStock = ($vStock <= 0);
-                    $vPrice = (float)($v['price'] ?? $basePrice);
-                    $vImg = !empty($v['full_image_url']) ? $v['full_image_url'] : (!empty($v['image_url']) ? url($v['image_url']) : '');
-                  ?>
-                    <option 
-                      value="<?= $v['id'] ?>" 
-                      data-price="<?= number_format($vPrice, 2, '.', '') ?>"
-                      data-stock="<?= $vStock ?>"
-                      data-img="<?= htmlspecialchars($vImg) ?>"
-                      data-name="<?= htmlspecialchars($v['variant_name']) ?>"
-                      <?= ($vIdx === 0) ? 'selected' : '' ?>
-                      <?= $isVOutOfStock ? 'class="opt-out-of-stock"' : '' ?>
-                    >
-                      <?= htmlspecialchars($v['variant_name']) ?> — $<?= number_format($vPrice, 2) ?><?= $isVOutOfStock ? ' (Out of Stock)' : '' ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-                <div class="showcase-select-chevron">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </div>
-              </div>
-            </div>
-          <?php endif; ?>
-
-          <!-- BOTTOM ACTION BAR: PRICE & ADD TO CART -->
-          <div class="showcase-bottom-action-bar">
-            <div class="showcase-price-box">
-              <span class="showcase-current-price" data-price-display>$<?= number_format($basePrice, 2) ?></span>
-              <?php if ($hasDiscount): ?>
-                <span class="showcase-compare-price">$<?= number_format($comparePrice, 2) ?></span>
-                <span class="showcase-save-badge">Save $<?= number_format($comparePrice - $basePrice, 2) ?></span>
-              <?php endif; ?>
-            </div>
-
-            <div class="showcase-purchase-controls">
-              <!-- Quantity Stepper -->
-              <div class="showcase-qty-stepper">
-                <button type="button" class="btn-qty-step btn-qty-minus" aria-label="Decrease quantity">−</button>
-                <input type="number" class="showcase-qty-input" value="1" min="1" max="99" readonly aria-label="Quantity">
-                <button type="button" class="btn-qty-step btn-qty-plus" aria-label="Increase quantity">+</button>
-              </div>
-
-              <!-- Direct Add to Cart Button -->
-              <button 
-                type="button" 
-                class="btn-showcase-add-cart" 
-                data-product-id="<?= $prod['id'] ?>"
-                data-variant-id="<?= $defaultVariantId ?>"
-                <?= (!$isInStock) ? 'disabled' : '' ?>
-              >
-                <svg class="cart-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                <span class="btn-cart-text"><?= $isInStock ? 'Add to Cart' : 'Out of Stock' ?></span>
-              </button>
-
-              <!-- Quick Details Link Button -->
-              <a href="<?= htmlspecialchars($prodUrl) ?>" class="btn-showcase-view-link" title="View Full Product Specifications">
-                <span>Details</span>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </a>
-            </div>
-          </div>
-
-          <div class="showcase-trust-strip">
-            <span>🔒 Secure Checkout</span>
-            <span>⚡ Same-Day Dispatch</span>
-            <span>📦 Discreet Shipping</span>
-          </div>
-        </div>
+        <!-- View Details Button -->
+        <a href="<?= htmlspecialchars($prodUrl) ?>" class="btn-compact-view" title="View Full Product Page">
+          <span>Details</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </a>
       </div>
     </div>
   </aside>
 
 <?php else: ?>
-  <!-- 2-Product Comparison Showcase (Max 2) -->
-  <aside class="blog-inline-showcase comparison-showcase-wrap my-xl" aria-label="Head-to-Head Product Comparison" data-showcase-container>
-    <div class="showcase-card comparison-main-card">
-      <div class="showcase-card-header-bar">
-        <div class="showcase-header-left">
-          <span class="showcase-badge-pill comparison-badge">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-            Head-to-Head Device Comparison
-          </span>
-          <span class="showcase-editor-pick-tag">Editorial Top 2</span>
-        </div>
-        <div class="showcase-header-right">
-          <span class="showcase-guarantee-text">
-            Side-by-Side Review
-          </span>
-        </div>
-      </div>
+  <!-- 2-Product Compact Comparison Showcase -->
+  <aside class="blog-inline-showcase comparison-compact-wrap my-lg" aria-label="Product Comparison" data-showcase-container>
+    <div class="compact-comparison-grid">
+      <?php foreach ($products as $idx => $prod): 
+        $slug = !empty($prod['slug']) ? $prod['slug'] : $prod['id'];
+        $prodUrl = url('product/' . urlencode($slug));
+        $prodImg = !empty($prod['featured_image']) ? $prod['featured_image'] : 'assets/images/no-image.svg';
+        if (!preg_match('~^(https?://|//|#)~i', $prodImg)) {
+          $prodImg = url($prodImg);
+        }
+        $basePrice = (float)($prod['base_price'] ?? 0);
+        $comparePrice = (float)($prod['compare_price'] ?? 0);
+        $hasDiscount = ($comparePrice > $basePrice);
+        $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
+        $stockStatus = !empty($prod['stock_status']) ? $prod['stock_status'] : 'In Stock';
+        $isInStock = (strtolower($stockStatus) !== 'out of stock');
+        $optionLabel = ($idx === 0) ? 'Option 1 • Top Pick' : 'Option 2 • Alternative';
+        $specPuffs = !empty($prod['spec_puffs']) ? $prod['spec_puffs'] : '';
+        $variants = !empty($prod['variants']) && is_array($prod['variants']) ? $prod['variants'] : [];
+        $hasVariants = !empty($variants);
+        $defaultVariantId = $hasVariants ? ($variants[0]['id'] ?? '') : '';
+      ?>
+        <div class="showcase-compact-card comparison-card <?= ($idx === 0) ? 'is-winner' : '' ?>" data-product-card="<?= $prod['id'] ?>">
+          <!-- Thumbnail Column -->
+          <a href="<?= htmlspecialchars($prodUrl) ?>" class="compact-thumb-link" aria-label="<?= htmlspecialchars($prod['name']) ?>">
+            <div class="compact-thumb-frame">
+              <img 
+                src="<?= htmlspecialchars($prodImg) ?>" 
+                alt="<?= htmlspecialchars($prod['name']) ?>" 
+                class="compact-thumb-img"
+                loading="lazy"
+                onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
+                data-original-img="<?= htmlspecialchars($prodImg) ?>"
+              >
+              <?php if ($hasDiscount): ?>
+                <span class="compact-discount-pill">-<?= $discountPct ?>%</span>
+              <?php endif; ?>
+            </div>
+          </a>
 
-      <div class="showcase-grid-two">
-        <?php foreach ($products as $idx => $prod): 
-          $slug = !empty($prod['slug']) ? $prod['slug'] : $prod['id'];
-          $prodUrl = url('product/' . urlencode($slug));
-          $prodImg = !empty($prod['featured_image']) ? $prod['featured_image'] : 'assets/images/no-image.svg';
-          if (!preg_match('~^(https?://|//|#)~i', $prodImg)) {
-            $prodImg = url($prodImg);
-          }
-          $basePrice = (float)($prod['base_price'] ?? 0);
-          $comparePrice = (float)($prod['compare_price'] ?? 0);
-          $hasDiscount = ($comparePrice > $basePrice);
-          $discountPct = $hasDiscount ? round((($comparePrice - $basePrice) / $comparePrice) * 100) : 0;
-          $stockStatus = !empty($prod['stock_status']) ? $prod['stock_status'] : 'In Stock';
-          $isInStock = (strtolower($stockStatus) !== 'out of stock');
-          $optionLabel = ($idx === 0) ? 'Option 1 • Top Pick' : 'Option 2 • Alternative';
-          $specPuffs = !empty($prod['spec_puffs']) ? $prod['spec_puffs'] : '';
-          $variants = !empty($prod['variants']) && is_array($prod['variants']) ? $prod['variants'] : [];
-          $hasVariants = !empty($variants);
-          $defaultVariantId = $hasVariants ? ($variants[0]['id'] ?? '') : '';
-        ?>
-          <div class="showcase-col-card <?= ($idx === 0) ? 'is-winner' : '' ?>" data-product-card="<?= $prod['id'] ?>">
-            <div class="showcase-col-top">
-              <span class="showcase-option-badge <?= ($idx === 0) ? 'badge-primary' : 'badge-alt' ?>"><?= $optionLabel ?></span>
-              <span class="showcase-stock-tag sm <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
-                <span class="stock-dot"></span> <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
+          <!-- Middle Info Column -->
+          <div class="compact-info-col">
+            <!-- Top Meta Row -->
+            <div class="compact-meta-row">
+              <span class="compact-editorial-tag <?= ($idx === 0) ? 'primary' : 'alt' ?>"><?= $optionLabel ?></span>
+              <?php if (!empty($prod['brand_name'])): ?>
+                <span class="compact-brand-badge"><?= htmlspecialchars($prod['brand_name']) ?></span>
+              <?php endif; ?>
+              <span class="compact-stock-badge <?= $isInStock ? 'in-stock' : 'out-of-stock' ?>" data-stock-badge>
+                <span class="stock-dot"></span>
+                <span class="stock-text"><?= htmlspecialchars($stockStatus) ?></span>
               </span>
             </div>
 
-            <div class="showcase-col-media">
-              <a href="<?= htmlspecialchars($prodUrl) ?>" aria-label="<?= htmlspecialchars($prod['name']) ?>">
-                <div class="showcase-img-frame sm">
-                  <img 
-                    src="<?= htmlspecialchars($prodImg) ?>" 
-                    alt="<?= htmlspecialchars($prod['name']) ?>" 
-                    class="showcase-col-img"
-                    loading="lazy"
-                    onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
-                    data-original-img="<?= htmlspecialchars($prodImg) ?>"
-                  >
-                  <?php if ($hasDiscount): ?>
-                    <span class="showcase-floating-discount sm">-<?= $discountPct ?>%</span>
-                  <?php endif; ?>
-                </div>
-              </a>
-            </div>
+            <!-- Product Title -->
+            <h4 class="compact-title-text">
+              <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
+            </h4>
 
-            <div class="showcase-col-info">
-              <div class="showcase-meta-top sm">
-                <?php if (!empty($prod['brand_name'])): ?>
-                  <span class="showcase-brand-chip sm"><?= htmlspecialchars($prod['brand_name']) ?></span>
+            <!-- Price & Variant Row -->
+            <div class="compact-sub-row">
+              <div class="compact-price-wrap">
+                <span class="compact-current-price" data-price-display>$<?= number_format($basePrice, 2) ?></span>
+                <?php if ($hasDiscount): ?>
+                  <span class="compact-compare-price">$<?= number_format($comparePrice, 2) ?></span>
                 <?php endif; ?>
-                <div class="showcase-rating-snippet sm">
-                  <span class="stars-gold">★★★★★</span>
-                </div>
               </div>
 
-              <h4 class="showcase-col-title">
-                <a href="<?= htmlspecialchars($prodUrl) ?>"><?= htmlspecialchars($prod['name']) ?></a>
-              </h4>
-
-              <?php if (!empty($specPuffs)): ?>
-                <div class="showcase-spec-pills-row">
-                  <span class="showcase-spec-chip sm">
-                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>
-                    <?= htmlspecialchars($specPuffs) ?> Puffs
-                  </span>
-                </div>
-              <?php endif; ?>
-
-              <!-- VARIANT PICKER FOR COMPARISON CARD -->
               <?php if ($hasVariants): ?>
-                <div class="showcase-variant-picker-wrap sm">
-                  <div class="showcase-variant-select-box sm">
-                    <select class="showcase-variant-select sm" data-prod-id="<?= $prod['id'] ?>" aria-label="Select Option">
-                      <?php foreach ($variants as $vIdx => $v): 
-                        $vStock = (int)($v['stock_quantity'] ?? 0);
-                        $isVOutOfStock = ($vStock <= 0);
-                        $vPrice = (float)($v['price'] ?? $basePrice);
-                        $vImg = !empty($v['full_image_url']) ? $v['full_image_url'] : (!empty($v['image_url']) ? url($v['image_url']) : '');
-                      ?>
-                        <option 
-                          value="<?= $v['id'] ?>" 
-                          data-price="<?= number_format($vPrice, 2, '.', '') ?>"
-                          data-stock="<?= $vStock ?>"
-                          data-img="<?= htmlspecialchars($vImg) ?>"
-                          data-name="<?= htmlspecialchars($v['variant_name']) ?>"
-                          <?= ($vIdx === 0) ? 'selected' : '' ?>
-                          <?= $isVOutOfStock ? 'class="opt-out-of-stock"' : '' ?>
-                        >
-                          <?= htmlspecialchars($v['variant_name']) ?> — $<?= number_format($vPrice, 2) ?><?= $isVOutOfStock ? ' (OOS)' : '' ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                    <div class="showcase-select-chevron sm">
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </div>
+                <div class="compact-variant-picker-box">
+                  <select 
+                    class="showcase-variant-select compact-variant-select" 
+                    data-prod-id="<?= $prod['id'] ?>"
+                    aria-label="Select Flavor or Option"
+                  >
+                    <?php foreach ($variants as $vIdx => $v): 
+                      $vStock = (int)($v['stock_quantity'] ?? 0);
+                      $isVOutOfStock = ($vStock <= 0);
+                      $vPrice = (float)($v['price'] ?? $basePrice);
+                      $vImg = !empty($v['full_image_url']) ? $v['full_image_url'] : (!empty($v['image_url']) ? url($v['image_url']) : '');
+                    ?>
+                      <option 
+                        value="<?= $v['id'] ?>" 
+                        data-price="<?= number_format($vPrice, 2, '.', '') ?>"
+                        data-stock="<?= $vStock ?>"
+                        data-img="<?= htmlspecialchars($vImg) ?>"
+                        data-name="<?= htmlspecialchars($v['variant_name']) ?>"
+                        <?= ($vIdx === 0) ? 'selected' : '' ?>
+                        <?= $isVOutOfStock ? 'class="opt-out-of-stock"' : '' ?>
+                      >
+                        <?= htmlspecialchars($v['variant_name']) ?><?= ($vPrice != $basePrice) ? ' — $' . number_format($vPrice, 2) : '' ?><?= $isVOutOfStock ? ' (OOS)' : '' ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                  <div class="compact-select-chevron">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </div>
                 </div>
               <?php endif; ?>
+            </div>
 
-              <div class="showcase-price-box sm">
-                <span class="showcase-current-price" data-price-display>$<?= number_format($basePrice, 2) ?></span>
-                <?php if ($hasDiscount): ?>
-                  <span class="showcase-compare-price">$<?= number_format($comparePrice, 2) ?></span>
-                <?php endif; ?>
-              </div>
+            <!-- Action Controls for Comparison Card -->
+            <div class="compact-card-bottom-actions">
+              <button 
+                type="button" 
+                class="btn-showcase-add-cart compact-btn-add" 
+                data-product-id="<?= $prod['id'] ?>"
+                data-variant-id="<?= $defaultVariantId ?>"
+                <?= (!$isInStock) ? 'disabled' : '' ?>
+              >
+                <svg class="cart-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                <span class="btn-cart-text"><?= $isInStock ? 'Add to Cart' : 'Out of Stock' ?></span>
+              </button>
 
-              <div class="showcase-compare-actions">
-                <button 
-                  type="button" 
-                  class="btn-showcase-add-cart btn-sm" 
-                  data-product-id="<?= $prod['id'] ?>"
-                  data-variant-id="<?= $defaultVariantId ?>"
-                  <?= (!$isInStock) ? 'disabled' : '' ?>
-                >
-                  <svg class="cart-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                  <span class="btn-cart-text"><?= $isInStock ? 'Add to Cart' : 'Out of Stock' ?></span>
-                </button>
-
-                <a href="<?= htmlspecialchars($prodUrl) ?>" class="btn-showcase-view-link sm" title="View Full Details">
-                  <span>Details</span>
-                </a>
-              </div>
+              <a href="<?= htmlspecialchars($prodUrl) ?>" class="btn-compact-view" title="View Full Details">
+                <span>Details</span>
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </a>
             </div>
           </div>
-        <?php endforeach; ?>
-      </div>
+        </div>
+      <?php endforeach; ?>
     </div>
   </aside>
 <?php endif; ?>
@@ -413,12 +333,6 @@ $count = count($products);
             addBtn.dataset.variantId = variantId;
           }
 
-          // Update Selected Variant Name Display
-          const nameDisplay = card.querySelector('[data-variant-name-display]');
-          if (nameDisplay && variantName) {
-            nameDisplay.textContent = variantName;
-          }
-
           // Update Dynamic Price Display
           const priceDisplay = card.querySelector('[data-price-display]');
           if (priceDisplay && price) {
@@ -426,7 +340,7 @@ $count = count($products);
           }
 
           // Update Dynamic Image if custom variant image exists
-          const imgEl = card.querySelector('.showcase-img, .showcase-col-img');
+          const imgEl = card.querySelector('.compact-thumb-img, .showcase-img');
           if (imgEl) {
             if (imgUrl && imgUrl.trim()) {
               imgEl.src = imgUrl;
@@ -442,7 +356,7 @@ $count = count($products);
 
           if (stock <= 0) {
             if (stockBadge) {
-              stockBadge.className = 'showcase-stock-tag out-of-stock' + (stockBadge.classList.contains('sm') ? ' sm' : '');
+              stockBadge.className = 'compact-stock-badge out-of-stock';
             }
             if (stockText) stockText.textContent = 'Out of Stock';
             if (addBtn) {
@@ -451,7 +365,7 @@ $count = count($products);
             }
           } else {
             if (stockBadge) {
-              stockBadge.className = 'showcase-stock-tag in-stock' + (stockBadge.classList.contains('sm') ? ' sm' : '');
+              stockBadge.className = 'compact-stock-badge in-stock';
             }
             if (stockText) stockText.textContent = stock < 15 ? 'Low Stock' : 'In Stock';
             if (addBtn) {
