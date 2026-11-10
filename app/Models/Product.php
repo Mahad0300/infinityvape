@@ -137,6 +137,9 @@ class Product extends Model
                            p.base_price, 
                            p.compare_price, 
                            p.stock_status, 
+                           p.short_desc,
+                           (SELECT spec_value FROM product_specifications WHERE product_id = p.id AND (spec_key = 'Puffs' OR spec_key = 'Puff Count') LIMIT 1) AS spec_puffs,
+                           (SELECT spec_value FROM product_specifications WHERE product_id = p.id AND (spec_key = 'Nicotine' OR spec_key = 'Nicotine Strength') LIMIT 1) AS spec_nicotine,
                            COALESCE(NULLIF(NULLIF(p.featured_image, ''), 'assets/images/vape-image.webp'), 'assets/images/no-image.svg') AS featured_image,
                            b.name AS brand_name
                     FROM products p
