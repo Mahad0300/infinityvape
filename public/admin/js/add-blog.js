@@ -578,11 +578,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function openDropdown() {
       renderResults(searchInput.value);
       dropdown.style.display = 'flex';
+      slotCard.classList.add('has-dropdown-open');
+      const parentBlock = slotCard.closest('.blog-section-block');
+      if (parentBlock) parentBlock.classList.add('has-dropdown-open');
       if (searchClear) searchClear.style.display = searchInput.value ? 'block' : 'none';
     }
 
     function closeDropdown() {
       dropdown.style.display = 'none';
+      slotCard.classList.remove('has-dropdown-open');
+      const parentBlock = slotCard.closest('.blog-section-block');
+      if (parentBlock) parentBlock.classList.remove('has-dropdown-open');
     }
 
     function selectProduct(id) {
