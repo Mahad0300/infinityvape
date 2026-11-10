@@ -363,15 +363,22 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="section-block-body">
         <div class="showcase-guidance-note">
-          Select <strong>1 product</strong> for a Spotlight Hero card, or click <strong>+ Add 2nd Product</strong> to create a Side-by-Side Comparison Grid. (Limit: strictly 2 products maximum per showcase block).
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <span>Select <strong>1 product</strong> for a Spotlight Hero card, or click <strong>+ Add 2nd Product</strong> to build a side-by-side comparison grid. (Strict limit: 2 products max).</span>
         </div>
 
         <div class="showcase-builder-grid ${hasSlot2 ? 'is-comparison' : ''}">
           <!-- Slot 1 -->
           <div class="showcase-slot-card" data-slot="1">
             <div class="slot-header">
-              <span class="slot-badge">Product 1 (Required)</span>
-              <span class="slot-mode-text">Spotlight / Option 1</span>
+              <div class="slot-header-left">
+                <span class="slot-badge primary">
+                  <span class="slot-badge-dot"></span>
+                  Product 1
+                </span>
+                <span class="slot-sub-badge">Spotlight Hero</span>
+              </div>
+              <span class="slot-mode-text">Required</span>
             </div>
             <select class="admin-form-select slot-product-select" data-slot="1" style="display:none;">
               ${options1Html}
@@ -381,9 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <!-- Slot 2 (Hidden by default unless id2 exists or user clicks '+') -->
           <div class="showcase-slot-card slot-card-2" data-slot="2" style="${hasSlot2 ? '' : 'display:none;'}">
             <div class="slot-header">
-              <span class="slot-badge secondary">Product 2 (Optional)</span>
+              <div class="slot-header-left">
+                <span class="slot-badge comparison">
+                  <span class="slot-badge-dot"></span>
+                  Product 2
+                </span>
+                <span class="slot-sub-badge">Comparison Item</span>
+              </div>
               <button type="button" class="btn-remove-slot2" title="Remove 2nd Product">
-                ✕ Remove
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Remove
               </button>
             </div>
             <select class="admin-form-select slot-product-select" data-slot="2" style="display:none;">
@@ -396,7 +410,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="slot2-toggle-bar" style="${hasSlot2 ? 'display:none;' : ''}">
           <button type="button" class="btn-toggle-slot2-add">
             <span class="plus-icon-circle">+</span>
-            <span>Add 2nd Product for Comparison (Optional)</span>
+            <span class="btn-toggle-text">
+              <strong>Add 2nd Product for Comparison (Optional)</strong>
+              <small>Click to compare specs, puffs &amp; price side-by-side</small>
+            </span>
           </button>
         </div>
 
@@ -750,13 +767,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update indicator text
       const count = (v1 ? 1 : 0) + (v2 ? 1 : 0);
+      const indicator = block.querySelector('.showcase-status-indicator');
       if (count === 0) {
+        if (indicator) indicator.className = 'showcase-status-indicator is-empty';
         if (pill) pill.className = 'showcase-status-pill';
         if (text) text.innerHTML = '⚠️ Please select <strong>Product 1</strong> to display this showcase.';
       } else if (count === 1) {
+        if (indicator) indicator.className = 'showcase-status-indicator is-spotlight';
         if (pill) pill.className = 'showcase-status-pill active';
         if (text) text.innerHTML = '⭐ <strong>1 / 2 Products Selected</strong> &bull; Storefront Mode: <strong>Spotlight Hero Card</strong>';
       } else {
+        if (indicator) indicator.className = 'showcase-status-indicator is-comparison';
         if (pill) pill.className = 'showcase-status-pill active';
         if (text) text.innerHTML = '⚖️ <strong>2 / 2 Products Selected (Max limit reached)</strong> &bull; Storefront Mode: <strong>Side-by-Side Comparison Grid</strong>';
       }

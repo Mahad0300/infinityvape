@@ -76,7 +76,7 @@ include dirname(__DIR__) . '/includes/header.php';
               </svg>
               <span>+ Add Text Block</span>
             </button>
-            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm btn-add-showcase-top" style="border-color: #6366f1; color: #4f46e5; background: #f5f3ff;">
+            <button type="button" class="btn-admin btn-admin-secondary btn-admin-sm btn-add-showcase-top">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                 <line x1="8" y1="21" x2="16" y2="21"></line>
