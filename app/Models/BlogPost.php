@@ -467,11 +467,11 @@ class BlogPost extends Model
             $sql = "INSERT INTO blog_posts (
                 category_id, author_id, title, slug, custom_url_path,
                 featured_image_url, author_name, excerpt, content,
-                tags, published_at, meta_title, meta_desc, is_active
+                published_at, meta_title, meta_desc, is_active
             ) VALUES (
                 :category_id, :author_id, :title, :slug, :custom_url_path,
                 :featured_image_url, :author_name, :excerpt, :content,
-                :tags, :published_at, :meta_title, :meta_desc, :is_active
+                :published_at, :meta_title, :meta_desc, :is_active
             )";
 
             $stmt = $db->prepare($sql);
@@ -485,7 +485,6 @@ class BlogPost extends Model
                 ':author_name'        => !empty($data['author_name']) ? $data['author_name'] : 'Infinity Vape Shop',
                 ':excerpt'            => $data['excerpt'] ?? '',
                 ':content'            => $data['content'] ?? '',
-                ':tags'               => $data['tags'] ?? '',
                 ':published_at'       => !empty($data['published_at']) ? $data['published_at'] : date('Y-m-d H:i:s'),
                 ':meta_title'         => $data['meta_title'] ?? null,
                 ':meta_desc'          => $data['meta_desc'] ?? null,
@@ -525,7 +524,7 @@ class BlogPost extends Model
             $allowed = [
                 'category_id', 'author_id', 'title', 'slug', 'custom_url_path',
                 'featured_image_url', 'author_name', 'excerpt', 'content',
-                'tags', 'published_at', 'meta_title', 'meta_desc', 'is_active'
+                'published_at', 'meta_title', 'meta_desc', 'is_active'
             ];
 
             foreach ($allowed as $field) {

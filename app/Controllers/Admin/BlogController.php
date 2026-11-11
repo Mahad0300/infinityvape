@@ -116,7 +116,6 @@ class BlogController extends AdminController
                 'author_name'        => 'Infinity Vape Shop',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
-                'tags'               => null,
                 'meta_title'         => trim($_POST['seo_title'] ?? $_POST['meta_title'] ?? ''),
                 'meta_desc'          => trim($_POST['seo_description'] ?? $_POST['meta_desc'] ?? ''),
                 'is_active'          => $isActive,
@@ -239,7 +238,6 @@ class BlogController extends AdminController
                 'author_name'        => 'Infinity Vape Shop',
                 'excerpt'            => trim($_POST['excerpt'] ?? ''),
                 'content'            => trim($_POST['content'] ?? ''),
-                'tags'               => null,
                 'meta_title'         => trim($_POST['seo_title'] ?? $_POST['meta_title'] ?? ''),
                 'meta_desc'          => trim($_POST['seo_description'] ?? $_POST['meta_desc'] ?? ''),
                 'is_active'          => $isActive
