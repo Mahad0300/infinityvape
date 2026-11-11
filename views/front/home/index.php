@@ -1,18 +1,17 @@
 <?php
-/**
- * HOMEPAGE (index.php)
- */
-
+/** HOMEPAGE (index.php) */
 $page_title = 'Online Vape Store | Every Flavor. In Stock.';
-$page_js    = 'home';
+$page_js = 'home';
 
 include dirname(__DIR__) . '/includes/header.php';
 ?>
 
-<?php 
-$activeSlides = array_filter($heroSlides ?? [], function($s) { return !empty($s['is_active']); });
-if (!empty($activeSlides)): 
-?>
+<?php
+$activeSlides = array_filter($heroSlides ?? [], function ($s) {
+  return !empty($s['is_active']);
+});
+if (!empty($activeSlides)):
+  ?>
 <!-- ==========================================
      HERO BANNER SECTION
      ========================================== -->
@@ -20,16 +19,16 @@ if (!empty($activeSlides)):
   <div class="hero-banner-container">
     <div class="hero-slider-wrapper" id="heroSliderWrapper">
       <div class="hero-slider-slides">
-        <?php 
+        <?php
         $slideIdx = 0;
         foreach ($activeSlides as $slide):
-            $isFirst = ($slideIdx === 0);
-            $imgSrc = !empty($slide['image_url']) ? $slide['image_url'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $imgSrc)) {
-                $imgSrc = url($imgSrc);
-            }
-            $btnUrl = !empty($slide['button_url']) ? (preg_match('~^(https?://|//|#)~i', $slide['button_url']) ? $slide['button_url'] : url($slide['button_url'])) : url('category');
-        ?>
+          $isFirst = ($slideIdx === 0);
+          $imgSrc = !empty($slide['image_url']) ? $slide['image_url'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $imgSrc)) {
+            $imgSrc = url($imgSrc);
+          }
+          $btnUrl = !empty($slide['button_url']) ? (preg_match('~^(https?://|//|#)~i', $slide['button_url']) ? $slide['button_url'] : url($slide['button_url'])) : url('category');
+          ?>
         <div class="hero-banner-card hero-slide-item <?= $isFirst ? 'active' : '' ?>" data-slide="<?= $slideIdx ?>">
           <!-- Background Banner Image -->
           <img 
@@ -63,7 +62,8 @@ if (!empty($activeSlides)):
             </a>
           </div>
         </div>
-        <?php $slideIdx++; endforeach; ?>
+        <?php $slideIdx++;
+        endforeach; ?>
       </div>
 
       <?php if (count($activeSlides) > 1): ?>
@@ -196,13 +196,14 @@ if (!empty($activeSlides)):
     <div class="categories-grid">
       <?php $categories = $categories ?? []; ?>
       <?php if (!empty($categories)): ?>
-        <?php foreach ($categories as $cat): 
+        <?php
+        foreach ($categories as $cat):
           $catUrl = url('collection/' . urlencode($cat['slug']));
           $imgUrl = !empty($cat['header_image_url']) ? $cat['header_image_url'] : 'assets/images/no-image.svg';
           if (!preg_match('~^(https?://|//|#)~i', $imgUrl)) {
-              $imgUrl = url($imgUrl);
+            $imgUrl = url($imgUrl);
           }
-        ?>
+          ?>
           <a href="<?= htmlspecialchars($catUrl) ?>" class="category-card">
             <div class="category-card-media">
               <img src="<?= htmlspecialchars($imgUrl) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" class="category-card-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
@@ -240,13 +241,13 @@ if (!empty($activeSlides)):
         <?php if (!empty($brands)): ?>
           <?php foreach ($brands as $b): ?>
             <?php
-              $bSlug = $b['slug'] ?? '';
-              $bName = $b['name'] ?? '';
-              $bDesc = $b['description'] ?? 'Official Verified Vendor';
-              $bLogo = !empty($b['logo_url']) ? $b['logo_url'] : 'assets/images/no-image.svg';
-              if (!preg_match('~^(https?://|//|#)~i', $bLogo)) {
-                  $bLogo = url($bLogo);
-              }
+            $bSlug = $b['slug'] ?? '';
+            $bName = $b['name'] ?? '';
+            $bDesc = $b['description'] ?? 'Official Verified Vendor';
+            $bLogo = !empty($b['logo_url']) ? $b['logo_url'] : 'assets/images/no-image.svg';
+            if (!preg_match('~^(https?://|//|#)~i', $bLogo)) {
+              $bLogo = url($bLogo);
+            }
             ?>
             <a href="<?= url('category?b=' . urlencode($bSlug)) ?>" class="brand-item-card">
               <div class="brand-logo-wrap">
@@ -305,21 +306,22 @@ if (!empty($activeSlides)):
       <?php if (!empty($newArrivals)): ?>
         <?php foreach ($newArrivals as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice): 
+              <?php
+              if ($pCompare > $pPrice):
                 $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-              ?>
+                ?>
                 <div class="product-badges">
                   <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
                 </div>
@@ -389,23 +391,24 @@ if (!empty($activeSlides)):
       <?php if (!empty($bestSellers)): ?>
         <?php foreach ($bestSellers as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
-            $ratingVal = round((float)($prod['rating_avg'] ?? 5));
-            $reviewsCount = (int)($prod['reviews_count'] ?? 0);
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
+          $ratingVal = round((float) ($prod['rating_avg'] ?? 5));
+          $reviewsCount = (int) ($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice): 
+              <?php
+              if ($pCompare > $pPrice):
                 $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-              ?>
+                ?>
                 <div class="product-badges">
                   <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
                 </div>
@@ -453,21 +456,24 @@ if (!empty($activeSlides)):
 <!-- ==========================================
      TWIN PROMO BANNERS SECTION
      ========================================== -->
-<?php 
-$activeTwins = array_filter($twinBanners ?? [], function($b) { return !empty($b['is_active']); });
-if (!empty($activeTwins)): 
-?>
+<?php
+$activeTwins = array_filter($twinBanners ?? [], function ($b) {
+  return !empty($b['is_active']);
+});
+if (!empty($activeTwins)):
+  ?>
 <section class="twin-banners-section">
   <div class="container">
     <div class="twin-banners-grid">
       
-      <?php foreach ($activeTwins as $card): 
+      <?php
+      foreach ($activeTwins as $card):
         $cardImg = !empty($card['image_url']) ? $card['image_url'] : 'assets/images/no-image.svg';
         if (!preg_match('~^(https?://|//|#)~i', $cardImg)) {
-            $cardImg = url($cardImg);
+          $cardImg = url($cardImg);
         }
         $cardBtnUrl = !empty($card['button_url']) ? (preg_match('~^(https?://|//|#)~i', $card['button_url']) ? $card['button_url'] : url($card['button_url'])) : url('category');
-      ?>
+        ?>
       <div class="promo-banner-card">
         <img src="<?= htmlspecialchars($cardImg) ?>" alt="<?= htmlspecialchars(strip_tags($card['title'])) ?>" class="promo-banner-bg" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
         <div class="promo-banner-content">
@@ -518,18 +524,18 @@ if (!empty($activeTwins)):
       <?php if (!empty($disposableVapes)): ?>
         <?php foreach ($disposableVapes as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
-            $ratingVal = round((float)($prod['rating_avg'] ?? 5));
-            $reviewsCount = (int)($prod['reviews_count'] ?? 0);
-            $isUsa = (!empty($prod['tags']) && stripos($prod['tags'], 'USA') !== false);
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
+          $ratingVal = round((float) ($prod['rating_avg'] ?? 5));
+          $reviewsCount = (int) ($prod['reviews_count'] ?? 0);
+          $isUsa = (!empty($prod['tags']) && stripos($prod['tags'], 'USA') !== false);
           ?>
           <div class="product-card">
             <div class="product-card-media">
@@ -604,23 +610,24 @@ if (!empty($activeTwins)):
       <?php if (!empty($vapeJuices)): ?>
         <?php foreach ($vapeJuices as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
-            $ratingVal = round((float)($prod['rating_avg'] ?? 5));
-            $reviewsCount = (int)($prod['reviews_count'] ?? 0);
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
+          $ratingVal = round((float) ($prod['rating_avg'] ?? 5));
+          $reviewsCount = (int) ($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice): 
+              <?php
+              if ($pCompare > $pPrice):
                 $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-              ?>
+                ?>
                 <div class="product-badges">
                   <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
                 </div>
@@ -688,23 +695,24 @@ if (!empty($activeTwins)):
       <?php if (!empty($nicotinePouches)): ?>
         <?php foreach ($nicotinePouches as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
-            $ratingVal = round((float)($prod['rating_avg'] ?? 5));
-            $reviewsCount = (int)($prod['reviews_count'] ?? 0);
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
+          $ratingVal = round((float) ($prod['rating_avg'] ?? 5));
+          $reviewsCount = (int) ($prod['reviews_count'] ?? 0);
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice): 
+              <?php
+              if ($pCompare > $pPrice):
                 $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-              ?>
+                ?>
                 <div class="product-badges">
                   <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
                 </div>
@@ -772,21 +780,22 @@ if (!empty($activeTwins)):
       <?php if (!empty($hempThc)): ?>
         <?php foreach ($hempThc as $prod): ?>
           <?php
-            $pId = $prod['id'];
-            $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-            $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-            $pPrice = (float)($prod['base_price'] ?? 0);
-            $pCompare = !empty($prod['compare_price']) ? (float)$prod['compare_price'] : 0;
-            $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-                $pImg = url($pImg);
-            }
+          $pId = $prod['id'];
+          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
+          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
+          $pPrice = (float) ($prod['base_price'] ?? 0);
+          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
+          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
+          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
+            $pImg = url($pImg);
+          }
           ?>
           <div class="product-card">
             <div class="product-card-media">
-              <?php if ($pCompare > $pPrice): 
+              <?php
+              if ($pCompare > $pPrice):
                 $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-              ?>
+                ?>
                 <div class="product-badges">
                   <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
                 </div>
@@ -875,16 +884,17 @@ if (!empty($activeTwins)):
     <div class="blog-cards-grid">
       <?php $latestBlogs = $latestBlogs ?? []; ?>
       <?php if (!empty($latestBlogs)): ?>
-        <?php foreach ($latestBlogs as $blog): 
+        <?php
+        foreach ($latestBlogs as $blog):
           $blogSlug = !empty($blog['slug']) ? $blog['slug'] : $blog['id'];
           $blogUrl = url('blog-detail?slug=' . urlencode($blogSlug));
           $blogImg = !empty($blog['featured_image_url']) ? $blog['featured_image_url'] : 'assets/images/no-image.svg';
           if (!preg_match('~^(https?://|//|#)~i', $blogImg)) {
-              $blogImg = url($blogImg);
+            $blogImg = url($blogImg);
           }
           $blogDate = blog_time_display($blog['published_at'] ?? '');
           $blogCat = !empty($blog['category_name']) ? $blog['category_name'] : 'Guide';
-        ?>
+          ?>
           <article class="blog-card">
             <a href="<?= htmlspecialchars($blogUrl) ?>" class="blog-card-thumb-link">
               <div class="blog-card-media">
