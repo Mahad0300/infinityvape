@@ -1,3 +1,5 @@
 # Everything is included (nothing ignored as requested)
 public/test_check.php
+error_log
+
 

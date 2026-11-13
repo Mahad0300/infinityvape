@@ -176,7 +176,7 @@ ol {
    ----------------------------------------------------------------------- */
 .site-header-main {
   background-color: var(--color-bg-white);
-  padding: 16px 0;
+  padding: 5px 0;
   border-bottom: 1px solid var(--color-border-light);
 }
 
@@ -195,7 +195,7 @@ ol {
 }
 
 .site-logo-img {
-  height: 40px;
+  height: 110px;
   width: auto;
   object-fit: contain;
 }
