@@ -19,7 +19,6 @@ class HomeController extends Controller
         $disposableVapes = Product::disposables(16);
         $vapeJuices = Product::vapeJuices(4);
         $nicotinePouches = Product::nicotinePouches(4);
-        $hempThc = Product::hempThc(4);
         $latestBlogs = BlogPost::latest(4);
         $heroSlides = ThemeSection::getHeroSlides();
         $twinBanners = ThemeSection::getTwinBanners();
@@ -37,7 +36,6 @@ class HomeController extends Controller
             'disposableVapes' => $disposableVapes,
             'vapeJuices' => $vapeJuices,
             'nicotinePouches' => $nicotinePouches,
-            'hempThc' => $hempThc,
             'latestBlogs' => $latestBlogs,
             'heroSlides' => $heroSlides,
             'twinBanners' => $twinBanners,

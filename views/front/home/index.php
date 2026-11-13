@@ -448,11 +448,6 @@ if (!empty($activeSlides)):
   </div>
 </section>
 
-
-
-<!-- ==========================================
-     TWIN PROMO BANNERS SECTION
-     ========================================== -->
 <!-- ==========================================
      TWIN PROMO BANNERS SECTION
      ========================================== -->
@@ -753,80 +748,6 @@ if (!empty($activeTwins)):
 </section>
 
 <!-- ==========================================
-     SHOP HEMP & THC PRODUCTS (1 ROW - 4 CARDS)
-     ========================================== -->
-<section class="disposables-grid-section hemp-thc-section">
-  <div class="container">
-    
-    <!-- Section Header -->
-    <div class="products-section-header">
-      <div class="products-header-left">
-        <h2 class="products-section-title">Shop Hemp &amp; THC Products</h2>
-        <p class="products-section-subtitle">THCA vapes, THC-P disposables, hemp prerolls &amp; more.</p>
-      </div>
-      <div class="products-header-right">
-        <a href="<?= url('collection/lifestyle') ?>" class="view-all-link">
-          Shop All Lifestyle
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </a>
-      </div>
-    </div>
-
-    <!-- 4 Columns Grid (4 Cards) -->
-    <div class="disposables-grid">
-<?php $hempThc = $hempThc ?? []; ?>
-      <?php if (!empty($hempThc)): ?>
-        <?php foreach ($hempThc as $prod): ?>
-          <?php
-          $pId = $prod['id'];
-          $pSlug = !empty($prod['slug']) ? $prod['slug'] : $pId;
-          $pTitle = $prod['title'] ?? $prod['name'] ?? '';
-          $pPrice = (float) ($prod['base_price'] ?? 0);
-          $pCompare = !empty($prod['compare_price']) ? (float) $prod['compare_price'] : 0;
-          $pImg = !empty($prod['featured_image']) && $prod['featured_image'] !== 'assets/images/vape-image.webp' ? $prod['featured_image'] : 'assets/images/no-image.svg';
-          if (!preg_match('~^(https?://|//|#)~i', $pImg)) {
-            $pImg = url($pImg);
-          }
-          ?>
-          <div class="product-card">
-            <div class="product-card-media">
-              <?php
-              if ($pCompare > $pPrice):
-                $pDiscPct = round((($pCompare - $pPrice) / $pCompare) * 100);
-                ?>
-                <div class="product-badges">
-                  <span class="badge badge-discount">-<?= $pDiscPct ?>%</span>
-                </div>
-              <?php endif; ?>
-              <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img hemp-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
-              </a>
-              <div class="product-action-wrap">
-                <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
-              </div>
-            </div>
-            <div class="product-card-info">
-              <h3 class="product-title">
-                <a href="<?= url('product/' . urlencode($pSlug)) ?>"><?= htmlspecialchars($pTitle) ?></a>
-              </h3>
-              <div class="product-price-row">
-                <span class="current-price">$<?= number_format($pPrice, 2) ?></span>
-                <?php if ($pCompare > $pPrice): ?>
-                  <span class="old-price">$<?= number_format($pCompare, 2) ?></span>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
-        <?php endforeach; ?>
-      <?php endif; ?>
-    </div>
-  </div>
-</section>
-
-
-<!-- ==========================================
      SEO TRUSTED VAPE STORE CONTENT SECTION
      ========================================== -->
 <?php if (!isset($seoContent['is_active']) || !empty($seoContent['is_active'])): ?>
@@ -844,7 +765,6 @@ if (!empty($activeTwins)):
   </div>
 </section>
 <?php endif; ?>
-
 
 <!-- ==========================================
      FROM OUR BLOG SECTION

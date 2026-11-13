@@ -226,11 +226,11 @@ class ThemeSection extends Model
         }
 
         // Default single rich text content from homepage
-        $defaultContent = '<p>We are a trusted online vape shop where you can buy vapes online with confidence. We stock a wide selection of <a href="category?cat=disposables">disposable vapes</a>, <a href="category?cat=e-liquids">e-liquids</a>, <a href="category?cat=nicotine-pouches">nicotine pouches</a>, and <a href="category?cat=hemp-thc">hemp &amp; THC products</a>, all from brands you know and love. Every product sold on our store is 100% authentic and ships fast from within the United States.</p>
+        $defaultContent = '<p>We are a trusted online vape shop where you can buy vapes online with confidence. We stock a wide selection of <a href="category?cat=disposables">disposable vapes</a>, <a href="category?cat=e-liquids">e-liquids</a>, and <a href="category?cat=nicotine-pouches">nicotine pouches</a>, all from brands you know and love. Every product sold on our store is 100% authentic and ships fast from within the United States.</p>
 
 <p>How much does a vape cost? Disposable vapes start at $8.99, nicotine pouches at $6.99, and most high-puff devices stay under $25. We back that up with a price match guarantee: find a lower price at another online vape store and we will match it. No coupon hunting needed, the price you see is already the low one.</p>
 
-<p>Looking for high-puff devices? Browse our collection of <a href="category">5,000 to 50,000+ puff disposable vapes</a> from top brands like Geek Bar, Lost Mary, RAZ, and more. We also carry vape juices in nicotine salt, freebase, TFN, and zero-nicotine options, plus vape pod systems and starter kits for every experience level. Interested in cannabinoids? Shop our <a href="category?cat=hemp-thc">THCA vapes</a>, <a href="category?cat=hemp-thc">THC-P disposables</a>, and <a href="category?cat=hemp-thc">hemp prerolls</a>.</p>
+<p>Looking for high-puff devices? Browse our collection of <a href="category">5,000 to 50,000+ puff disposable vapes</a> from top brands like Geek Bar, Lost Mary, RAZ, and more. We also carry vape juices in nicotine salt, freebase, TFN, and zero-nicotine options, plus vape pod systems and starter kits for every experience level.</p>
 
 <p>So what makes us the best online vape store? Ask the people who shop here: our customers rate us 4.7 out of 5 stars across more than 1,700 reviews. Orders ship the same day, every purchase is covered by a 14-day return policy, and our support team actually answers when you need help with an order, a device, or a flavor recommendation.</p>
 
