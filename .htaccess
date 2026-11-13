@@ -14,7 +14,7 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /vapefinalwebsite/
+    # RewriteBase is intentionally omitted so it works dynamically under any folder name or domain root
 
     # Block direct access to internal application directories
     RewriteRule ^(app|config|storage|views)/ - [F,L]
