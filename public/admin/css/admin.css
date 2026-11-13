@@ -147,7 +147,8 @@ img {
 }
 
 .sidebar-logo img {
-  height: 38px;
+  height: 50px;
+  max-height: 54px;
   width: auto;
   object-fit: contain;
 }
