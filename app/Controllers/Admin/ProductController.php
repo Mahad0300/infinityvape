@@ -297,6 +297,16 @@ class ProductController extends AdminController
                 $fbtIds = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtInput))), 0, 4));
             }
 
+            // Multiple Collection IDs handling with single fallback
+            $colIdsInput = $_POST['collection_ids'] ?? $_POST['collections'] ?? [];
+            if (!is_array($colIdsInput) && !empty($colIdsInput)) {
+                $colIdsInput = [$colIdsInput];
+            }
+            if (empty($colIdsInput) && !empty($_POST['collection'])) {
+                $colIdsInput = [$_POST['collection']];
+            }
+            $cleanColIds = array_values(array_filter(array_map('intval', (array)$colIdsInput)));
+
             $data = [
                 'title' => $title,
                 'name' => $title,
@@ -304,6 +314,8 @@ class ProductController extends AdminController
                 'slug' => trim($_POST['slug'] ?? ''),
                 'brand' => trim($_POST['brand'] ?? ''),
                 'collection' => trim($_POST['collection'] ?? ''),
+                'collection_ids' => $cleanColIds,
+                'collections' => $colIdsInput,
                 'price' => trim($_POST['price'] ?? '0.00'),
                 'compare_price' => trim($_POST['compare_price'] ?? ''),
                 'stock' => trim($_POST['stock'] ?? $_POST['stock_quantity'] ?? '0'),
@@ -588,6 +600,18 @@ class ProductController extends AdminController
                 $fbtIds = array_values(array_slice(array_unique(array_filter(array_map('intval', $fbtInput))), 0, 4));
             }
 
+            // Multiple Collection IDs handling with single fallback
+            $colIdsInput = $_POST['collection_ids'] ?? $_POST['collections'] ?? null;
+            $cleanColIds = [];
+            if ($colIdsInput !== null) {
+                if (!is_array($colIdsInput) && !empty($colIdsInput)) {
+                    $colIdsInput = [$colIdsInput];
+                } elseif (!is_array($colIdsInput)) {
+                    $colIdsInput = [];
+                }
+                $cleanColIds = array_values(array_filter(array_map('intval', (array)$colIdsInput)));
+            }
+
             $data = [
                 'title' => $title,
                 'name' => $title,
@@ -595,6 +619,8 @@ class ProductController extends AdminController
                 'slug' => trim($_POST['slug'] ?? $product['slug']),
                 'brand' => trim($_POST['brand'] ?? $product['brand']),
                 'collection' => trim($_POST['collection'] ?? $product['category']),
+                'collection_ids' => $cleanColIds,
+                'collections' => $colIdsInput !== null ? $colIdsInput : (isset($_POST['collection']) ? [$_POST['collection']] : null),
                 'price' => trim($_POST['price'] ?? $product['base_price']),
                 'compare_price' => trim($_POST['compare_price'] ?? $product['compare_price']),
                 'stock' => trim($_POST['stock'] ?? $_POST['stock_quantity'] ?? $product['stock_quantity']),
@@ -717,6 +743,7 @@ class ProductController extends AdminController
         $rawVariants = Product::getRawVariants($id);
         $specData = Product::getRawSpecifications($id);
         $faqs = Product::getFaqs($id, $product);
+        $selectedCollectionIds = Product::getCollectionIds($id);
         $allProducts = Product::all();
 
         $this->render('admin.products.edit', [
@@ -730,6 +757,7 @@ class ProductController extends AdminController
             'specs' => $specData['specs'] ?? [],
             'faqs' => $faqs,
             'collections' => $collections,
+            'selected_collection_ids' => $selectedCollectionIds,
             'brands' => $brands,
             'all_products' => $allProducts,
             'error' => get_flash('error'),

@@ -917,16 +917,84 @@ $prodFaqs = !empty($faqs) && is_array($faqs) ? $faqs : [];
             </select>
           </div>
 
-          <!-- Collection Selector -->
+          <?php
+          $currentColIds = !empty($selected_collection_ids) ? $selected_collection_ids : (!empty($product['collection_id']) ? [(int)$product['collection_id']] : []);
+          ?>
+          <!-- Collection / Categories Multi-Selector -->
           <div class="admin-form-group">
-            <label for="productCollection" class="admin-form-label">Primary Collection <span class="required">*</span></label>
-            <select id="productCollection" name="collection" class="admin-form-select" required>
-              <option value="">Select Collection</option>
-              <?php foreach ($collections as $col): ?>
-                <option value="<?php echo htmlspecialchars($col); ?>" <?php echo ($col === ($product_data['collection'] ?? $product_data['category'] ?? '')) ? 'selected' : ''; ?>><?php echo htmlspecialchars($col); ?></option>
-              <?php endforeach; ?>
-            </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-form-label" style="margin-bottom: 0;">Collections / Categories <span class="required">*</span></label>
+              <span id="selectedColCountBadgeEdit" style="font-size: 11px; font-weight: 700; color: #082142; background: #e2e8f0; padding: 2px 8px; border-radius: 10px;">0 selected</span>
+            </div>
+            <p class="form-help-text" style="margin-top: 0; margin-bottom: 8px;">Select one or multiple collections for this product (e.g. Disposable Vapes, New Arrivals, Best Sellers).</p>
+            
+            <!-- Quick search filter -->
+            <input type="text" id="searchProductCollectionsInputEdit" class="admin-form-input" placeholder="Search collections..." style="height: 32px; font-size: 12px; margin-bottom: 8px; padding: 4px 10px;">
+
+            <!-- Scrollable Checkbox List -->
+            <div id="productCollectionsListEdit" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color, #cbd5e1); border-radius: 6px; padding: 8px 10px; background: #ffffff; display: flex; flex-direction: column; gap: 6px;">
+              <?php if (!empty($allCols)): ?>
+                <?php foreach ($allCols as $colItem): 
+                  $cId = (int)$colItem['id'];
+                  $cName = $colItem['name'] ?? '';
+                  $cSlug = $colItem['slug'] ?? '';
+                  $isChecked = in_array($cId, $currentColIds) || ($cName === ($product_data['collection'] ?? $product_data['category'] ?? ''));
+                ?>
+                  <label class="product-col-item" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #334155; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.15s ease;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                    <input type="checkbox" name="collection_ids[]" value="<?= $cId ?>" data-name="<?= htmlspecialchars($cName) ?>" class="product-col-checkbox" <?= $isChecked ? 'checked' : '' ?> style="width: 16px; height: 16px; accent-color: #082142; cursor: pointer;">
+                    <span style="font-weight: 500;"><?= htmlspecialchars($cName) ?></span>
+                    <span style="font-size: 11px; color: #94a3b8; margin-left: auto;"><?= htmlspecialchars($cSlug) ?></span>
+                  </label>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <p style="padding: 10px; color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">No collections found.</p>
+              <?php endif; ?>
+            </div>
+            <!-- Primary collection hidden fallback for legacy receivers -->
+            <input type="hidden" name="collection" id="primaryCollectionFallbackEdit" value="<?= htmlspecialchars($product_data['collection'] ?? $product_data['category'] ?? '') ?>">
           </div>
+
+          <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            const colSearch = document.getElementById('searchProductCollectionsInputEdit');
+            const colList = document.getElementById('productCollectionsListEdit');
+            const colBadge = document.getElementById('selectedColCountBadgeEdit');
+            const fallbackInput = document.getElementById('primaryCollectionFallbackEdit');
+
+            function updateColCount() {
+              if (!colList) return;
+              const checked = colList.querySelectorAll('.product-col-checkbox:checked');
+              if (colBadge) {
+                colBadge.textContent = checked.length + ' selected';
+                colBadge.style.background = checked.length > 0 ? '#dcfce7' : '#e2e8f0';
+                colBadge.style.color = checked.length > 0 ? '#166534' : '#082142';
+              }
+              if (fallbackInput && checked.length > 0) {
+                fallbackInput.value = checked[0].getAttribute('data-name') || '';
+              } else if (fallbackInput) {
+                fallbackInput.value = '';
+              }
+            }
+
+            if (colList) {
+              colList.querySelectorAll('.product-col-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateColCount);
+              });
+            }
+
+            if (colSearch && colList) {
+              colSearch.addEventListener('input', function() {
+                const q = this.value.toLowerCase().trim();
+                colList.querySelectorAll('.product-col-item').forEach(item => {
+                  const text = item.textContent.toLowerCase();
+                  item.style.display = text.includes(q) ? 'flex' : 'none';
+                });
+              });
+            }
+
+            updateColCount();
+          });
+          </script>
 
           <!-- Product Tags with Chips -->
           <div class="admin-form-group mb-0">

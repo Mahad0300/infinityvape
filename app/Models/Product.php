@@ -689,19 +689,49 @@ class Product extends Model
 
             $productId = (int)$db->lastInsertId();
 
-            // Link Collection
-            $colId = !empty($data['collection_id']) ? (int)$data['collection_id'] : null;
-            if (!$colId && !empty($data['collection'])) {
-                $colName = trim($data['collection']);
-                $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
-                $cStmt->execute([strtolower($colName), strtolower($colName)]);
-                $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
-                if ($cRow) $colId = (int)$cRow['id'];
+            // Link Collections (Supports multiple collection IDs / names with single fallback)
+            $colIds = [];
+            if (!empty($data['collection_ids']) && is_array($data['collection_ids'])) {
+                foreach ($data['collection_ids'] as $cid) {
+                    $cInt = (int)$cid;
+                    if ($cInt > 0 && !in_array($cInt, $colIds)) $colIds[] = $cInt;
+                }
+            }
+            if (!empty($data['collections']) && is_array($data['collections'])) {
+                foreach ($data['collections'] as $cItem) {
+                    if (is_numeric($cItem)) {
+                        $cInt = (int)$cItem;
+                        if ($cInt > 0 && !in_array($cInt, $colIds)) $colIds[] = $cInt;
+                    } else {
+                        $cName = trim((string)$cItem);
+                        if (!empty($cName)) {
+                            $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
+                            $cStmt->execute([strtolower($cName), strtolower($cName)]);
+                            $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
+                            if ($cRow && !in_array((int)$cRow['id'], $colIds)) {
+                                $colIds[] = (int)$cRow['id'];
+                            }
+                        }
+                    }
+                }
+            }
+            if (empty($colIds)) {
+                $colId = !empty($data['collection_id']) ? (int)$data['collection_id'] : null;
+                if (!$colId && !empty($data['collection'])) {
+                    $colName = trim((string)$data['collection']);
+                    $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
+                    $cStmt->execute([strtolower($colName), strtolower($colName)]);
+                    $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
+                    if ($cRow) $colId = (int)$cRow['id'];
+                }
+                if ($colId) $colIds[] = $colId;
             }
 
-            if ($colId) {
-                $pcStmt = $db->prepare("INSERT INTO product_collections (product_id, collection_id) VALUES (?, ?)");
-                $pcStmt->execute([$productId, $colId]);
+            if (!empty($colIds)) {
+                $pcStmt = $db->prepare("INSERT IGNORE INTO product_collections (product_id, collection_id) VALUES (?, ?)");
+                foreach ($colIds as $cid) {
+                    $pcStmt->execute([$productId, $cid]);
+                }
             }
 
             // Save Images to product_images table if provided
@@ -944,22 +974,54 @@ class Product extends Model
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
 
-            // Update primary collection link
-            $colId = !empty($data['collection_id']) ? (int)$data['collection_id'] : null;
-            if (!$colId && !empty($data['collection'])) {
-                $colName = trim($data['collection']);
-                $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
-                $cStmt->execute([strtolower($colName), strtolower($colName)]);
-                $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
-                if ($cRow) $colId = (int)$cRow['id'];
+            // Update collection links (Supports multiple collection IDs / names with single fallback)
+            $colIds = [];
+            if (isset($data['collection_ids']) && is_array($data['collection_ids'])) {
+                foreach ($data['collection_ids'] as $cid) {
+                    $cInt = (int)$cid;
+                    if ($cInt > 0 && !in_array($cInt, $colIds)) $colIds[] = $cInt;
+                }
+            }
+            if (isset($data['collections']) && is_array($data['collections'])) {
+                foreach ($data['collections'] as $cItem) {
+                    if (is_numeric($cItem)) {
+                        $cInt = (int)$cItem;
+                        if ($cInt > 0 && !in_array($cInt, $colIds)) $colIds[] = $cInt;
+                    } else {
+                        $cName = trim((string)$cItem);
+                        if (!empty($cName)) {
+                            $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
+                            $cStmt->execute([strtolower($cName), strtolower($cName)]);
+                            $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
+                            if ($cRow && !in_array((int)$cRow['id'], $colIds)) {
+                                $colIds[] = (int)$cRow['id'];
+                            }
+                        }
+                    }
+                }
+            }
+            if (empty($colIds) && !isset($data['collections']) && !isset($data['collection_ids'])) {
+                $colId = !empty($data['collection_id']) ? (int)$data['collection_id'] : null;
+                if (!$colId && !empty($data['collection'])) {
+                    $colName = trim((string)$data['collection']);
+                    $cStmt = $db->prepare("SELECT id FROM collections WHERE LOWER(name) = ? OR LOWER(slug) = ? LIMIT 1");
+                    $cStmt->execute([strtolower($colName), strtolower($colName)]);
+                    $cRow = $cStmt->fetch(PDO::FETCH_ASSOC);
+                    if ($cRow) $colId = (int)$cRow['id'];
+                }
+                if ($colId) $colIds[] = $colId;
             }
 
-            if ($colId) {
+            if (isset($data['collections']) || isset($data['collection_ids']) || isset($data['collection']) || isset($data['collection_id'])) {
                 $delColStmt = $db->prepare("DELETE FROM product_collections WHERE product_id = ?");
                 $delColStmt->execute([(int)$id]);
 
-                $pcStmt = $db->prepare("INSERT INTO product_collections (product_id, collection_id) VALUES (?, ?)");
-                $pcStmt->execute([(int)$id, $colId]);
+                if (!empty($colIds)) {
+                    $pcStmt = $db->prepare("INSERT IGNORE INTO product_collections (product_id, collection_id) VALUES (?, ?)");
+                    foreach ($colIds as $cid) {
+                        $pcStmt->execute([(int)$id, $cid]);
+                    }
+                }
             }
 
             // Sync images in product_images table
@@ -1656,6 +1718,46 @@ class Product extends Model
             return $results;
         } catch (\Exception $e) {
             error_log("Product::getFrequentlyBoughtProducts error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get all collection IDs assigned to a product
+     */
+    public static function getCollectionIds($productId)
+    {
+        $db = self::getDB();
+        if (!$db || empty($productId)) return [];
+        try {
+            $stmt = $db->prepare("SELECT collection_id FROM product_collections WHERE product_id = ?");
+            $stmt->execute([(int)$productId]);
+            return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        } catch (\Exception $e) {
+            error_log("Product::getCollectionIds error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get all collection records assigned to a product
+     */
+    public static function getCollections($productId)
+    {
+        $db = self::getDB();
+        if (!$db || empty($productId)) return [];
+        try {
+            $stmt = $db->prepare("
+                SELECT c.id, c.name, c.slug, c.header_image_url
+                FROM collections c 
+                JOIN product_collections pc ON c.id = pc.collection_id 
+                WHERE pc.product_id = ?
+                ORDER BY c.name ASC
+            ");
+            $stmt->execute([(int)$productId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Product::getCollections error: " . $e->getMessage());
             return [];
         }
     }
