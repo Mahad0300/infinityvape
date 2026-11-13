@@ -224,76 +224,39 @@ class Product extends Model
     }
 
     /**
-     * Get New Arrivals for storefront
+     * Get New Arrivals for storefront (Sirf New Arrivals collection select karne par)
      */
     public static function newArrivals($limit = 10)
     {
-        $db = self::getDB();
-        if ($db) {
-            try {
-                $sql = "SELECT p.*, 
-                               b.name AS brand,
-                               COALESCE(c.name, 'Disposable') AS category,
-                               c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img
-                        FROM products p 
-                        LEFT JOIN brands b ON p.brand_id = b.id
-                        LEFT JOIN product_collections pc ON p.id = pc.product_id
-                        LEFT JOIN collections c ON pc.collection_id = c.id
-                        WHERE p.status = 'published' AND (p.is_new = 1 OR pc.collection_id IN (8, 19))
-                        GROUP BY p.id
-                        ORDER BY p.id DESC
-                        LIMIT " . (int)$limit;
-                $stmt = $db->query($sql);
-                $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($results)) return $results;
-            } catch (\Exception $e) {
-                error_log("Product::newArrivals() error: " . $e->getMessage());
-            }
-        }
-        return [];
+        return self::byCollection(['new-arrivals', 'new-arrival'], $limit, 'p.id DESC');
     }
 
     /**
-     * Get Best Selling products for storefront
+     * Get Best Selling products for storefront (Sirf Best Sellers collection select karne par)
      */
     public static function bestSellers($limit = 10)
     {
-        $db = self::getDB();
-        if ($db) {
-            try {
-                $sql = "SELECT p.*, 
-                               b.name AS brand,
-                               COALESCE(c.name, 'Disposable') AS category,
-                               c.id AS collection_id,
-                               COALESCE(NULLIF(p.featured_image, ''), 'assets/images/no-image.svg') AS img
-                        FROM products p 
-                        LEFT JOIN brands b ON p.brand_id = b.id
-                        LEFT JOIN product_collections pc ON p.id = pc.product_id
-                        LEFT JOIN collections c ON pc.collection_id = c.id
-                        WHERE p.status = 'published' AND (p.is_bestseller = 1 OR pc.collection_id IN (9, 20))
-                        GROUP BY p.id
-                        ORDER BY p.reviews_count DESC, p.id DESC
-                        LIMIT " . (int)$limit;
-                $stmt = $db->query($sql);
-                $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($results)) return $results;
-            } catch (\Exception $e) {
-                error_log("Product::bestSellers() error: " . $e->getMessage());
-            }
-        }
-        return [];
+        return self::byCollection(['best-sellers', 'best-seller', 'best-selling', 'best-sellings', 'bestsellers'], $limit, 'p.reviews_count DESC, p.id DESC');
     }
 
     /**
      * Get products by collection/category slug or ID
      */
-    public static function byCollection($slugOrId, $limit = 16)
+    public static function byCollection($slugOrId, $limit = 16, $orderBy = 'p.id DESC')
     {
         $db = self::getDB();
         if ($db) {
             try {
-                $isNumeric = is_numeric($slugOrId);
+                if (is_array($slugOrId)) {
+                    $placeholders = implode(',', array_fill(0, count($slugOrId), '?'));
+                    $whereClause = "c.slug IN ($placeholders)";
+                    $params = array_values($slugOrId);
+                } else {
+                    $isNumeric = is_numeric($slugOrId);
+                    $whereClause = $isNumeric ? "c.id = ?" : "c.slug = ?";
+                    $params = [$slugOrId];
+                }
+
                 $sql = "SELECT p.*, 
                                b.name AS brand,
                                COALESCE(c.name, 'Disposable') AS category,
@@ -303,12 +266,12 @@ class Product extends Model
                         LEFT JOIN brands b ON p.brand_id = b.id
                         JOIN product_collections pc ON p.id = pc.product_id
                         JOIN collections c ON pc.collection_id = c.id
-                        WHERE p.status = 'published' AND (" . ($isNumeric ? "c.id = ?" : "c.slug = ?") . ")
+                        WHERE p.status = 'published' AND ($whereClause)
                         GROUP BY p.id
-                        ORDER BY p.id DESC
+                        ORDER BY {$orderBy}
                         LIMIT " . (int)$limit;
                 $stmt = $db->prepare($sql);
-                $stmt->execute([$slugOrId]);
+                $stmt->execute($params);
                 $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 if (!empty($results)) return $results;
             } catch (\Exception $e) {
@@ -568,14 +531,7 @@ class Product extends Model
      */
     public static function disposables($limit = 16)
     {
-        $results = self::byCollection('disposable', $limit);
-        if (empty($results)) {
-            $results = self::byCollection('disposable-vapes', $limit);
-        }
-        if (empty($results)) {
-            $results = self::byCollection(16, $limit);
-        }
-        return $results;
+        return self::byCollection(['disposable-vapes', 'disposable-vape', 'disposable'], $limit);
     }
 
     /**
@@ -583,14 +539,7 @@ class Product extends Model
      */
     public static function vapeJuices($limit = 4)
     {
-        $results = self::byCollection('e-liquids', $limit);
-        if (empty($results)) {
-            $results = self::byCollection('eliquids', $limit);
-        }
-        if (empty($results)) {
-            $results = self::byCollection(17, $limit);
-        }
-        return $results;
+        return self::byCollection(['e-liquids', 'eliquids'], $limit);
     }
 
     /**
@@ -598,14 +547,7 @@ class Product extends Model
      */
     public static function nicotinePouches($limit = 4)
     {
-        $results = self::byCollection('nicotine-pouches', $limit);
-        if (empty($results)) {
-            $results = self::byCollection('pouches', $limit);
-        }
-        if (empty($results)) {
-            $results = self::byCollection(18, $limit);
-        }
-        return $results;
+        return self::byCollection(['nicotine-pouches', 'nicotine-pouche'], $limit);
     }
 
     /**

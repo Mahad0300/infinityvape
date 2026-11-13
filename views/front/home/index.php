@@ -275,7 +275,7 @@ if (!empty($activeSlides)):
     <!-- Section Header with Title & Navigation Controls -->
     <div class="products-section-header">
       <div class="products-header-left">
-        <h2 class="products-section-title">New Arrivals: Latest Products</h2>
+        <h2 class="products-section-title">New Arrivals</h2>
         <p class="products-section-subtitle">Our newest products, shipped same day.</p>
       </div>
       <div class="products-header-right">
@@ -360,7 +360,7 @@ if (!empty($activeSlides)):
     <!-- Section Header with Title & Navigation Controls -->
     <div class="products-section-header">
       <div class="products-header-left">
-        <h2 class="products-section-title">Best Selling Vapes &amp; E-Liquids</h2>
+        <h2 class="products-section-title">Best Selling</h2>
         <p class="products-section-subtitle">Most popular vapes and e-liquids chosen by our customers.</p>
       </div>
       <div class="products-header-right">
@@ -500,7 +500,7 @@ if (!empty($activeTwins)):
     <!-- Section Header -->
     <div class="products-section-header">
       <div class="products-header-left">
-        <h2 class="products-section-title">Shop Disposable Vapes</h2>
+        <h2 class="products-section-title">Disposable Vapes</h2>
         <p class="products-section-subtitle">Pre-filled disposable vape devices with high puff counts.</p>
       </div>
       <div class="products-header-right">
@@ -586,12 +586,12 @@ if (!empty($activeTwins)):
     <!-- Section Header -->
     <div class="products-section-header">
       <div class="products-header-left">
-        <h2 class="products-section-title">Shop Vape Juices</h2>
+        <h2 class="products-section-title">E-Liquids</h2>
         <p class="products-section-subtitle">E-liquids in nicotine salt, freebase and zero-nic options.</p>
       </div>
       <div class="products-header-right">
         <a href="<?= url('collection/e-liquids') ?>" class="view-all-link">
-          Shop All Vape Juices
+          Shop All E-Liquids
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
@@ -671,7 +671,7 @@ if (!empty($activeTwins)):
     <!-- Section Header -->
     <div class="products-section-header">
       <div class="products-header-left">
-        <h2 class="products-section-title">Shop Nicotine Pouches</h2>
+        <h2 class="products-section-title">Nicotine Pouches</h2>
         <p class="products-section-subtitle">Tobacco-free nicotine pouches from ZYN, VELO and more.</p>
       </div>
       <div class="products-header-right">
