@@ -117,6 +117,7 @@ $formatNavUrl = function($link) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo htmlspecialchars($page_title); ?></title>
+  <link rel="icon" type="image/jpeg" href="<?= function_exists('url') ? url('favicon.jpg') : 'favicon.jpg' ?>">
   <?php if (!empty($meta_description)): ?>
   <meta name="description" content="<?php echo htmlspecialchars($meta_description); ?>">
   <?php endif; ?>
@@ -252,6 +253,18 @@ $formatNavUrl = function($link) {
             </svg>
             <span class="header-cart-badge" style="display: none;" data-count="0"></span>
           </a>
+
+          <!-- Mobile-only search icon. Desktop keeps the full search box. -->
+          <button type="button" class="header-action-btn header-search-toggle" id="headerSearchToggle" aria-label="Open search" aria-expanded="false" aria-controls="headerSearchForm">
+            <svg class="header-search-toggle-icon header-search-toggle-icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <svg class="header-search-toggle-icon header-search-toggle-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
 
       </div>
@@ -373,7 +386,7 @@ $formatNavUrl = function($link) {
   <div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
   <aside class="mobile-nav-drawer" id="mobileNavDrawer">
     <div class="mobile-drawer-header">
-      <img src="assets/images/logo.svg" alt="Logo" style="height: 32px;">
+      <img src="infinityvapeshoplogo.jpg" alt="Logo" style="height: 55px;">
       <button class="mobile-drawer-close" id="mobileNavClose" aria-label="Close menu">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>

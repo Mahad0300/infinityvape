@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo isset($page_title) ? $page_title . ' - Infinity Vape Shop Admin' : 'Infinity Vape Shop Admin Dashboard'; ?></title>
+  <link rel="icon" type="image/jpeg" href="<?= function_exists('url') ? url('favicon.jpg') : '/favicon.jpg' ?>">
   <base href="<?php echo function_exists('base_url') ? rtrim(base_url('admin'), '/') . '/' : ''; ?>">
   <script>
     window.APP_BASE_URL = "<?php echo function_exists('base_url') ? rtrim(base_url(), '/') : ''; ?>";

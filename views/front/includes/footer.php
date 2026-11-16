@@ -278,7 +278,7 @@ $formatFooterUrl = function($link) {
   <script src="<?= asset('assets/js/tracker.js') ?>"></script>
 
   <!-- Global JavaScript -->
-  <script src="assets/js/main.js?v=1.0.0"></script>
+  <script src="assets/js/main.js?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/main.js') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/js/main.js') : time() ?>"></script>
 
   <!-- Page Specific JavaScript (if defined) -->
   <?php if (!empty($page_js)): ?>

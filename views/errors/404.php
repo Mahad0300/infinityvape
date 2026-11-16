@@ -7,6 +7,7 @@ $page_title = '404 - Page Not Found | Infinity Vape Shop';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo htmlspecialchars($page_title); ?></title>
+  <link rel="icon" type="image/jpeg" href="<?= function_exists('url') ? url('favicon.jpg') : 'favicon.jpg' ?>">
   <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

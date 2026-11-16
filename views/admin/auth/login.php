@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= e($page_title ?? 'Admin Login - Infinity Vape Shop') ?></title>
+  <link rel="icon" type="image/jpeg" href="<?= function_exists('url') ? url('favicon.jpg') : 'favicon.jpg' ?>">
   
   <!-- Google Fonts: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

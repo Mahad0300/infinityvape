@@ -70,6 +70,49 @@ document.addEventListener('DOMContentLoaded', () => {
   // Global Search Form Handling
   const searchForm = document.getElementById('headerSearchForm');
   const searchInput = document.getElementById('headerSearchInput');
+  const searchToggle = document.getElementById('headerSearchToggle');
+  const headerMain = document.querySelector('.site-header-main');
+  const mobileHeaderQuery = window.matchMedia('(max-width: 991px)');
+
+  function setMobileSearchOpen(open) {
+    if (!headerMain || !searchToggle) return;
+    headerMain.classList.toggle('is-search-open', open);
+    searchToggle.classList.toggle('is-open', open);
+    searchToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    searchToggle.setAttribute('aria-label', open ? 'Close search' : 'Open search');
+    if (open && searchInput) {
+      searchInput.focus();
+    }
+  }
+
+  if (searchToggle && headerMain) {
+    searchToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setMobileSearchOpen(!headerMain.classList.contains('is-search-open'));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!headerMain.classList.contains('is-search-open')) return;
+      if (headerMain.contains(e.target)) return;
+      setMobileSearchOpen(false);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && headerMain.classList.contains('is-search-open')) {
+        setMobileSearchOpen(false);
+      }
+    });
+
+    const onHeaderModeChange = (event) => {
+      if (!event.matches) setMobileSearchOpen(false);
+    };
+    if (typeof mobileHeaderQuery.addEventListener === 'function') {
+      mobileHeaderQuery.addEventListener('change', onHeaderModeChange);
+    } else if (typeof mobileHeaderQuery.addListener === 'function') {
+      mobileHeaderQuery.addListener(onHeaderModeChange);
+    }
+  }
 
   if (searchForm && searchInput) {
     searchForm.addEventListener('submit', (e) => {
