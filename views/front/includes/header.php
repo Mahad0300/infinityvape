@@ -209,14 +209,19 @@ $formatNavUrl = function($link) {
 
         <!-- Search Bar -->
         <div class="header-search-wrapper">
-          <form class="header-search-form" id="headerSearchForm" action="<?= url('collection/all') ?>" method="GET">
+          <form class="header-search-form" id="headerSearchForm" action="<?= url('search') ?>" method="GET" data-suggest-url="<?= e(url('search/suggest')) ?>">
             <input 
               type="text" 
               name="q" 
               class="header-search-input" 
               id="headerSearchInput" 
-              placeholder="Search entire store here..." 
+              placeholder="Search products and categories..." 
+              value="<?= e($_GET['q'] ?? '') ?>"
               autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="headerSearchSuggest"
             >
             <button type="submit" class="header-search-btn" aria-label="Search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -225,6 +230,7 @@ $formatNavUrl = function($link) {
               </svg>
             </button>
           </form>
+          <div class="header-search-suggest" id="headerSearchSuggest" hidden></div>
         </div>
 
         <!-- Right Side Icons (Account, Cart) -->

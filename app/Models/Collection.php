@@ -635,4 +635,35 @@ class Collection extends Model
             return false;
         }
     }
+
+    /**
+     * Active collections whose name matches the storefront search.
+     * A collection shows up as soon as it is active, and drops out when it is turned off.
+     */
+    public static function searchActiveByName($query, $limit = 24)
+    {
+        $db = self::getDB();
+        $query = trim((string)$query);
+        if (!$db || $query === '') return [];
+
+        try {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query);
+            $contains = '%' . $escaped . '%';
+            $starts = $escaped . '%';
+            $limit = max(1, (int)$limit);
+
+            $stmt = $db->prepare("
+                SELECT c.id, c.name, c.slug, c.parent_id, c.short_description
+                FROM collections c
+                WHERE c.is_active = 1 AND c.name LIKE ? ESCAPE '\\\\'
+                ORDER BY (c.name LIKE ? ESCAPE '\\\\') DESC, c.sort_order ASC, c.name ASC
+                LIMIT $limit
+            ");
+            $stmt->execute([$contains, $starts]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Collection::searchActiveByName error: " . $e->getMessage());
+            return [];
+        }
+    }
 }

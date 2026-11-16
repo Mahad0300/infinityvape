@@ -1761,4 +1761,40 @@ class Product extends Model
             return [];
         }
     }
+
+    /**
+     * Published products whose title matches the storefront search.
+     * New published products are included on the next search. Drafts and archived products are not.
+     */
+    public static function searchByTitle($query, $limit = 100)
+    {
+        $db = self::getDB();
+        $query = trim((string)$query);
+        if (!$db || $query === '') return [];
+
+        try {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query);
+            $contains = '%' . $escaped . '%';
+            $starts = $escaped . '%';
+            $limit = max(1, (int)$limit);
+
+            $stmt = $db->prepare("
+                SELECT p.id, p.title, p.name, p.slug, p.base_price, p.compare_price,
+                       p.featured_image, p.stock_quantity, p.stock_status, p.is_bestseller,
+                       b.name AS brand, b.slug AS brand_slug,
+                       COALESCE((SELECT COUNT(*) FROM product_reviews pr WHERE pr.product_id = p.id AND pr.status = 'approved'), 0) AS reviews_count,
+                       COALESCE((SELECT ROUND(AVG(rating), 2) FROM product_reviews pr WHERE pr.product_id = p.id AND pr.status = 'approved'), 0.00) AS rating_avg
+                FROM products p
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE p.status = 'published' AND p.title LIKE ? ESCAPE '\\\\'
+                ORDER BY (p.title LIKE ? ESCAPE '\\\\') DESC, p.title ASC
+                LIMIT $limit
+            ");
+            $stmt->execute([$contains, $starts]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Product::searchByTitle error: " . $e->getMessage());
+            return [];
+        }
+    }
 }
