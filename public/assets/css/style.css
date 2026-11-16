@@ -411,6 +411,23 @@ ol {
   border-radius: 2px 2px 0 0;
 }
 
+/* 992–1200px: desktop nav is visible, but the nowrap row is wider than the bar.
+   Tighten only the links so the row stays inside the container and cannot
+   widen the page. Below 991px this bar is hidden. */
+@media (max-width: 1200px) {
+  .nav-menu-link {
+    padding: 14px 6px;
+    font-size: 0.8rem;
+    gap: 4px;
+  }
+
+  .nav-menu-item.active>.nav-menu-link::after,
+  .nav-menu-item:hover>.nav-menu-link::after {
+    left: 6px;
+    right: 6px;
+  }
+}
+
 /* --------------------------------------------------------------------------
    STANDARD DROPDOWNS (.has-dropdown)
    ----------------------------------------------------------------------- */
@@ -435,6 +452,14 @@ ol {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* Last items sit near the right edge. Open their menus inward so a closed
+   dropdown cannot stick out and create a horizontal scrollbar. */
+.nav-menu-item.has-dropdown:last-child>.nav-dropdown,
+.nav-menu-item.has-dropdown:nth-last-child(2)>.nav-dropdown {
+  left: auto;
+  right: 0;
 }
 
 .nav-dropdown-link {
@@ -2157,7 +2182,7 @@ ol {
 }
 
 .footer-brand-logo-img {
-  height: 48px;
+  height: 110px;
   max-width: 210px;
   object-fit: contain;
   display: block;
@@ -2421,7 +2446,7 @@ ol {
   }
 
   .site-logo-img {
-    height: 38px;
+    height: 55px;
   }
 
   .hero-banner-card {
@@ -2879,7 +2904,7 @@ ol {
   }
 
   .footer-brand-logo-img {
-    height: 40px;
+    height: 55px;
   }
 
   .footer-newsletter-form {

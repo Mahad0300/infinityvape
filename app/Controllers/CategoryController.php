@@ -26,7 +26,7 @@ class CategoryController extends Controller
         }
 
         // Default fallback if no slug specified
-        $targetUrl = url('collection/disposable') . $queryString;
+        $targetUrl = url('collection/disposable-vapes') . $queryString;
         header("HTTP/1.1 301 Moved Permanently");
         header("Location: " . $targetUrl);
         exit;

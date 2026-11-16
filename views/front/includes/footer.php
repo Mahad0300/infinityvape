@@ -148,7 +148,7 @@ $formatFooterUrl = function($link) {
           <!-- Left: Brand Logo (Aligned with Left Column) -->
           <div class="footer-newsletter-logo-col">
             <a href="<?= url() ?>" class="footer-brand-logo-link" aria-label="Homepage">
-              <img src="assets/images/logo.svg" alt="Infinity Vape Shop" class="footer-brand-logo-img">
+              <img src="infinityvapeshoplogo.jpg" alt="Infinity Vape Shop" class="footer-brand-logo-img">
             </a>
           </div>
 
