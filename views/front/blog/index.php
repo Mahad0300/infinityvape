@@ -249,7 +249,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <?php if (!empty($hempAndPouches)): ?>
         <section class="blog-articles-grid-section">
           <div class="blog-section-header">
-            <h2 class="blog-section-heading">Nicotine Pouches &amp; Hemp Guides</h2>
+            <h2 class="blog-section-heading">Nicotine Pouches &amp; E-Liquid Guides</h2>
           </div>
 
           <!-- Active Filter Pill Bar (Hidden initially, visible when search or category is active) -->

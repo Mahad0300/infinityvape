@@ -378,9 +378,7 @@ class BlogPost extends Model
             $params = [];
 
             if (!empty($search)) {
-                $where[] = "(b.title LIKE ? OR b.excerpt LIKE ? OR b.tags LIKE ?)";
-                $params[] = '%' . $search . '%';
-                $params[] = '%' . $search . '%';
+                $where[] = "b.title LIKE ?";
                 $params[] = '%' . $search . '%';
             }
 

@@ -20,8 +20,8 @@ class BlogController extends Controller
         // 3. Flavor Profiles (1 lead card)
         $flavorProfiles = BlogPost::getByCategorySlugs(['flavor-profiles'], 1);
 
-        // 4. Nicotine Pouches & Hemp Guides (4 grid items)
-        $hempAndPouches = BlogPost::getByCategorySlugs(['nicotine-pouches-guide', 'eliquid-guide', 'comparisons', 'brand-spotlights'], 4);
+        // 4. Nicotine Pouches & E-Liquid Guides (only these two categories)
+        $hempAndPouches = BlogPost::getByCategorySlugs(['nicotine-pouches-guide', 'eliquid-guide'], 4, false);
 
         // 5. Latest Posts (6 compact items)
         $latestPosts = BlogPost::latest(6);
