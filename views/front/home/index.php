@@ -1,6 +1,6 @@
 <?php
 /** HOMEPAGE (index.php) */
-$page_title = 'Online Vape Store | Every Flavor. In Stock.';
+$page_title = 'Infinity Vape Shop | Every Flavor. In Stock.';
 $page_js = 'home';
 
 include dirname(__DIR__) . '/includes/header.php';
