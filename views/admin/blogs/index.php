@@ -89,20 +89,22 @@ include dirname(__DIR__) . '/includes/header.php';
   <?php else: ?>
     <!-- Blog Cards Grid (3 Columns) -->
     <div class="admin-blogs-grid">
-      <?php foreach ($posts as $b): 
+      <?php
+      foreach ($posts as $b):
         $statusText = $b['is_active'] ? 'Visible' : 'Hidden';
         $statusClass = $b['is_active'] ? 'badge-status-active' : 'badge-status-inactive';
         $cover = !empty($b['featured_image_url']) ? $b['featured_image_url'] : 'assets/images/blog-1.jpg';
         if (!preg_match('~^(https?://|//|#)~i', $cover)) {
-            $cover = url($cover);
+          $cover = url($cover);
         }
         $pubDate = !empty($b['published_at']) ? date('M d, Y', strtotime($b['published_at'])) : date('M d, Y');
         $catName = $b['category_name'] ?? 'General Guides';
         $catList = array_filter(array_map('trim', explode(',', $catName)));
-        if (empty($catList)) $catList = ['General Guides'];
+        if (empty($catList))
+          $catList = ['General Guides'];
         $firstCat = $catList[0];
         $remainingCats = array_slice($catList, 1);
-      ?>
+        ?>
       <div class="admin-blog-card">
         <div class="admin-blog-card-media">
           <img src="<?= e($cover) ?>" alt="<?= e($b['title']) ?>" class="admin-blog-cover-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
@@ -167,7 +169,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div style="display: flex; gap: 6px;">
           <?php for ($p = 1; $p <= $pagination['last_page']; $p++): ?>
             <a href="<?= url('admin/blogs?page=' . $p . (!empty($search) ? '&q=' . urlencode($search) : '') . (!empty($status) ? '&status=' . urlencode($status) : '')) ?>" 
-               class="btn-admin <?= $p === (int)$pagination['current_page'] ? 'btn-admin-primary' : 'btn-admin-outline' ?>" 
+               class="btn-admin <?= $p === (int) $pagination['current_page'] ? 'btn-admin-primary' : 'btn-admin-outline' ?>" 
                style="min-width: 38px; height: 38px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 600;">
               <?= $p ?>
             </a>

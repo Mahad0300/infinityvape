@@ -201,11 +201,11 @@ $sessionsChartJson = json_encode($sessions['chart'], JSON_UNESCAPED_SLASHES);
     <div class="funnel-visual-wrap">
       <div class="funnel-visual-bar b-1" style="flex: 100;" title="Sessions: 100%"></div>
       <div class="funnel-connector"></div>
-      <div class="funnel-visual-bar b-2" style="flex: <?= max(12, (float)($funnel['stages']['cart']['pct'] ?? 25)) ?>;" title="Cart Additions"></div>
+      <div class="funnel-visual-bar b-2" style="flex: <?= max(12, (float) ($funnel['stages']['cart']['pct'] ?? 25)) ?>;" title="Cart Additions"></div>
       <div class="funnel-connector"></div>
-      <div class="funnel-visual-bar b-3" style="flex: <?= max(10, (float)($funnel['stages']['checkout']['pct'] ?? 18)) ?>;" title="Checkouts Started"></div>
+      <div class="funnel-visual-bar b-3" style="flex: <?= max(10, (float) ($funnel['stages']['checkout']['pct'] ?? 18)) ?>;" title="Checkouts Started"></div>
       <div class="funnel-connector"></div>
-      <div class="funnel-visual-bar b-4" style="flex: <?= max(8, (float)($funnel['stages']['completed']['pct'] ?? 5) * 3) ?>;" title="Completed Orders"></div>
+      <div class="funnel-visual-bar b-4" style="flex: <?= max(8, (float) ($funnel['stages']['completed']['pct'] ?? 5) * 3) ?>;" title="Completed Orders"></div>
     </div>
   </div>
 </div>
@@ -279,11 +279,12 @@ $sessionsChartJson = json_encode($sessions['chart'], JSON_UNESCAPED_SLASHES);
           </thead>
           <tbody id="topProductsTableBody">
             <?php if (!empty($topProducts)): ?>
-              <?php foreach ($topProducts as $tp): 
-                $sold = (int)($tp['units_sold'] ?? 0);
-                $rev = (float)($tp['total_revenue'] ?? 0);
+              <?php
+              foreach ($topProducts as $tp):
+                $sold = (int) ($tp['units_sold'] ?? 0);
+                $rev = (float) ($tp['total_revenue'] ?? 0);
                 $img = !empty($tp['featured_image']) ? asset($tp['featured_image']) : asset('assets/images/product-1.webp');
-              ?>
+                ?>
                 <tr>
                   <td>
                     <div class="table-product-cell">
@@ -417,14 +418,15 @@ $sessionsChartJson = json_encode($sessions['chart'], JSON_UNESCAPED_SLASHES);
         <!-- Responsive Donut Representation -->
         <svg viewBox="0 0 100 100" class="donut-svg" style="width: 120px; height: 120px;">
           <?php
-            $accumPct = 0;
-            foreach ($devices as $d):
-              $pct = (float)$d['raw_pct'];
-              if ($pct <= 0) continue;
-              $dashArray = "{$pct} " . (100 - $pct);
-              $dashOffset = 25 - $accumPct;
-              $accumPct += $pct;
-          ?>
+          $accumPct = 0;
+          foreach ($devices as $d):
+            $pct = (float) $d['raw_pct'];
+            if ($pct <= 0)
+              continue;
+            $dashArray = "{$pct} " . (100 - $pct);
+            $dashOffset = 25 - $accumPct;
+            $accumPct += $pct;
+            ?>
             <circle cx="50" cy="50" r="15.915" fill="transparent" stroke="<?= $d['color'] ?>" stroke-width="6" stroke-dasharray="<?= $dashArray ?>" stroke-dashoffset="<?= $dashOffset ?>"></circle>
           <?php endforeach; ?>
           <text x="50" y="54" font-size="12" font-weight="700" text-anchor="middle" fill="#0f172a"><?= $devices[0]['pct'] ?? '0%' ?></text>
