@@ -67,7 +67,7 @@ class BrandController extends AdminController
                     }
                 }
             }
-            $logoUrl = $uploadedLogo ?: (!empty($_POST['logo']) ? trim($_POST['logo']) : '');
+            $logoUrl = $uploadedLogo ?: (!empty($_POST['logo']) ? trim($_POST['logo']) : 'assets/images/logo.svg');
 
             // Process Brand Header Banner Upload
             $uploadedHeader = null;
