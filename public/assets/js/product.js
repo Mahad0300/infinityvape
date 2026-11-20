@@ -852,10 +852,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      if (mainImage.dataset.baseAlt) {
-        mainImage.alt = (variant.variant_name && targetImg !== mainImage.dataset.defaultSrc)
-          ? `${mainImage.dataset.baseAlt} - ${variant.variant_name}`
-          : mainImage.dataset.baseAlt;
+      if (targetImg) {
+        var altFile = decodeURIComponent(String(targetImg).split('/').pop().split('?')[0]).replace(/\.[a-z0-9]+$/i, '');
+        if (altFile && !/^(prod|brand|brand_hdr|brand_promo|col|blog|var|banner|deal)_\d+/i.test(altFile)) {
+          mainImage.alt = altFile.trim();
+        } else if (mainImage.dataset.baseAlt) {
+          mainImage.alt = mainImage.dataset.baseAlt;
+        }
       }
 
       if (thumbButtons && thumbButtons.length > 0 && targetImg) {

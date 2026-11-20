@@ -54,11 +54,11 @@ class CollectionController extends AdminController
                 $fileTmp = $_FILES['collection_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['collection_image']['name'], $cleanExt)) {
-                    $fileName = 'col_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/collections/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['collection_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedImage = 'assets/images/collections/' . $fileName;
                     }
@@ -156,11 +156,11 @@ class CollectionController extends AdminController
                 $fileTmp = $_FILES['collection_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['collection_image']['name'], $cleanExt)) {
-                    $fileName = 'col_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/collections/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['collection_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedImage = 'assets/images/collections/' . $fileName;
                     }

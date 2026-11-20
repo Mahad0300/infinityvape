@@ -38,7 +38,7 @@ $count = count($products);
         <div class="compact-thumb-frame">
           <img 
             src="<?= htmlspecialchars($prodImg) ?>" 
-            alt="<?= htmlspecialchars($prod['name']) ?>" 
+            alt="<?= htmlspecialchars(image_alt_from_path($prodImg, $prod['name'])) ?>" 
             class="compact-thumb-img"
             loading="lazy"
             onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
@@ -158,7 +158,7 @@ $count = count($products);
             <div class="compact-thumb-frame">
               <img 
                 src="<?= htmlspecialchars($prodImg) ?>" 
-                alt="<?= htmlspecialchars($prod['name']) ?>" 
+                alt="<?= htmlspecialchars(image_alt_from_path($prodImg, $prod['name'])) ?>" 
                 class="compact-thumb-img"
                 loading="lazy"
                 onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"

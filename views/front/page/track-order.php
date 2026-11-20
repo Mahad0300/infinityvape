@@ -194,7 +194,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     $pImg = !empty($item['featured_image']) ? asset($item['featured_image']) : asset('assets/images/product-1.webp');
                   ?>
                     <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f1f5f9;">
-                      <img src="<?= $pImg ?>" alt="<?= htmlspecialchars($item['product_title']) ?>" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" onerror="this.src='<?= asset('assets/images/vape-image.webp') ?>';">
+                      <img src="<?= $pImg ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $item['product_title'])) ?>" style="width:42px; height:42px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" onerror="this.src='<?= asset('assets/images/vape-image.webp') ?>';">
                       <div style="flex:1;">
                         <div style="font-size:13px; font-weight:600; color:#0f172a;"><?= htmlspecialchars($item['product_title']) ?></div>
                         <?php if (!empty($item['variant_name'])): ?>

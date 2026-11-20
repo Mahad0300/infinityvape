@@ -57,11 +57,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['brand_logo']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['brand_logo']['name'], $cleanExt)) {
-                    $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['brand_logo']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedLogo = 'assets/images/brands/' . $fileName;
                     }
@@ -75,11 +75,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['header_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['header_image']['name'], $cleanExt)) {
-                    $fileName = 'brand_hdr_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['header_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedHeader = 'assets/images/brands/' . $fileName;
                     }
@@ -93,11 +93,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['promo_banner_file']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['promo_banner_file']['name'], $cleanExt)) {
-                    $fileName = 'brand_promo_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['promo_banner_file']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedPromo = 'assets/images/brands/' . $fileName;
                     }
@@ -196,11 +196,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['brand_logo']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['brand_logo']['name'], $cleanExt)) {
-                    $fileName = 'brand_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['brand_logo']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedLogo = 'assets/images/brands/' . $fileName;
                     }
@@ -214,11 +214,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['header_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['header_image']['name'], $cleanExt)) {
-                    $fileName = 'brand_hdr_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['header_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedHeader = 'assets/images/brands/' . $fileName;
                     }
@@ -232,11 +232,11 @@ class BrandController extends AdminController
                 $fileTmp = $_FILES['promo_banner_file']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['promo_banner_file']['name'], $cleanExt)) {
-                    $fileName = 'brand_promo_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $targetDir = ROOT_PATH . '/public/assets/images/brands/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['promo_banner_file']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedPromo = 'assets/images/brands/' . $fileName;
                     }

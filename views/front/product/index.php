@@ -160,7 +160,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 id="productMainImage" 
                 src="<?= asset($mainImgSrc) ?>" 
                 data-default-src="<?= asset($mainImgSrc) ?>" 
-                alt="<?= htmlspecialchars($productTitle) ?>" 
+                alt="<?= htmlspecialchars(image_alt_from_path($mainImgSrc, $productTitle)) ?>" 
                 class="product-main-img"
                 onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';"
               >
@@ -183,7 +183,7 @@ include dirname(__DIR__) . '/includes/header.php';
             <div class="product-thumbnails-track" id="productThumbnailsTrack">
               <?php foreach ($galleryList as $tIdx => $tImg): ?>
                 <button type="button" class="product-thumb-btn <?= $tIdx === 0 ? 'active' : '' ?>" data-index="<?= $tIdx ?>" data-img="<?= asset($tImg) ?>" aria-label="View product image <?= $tIdx + 1 ?>">
-                  <img src="<?= asset($tImg) ?>" alt="<?= htmlspecialchars($productTitle) ?> thumbnail <?= $tIdx + 1 ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
+                  <img src="<?= asset($tImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($tImg, $productTitle)) ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
                 </button>
               <?php endforeach; ?>
             </div>
@@ -562,7 +562,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <a href="<?= !empty($product['bundle_banner_link']) ? (preg_match('/^https?:\/\//i', $product['bundle_banner_link']) ? htmlspecialchars($product['bundle_banner_link']) : url(htmlspecialchars(ltrim($product['bundle_banner_link'], '/')))) : 'javascript:void(0);' ?>" class="product-promo-link">
             <img 
               src="<?= asset($product['bundle_banner_img']) ?>" 
-              alt="<?= htmlspecialchars($productTitle) ?> Promotional Deal" 
+              alt="<?= htmlspecialchars(image_alt_from_path($product['bundle_banner_img'], $productTitle . ' Promotional Deal')) ?>" 
               class="product-promo-img"
               onerror="this.onerror=null;this.src='<?= asset('assets/images/limited-time.webp') ?>';"
             >
@@ -675,7 +675,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   </label>
 
                   <a href="<?= url('product/' . urlencode($fbtSlug)) ?>" class="fbt-item-img-link" title="<?= htmlspecialchars($fbtTitle) ?>">
-                    <img src="<?= asset($fbtImg) ?>" alt="<?= htmlspecialchars($fbtTitle) ?>" class="fbt-item-img" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
+                    <img src="<?= asset($fbtImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($fbtImg, $fbtTitle)) ?>" class="fbt-item-img" onerror="this.onerror=null;this.src='<?= asset('assets/images/no-image.svg') ?>';">
                   </a>
 
                   <div class="fbt-item-meta">
@@ -1067,7 +1067,7 @@ $firstTabId = !empty($tabs) ? array_key_first($tabs) : null;
             <?php endif; ?>
             <a href="<?= htmlspecialchars($relUrl) ?>" class="product-img-wrap">
               <img src="<?= htmlspecialchars($relImg) ?>" 
-                   alt="<?= htmlspecialchars($relTitle) ?>" 
+                   alt="<?= htmlspecialchars(image_alt_from_path($relImg, $relTitle)) ?>" 
                    class="product-img" 
                    loading="lazy"
                    onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">

@@ -354,6 +354,44 @@ if (!function_exists('hit_rate_limit')) {
     }
 }
 
+if (!function_exists('uploaded_image_filename')) {
+    /**
+     * Keep the name the user gave the image, sanitized and unique in the folder.
+     */
+    function uploaded_image_filename($originalName, $directory, $extension) {
+        $base = pathinfo((string)$originalName, PATHINFO_FILENAME);
+        $base = preg_replace('/[^\p{L}\p{N}\-_ ]+/u', '', $base);
+        $base = trim((string)preg_replace('/\s+/', '-', $base), '-_. ');
+        if ($base === '') {
+            $base = 'image-' . time();
+        }
+        $base = mb_substr($base, 0, 80);
+        $ext = strtolower(preg_replace('/[^a-z0-9]/', '', (string)$extension));
+        $directory = rtrim((string)$directory, '/\\');
+        $fileName = $base . '.' . $ext;
+        $n = 1;
+        while ($fileName === '.' || $fileName === '..' || is_file($directory . DIRECTORY_SEPARATOR . $fileName)) {
+            $fileName = $base . '-' . $n . '.' . $ext;
+            $n++;
+        }
+        return $fileName;
+    }
+}
+
+if (!function_exists('image_alt_from_path')) {
+    /**
+     * Alt text is the uploaded file name. Older generated names fall back to the record title.
+     */
+    function image_alt_from_path($path, $fallback = '') {
+        $base = pathinfo(rawurldecode((string)parse_url((string)$path, PHP_URL_PATH)), PATHINFO_FILENAME);
+        $fallback = trim((string)$fallback);
+        if ($base === '' || preg_match('/^(prod|brand|brand_hdr|brand_promo|col|blog|var|banner|deal)_\d+/i', $base)) {
+            return $fallback;
+        }
+        return $base;
+    }
+}
+
 if (!function_exists('clear_rate_limit')) {
     /**
      * Clear rate limit on successful login.

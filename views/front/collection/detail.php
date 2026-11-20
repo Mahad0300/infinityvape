@@ -437,7 +437,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <?php endif; ?>
                 <a href="<?= htmlspecialchars($pUrl) ?>" class="card-img-link">
                   <img src="<?= htmlspecialchars($pImg) ?>" 
-                       alt="<?= htmlspecialchars($pTitle) ?>" 
+                       alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" 
                        class="card-product-img" 
                        loading="lazy"
                        onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">

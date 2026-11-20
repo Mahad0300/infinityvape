@@ -387,7 +387,11 @@
             return `
             <div class="cart-drawer-item" data-id="${item.id}">
               <a href="${productUrl}" class="cart-item-thumb" title="${escapeHtml(item.title)}">
-                <img src="${item.image}" alt="${escapeHtml(item.title)}" onerror="this.onerror=null;this.src='${getApiBaseUrl()}/assets/images/vape-image.webp';">
+                <img src="${item.image}" alt="${escapeHtml((function (url, fallback) {
+                  var file = decodeURIComponent(String(url || '').split('/').pop().split('?')[0]).replace(/\.[a-z0-9]+$/i, '');
+                  if (!file || /^(prod|brand|brand_hdr|brand_promo|col|blog|var|banner|deal)_\d+/i.test(file)) return fallback || '';
+                  return file.trim();
+                })(item.image, item.title))}" onerror="this.onerror=null;this.src='${getApiBaseUrl()}/assets/images/vape-image.webp';">
               </a>
               <div class="cart-item-details">
                 <div class="cart-item-top">

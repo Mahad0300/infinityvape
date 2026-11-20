@@ -440,7 +440,7 @@ $loggedUser = $currentUser ?? null;
             ?>
             <div class="checkout-item-row" data-price="<?= number_format($pPrice, 2, '.', '') ?>">
               <div class="checkout-item-thumb">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';" loading="lazy">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" onerror="this.onerror=null;this.src='<?= asset('assets/images/vape-image.webp') ?>';" loading="lazy">
                 <span class="checkout-item-qty-badge"><?= $pQty ?></span>
               </div>
               <div class="checkout-item-info">

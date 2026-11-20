@@ -80,7 +80,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   </div>
                 <?php endif; ?>
                 <a href="<?= e($pUrl) ?>" class="card-img-link">
-                  <img src="<?= e($pImg) ?>" alt="<?= e($pTitle) ?>" class="card-product-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                  <img src="<?= e($pImg) ?>" alt="<?= e(image_alt_from_path($pImg, $pTitle)) ?>" class="card-product-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
                 </a>
                 <button type="button" class="btn-card-add-cart" data-id="<?= (int)$pId ?>" data-title="<?= e($pTitle) ?>" data-price="<?= e($basePrice) ?>">ADD TO CART</button>
               </div>

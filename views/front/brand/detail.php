@@ -455,7 +455,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <?php endif; ?>
                 <a href="<?= htmlspecialchars($pUrl) ?>" class="card-img-link">
                   <img src="<?= htmlspecialchars($pImg) ?>" 
-                       alt="<?= htmlspecialchars($pTitle) ?>" 
+                       alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" 
                        class="card-product-img" 
                        loading="lazy"
                        onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
@@ -553,11 +553,11 @@ include dirname(__DIR__) . '/includes/header.php';
     <section class="brand-promo-banner-section" style="margin: 36px 0 10px 0;">
       <?php if (!empty($promoLink)): ?>
         <a href="<?= htmlspecialchars($promoLink) ?>" style="display: block; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: transform 0.2s ease;">
-          <img src="<?= $promoBanner ?>" alt="<?= htmlspecialchars($brandName) ?> Promotional Banner" style="width: 100%; height: auto; display: block; max-height: 480px; object-fit: cover; object-position: center;">
+          <img src="<?= $promoBanner ?>" alt="<?= htmlspecialchars(image_alt_from_path($promoBanner, $brandName . ' Promotional Banner')) ?>" style="width: 100%; height: auto; display: block; max-height: 480px; object-fit: cover; object-position: center;">
         </a>
       <?php else: ?>
         <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
-          <img src="<?= $promoBanner ?>" alt="<?= htmlspecialchars($brandName) ?> Promotional Banner" style="width: 100%; height: auto; display: block; max-height: 480px; object-fit: cover; object-position: center;">
+          <img src="<?= $promoBanner ?>" alt="<?= htmlspecialchars(image_alt_from_path($promoBanner, $brandName . ' Promotional Banner')) ?>" style="width: 100%; height: auto; display: block; max-height: 480px; object-fit: cover; object-position: center;">
         </div>
       <?php endif; ?>
     </section>

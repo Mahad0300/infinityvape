@@ -33,7 +33,7 @@ if (!empty($activeSlides)):
           <!-- Background Banner Image -->
           <img 
             src="<?= htmlspecialchars($imgSrc) ?>" 
-            alt="<?= htmlspecialchars($slide['title']) ?>" 
+            alt="<?= htmlspecialchars(image_alt_from_path($imgSrc, $slide['title'])) ?>" 
             class="hero-banner-bg"
             onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
           >
@@ -206,7 +206,7 @@ if (!empty($activeSlides)):
           ?>
           <a href="<?= htmlspecialchars($catUrl) ?>" class="category-card">
             <div class="category-card-media">
-              <img src="<?= htmlspecialchars($imgUrl) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" class="category-card-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+              <img src="<?= htmlspecialchars($imgUrl) ?>" alt="<?= htmlspecialchars(image_alt_from_path($imgUrl, $cat['name'])) ?>" class="category-card-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
             </div>
             <div class="category-card-info">
               <h3 class="category-card-title"><?= htmlspecialchars($cat['name']) ?></h3>
@@ -271,7 +271,7 @@ if (!empty($activeSlides)):
                     ?>
                     <a href="<?= url('category?b=' . urlencode($bSlug)) ?>" class="brand-item-card"<?= $copy === 1 ? ' tabindex="-1"' : '' ?>>
                       <div class="brand-logo-wrap">
-                        <img src="<?= htmlspecialchars($bLogo) ?>" alt="<?= htmlspecialchars($bName) ?>" class="brand-logo-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                        <img src="<?= htmlspecialchars($bLogo) ?>" alt="<?= htmlspecialchars(image_alt_from_path($bLogo, $bName)) ?>" class="brand-logo-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
                       </div>
                       <div class="brand-item-info">
                         <h3 class="brand-item-name"><?= htmlspecialchars($bName) ?></h3>
@@ -352,7 +352,7 @@ if (!empty($activeSlides)):
                 </div>
               <?php endif; ?>
               <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
                 <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
@@ -439,7 +439,7 @@ if (!empty($activeSlides)):
                 </div>
               <?php endif; ?>
               <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
                 <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
@@ -495,7 +495,7 @@ if (!empty($activeTwins)):
         $cardBtnUrl = !empty($card['button_url']) ? (preg_match('~^(https?://|//|#)~i', $card['button_url']) ? $card['button_url'] : url($card['button_url'])) : url('category');
         ?>
       <div class="promo-banner-card">
-        <img src="<?= htmlspecialchars($cardImg) ?>" alt="<?= htmlspecialchars(strip_tags($card['title'])) ?>" class="promo-banner-bg" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+        <img src="<?= htmlspecialchars($cardImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($cardImg, strip_tags($card['title']))) ?>" class="promo-banner-bg" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
         <div class="promo-banner-content">
           <h3 class="promo-banner-title"><?= $card['title'] ?></h3>
           <?php if (!empty($card['subtitle'])): ?>
@@ -568,7 +568,7 @@ if (!empty($activeTwins)):
                 </div>
               <?php endif; ?>
               <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" class="product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
                 <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
@@ -653,7 +653,7 @@ if (!empty($activeTwins)):
                 </div>
               <?php endif; ?>
               <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img juice-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" class="product-img juice-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
                 <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
@@ -738,7 +738,7 @@ if (!empty($activeTwins)):
                 </div>
               <?php endif; ?>
               <a href="<?= url('product/' . urlencode($pSlug)) ?>" class="product-img-wrap">
-                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars($pTitle) ?>" class="product-img pouch-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($pImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($pImg, $pTitle)) ?>" class="product-img pouch-product-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </a>
               <div class="product-action-wrap">
                 <button type="button" class="btn-add-to-cart" data-id="<?= $pId ?>" data-title="<?= htmlspecialchars($pTitle) ?>" data-price="<?= number_format($pPrice, 2, '.', '') ?>" data-image="<?= htmlspecialchars($pImg) ?>">ADD TO CART</button>
@@ -843,7 +843,7 @@ if (!empty($activeTwins)):
           <article class="blog-card">
             <a href="<?= htmlspecialchars($blogUrl) ?>" class="blog-card-thumb-link">
               <div class="blog-card-media">
-                <img src="<?= htmlspecialchars($blogImg) ?>" alt="<?= htmlspecialchars($blog['title']) ?>" class="blog-card-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                <img src="<?= htmlspecialchars($blogImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($blogImg, $blog['title'])) ?>" class="blog-card-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
               </div>
             </a>
             <div class="blog-card-content">

@@ -85,12 +85,12 @@ class BlogController extends AdminController
                 $fileTmp = $_FILES['featured_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['featured_image']['name'], $cleanExt)) {
-                    $fileName = 'blog_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $baseDir = defined('ROOT_PATH') ? ROOT_PATH : dirname(dirname(dirname(__DIR__)));
                     $targetDir = $baseDir . '/public/assets/images/blogs/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['featured_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $featuredImageUrl = 'assets/images/blogs/' . $fileName;
                     }
@@ -207,12 +207,12 @@ class BlogController extends AdminController
                 $fileTmp = $_FILES['featured_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['featured_image']['name'], $cleanExt)) {
-                    $fileName = 'blog_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
                     $baseDir = defined('ROOT_PATH') ? ROOT_PATH : dirname(dirname(dirname(__DIR__)));
                     $targetDir = $baseDir . '/public/assets/images/blogs/';
                     if (!is_dir($targetDir)) {
                         @mkdir($targetDir, 0777, true);
                     }
+                    $fileName = uploaded_image_filename($_FILES['featured_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $featuredImageUrl = 'assets/images/blogs/' . $fileName;
                     }

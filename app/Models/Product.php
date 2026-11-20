@@ -764,7 +764,7 @@ class Product extends Model
             if (!empty($finalCreateImages)) {
                 $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)");
                 foreach ($finalCreateImages as $order => $imgUrl) {
-                    $altText = $title . ' - ' . ($order === 0 ? 'Featured Image' : 'Gallery Image ' . ($order + 1));
+                    $altText = image_alt_from_path($imgUrl, $title);
                     $imgStmt->execute([$productId, $imgUrl, $altText, $order + 1]);
                 }
             }
@@ -1056,7 +1056,7 @@ class Product extends Model
                 if (!empty($finalImages)) {
                     $imgStmt = $db->prepare("INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)");
                     foreach ($finalImages as $order => $imgUrl) {
-                        $altText = $title . ' - ' . ($order === 0 ? 'Featured Image' : 'Gallery Image ' . ($order + 1));
+                        $altText = image_alt_from_path($imgUrl, $title);
                         $imgStmt->execute([(int)$id, $imgUrl, $altText, $order + 1]);
                     }
                 }
@@ -1172,7 +1172,7 @@ class Product extends Model
             $images = [
                 [
                     'image_url' => $featImg,
-                    'alt_text'  => $pTitle . ' - Front View'
+                    'alt_text'  => image_alt_from_path($featImg, $pTitle)
                 ]
             ];
         }

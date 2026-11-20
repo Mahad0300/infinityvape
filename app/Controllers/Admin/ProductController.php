@@ -58,7 +58,7 @@ class ProductController extends AdminController
                     if (!empty($origName) && isset($errors[$i]) && $errors[$i] === UPLOAD_ERR_OK && !empty($tmpNames[$i])) {
                         $cleanExt = null;
                         if (is_valid_image_upload($tmpNames[$i], $origName, $cleanExt)) {
-                            $fileName = 'prod_' . time() . '_' . bin2hex(random_bytes(4)) . '_' . ($i + 1) . '.' . $cleanExt;
+                            $fileName = uploaded_image_filename($origName, $targetDir, $cleanExt);
                             if (@move_uploaded_file($tmpNames[$i], $targetDir . $fileName)) {
                                 $uploadedImages[] = 'assets/images/products/' . $fileName;
                             }
@@ -72,7 +72,7 @@ class ProductController extends AdminController
                 $fileTmp = $_FILES['product_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['product_image']['name'], $cleanExt)) {
-                    $fileName = 'prod_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $fileName = uploaded_image_filename($_FILES['product_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedImages[] = 'assets/images/products/' . $fileName;
                     }
@@ -110,7 +110,7 @@ class ProductController extends AdminController
                             $vTmp = $_FILES['variant_images']['tmp_name'][$idx];
                             $vCleanExt = null;
                             if (is_valid_image_upload($vTmp, $_FILES['variant_images']['name'][$idx], $vCleanExt)) {
-                                $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $vCleanExt;
+                                $vFileName = uploaded_image_filename($_FILES['variant_images']['name'][$idx], $varDir, $vCleanExt);
                                 if (@move_uploaded_file($vTmp, $varDir . $vFileName)) {
                                     $vImg = 'assets/images/products/' . $vFileName;
                                 }
@@ -121,7 +121,7 @@ class ProductController extends AdminController
                             if (in_array($b64Ext, ['jpg', 'png', 'webp', 'avif', 'gif'])) {
                                 $b64Decoded = base64_decode($b64Matches[2]);
                                 if ($b64Decoded !== false) {
-                                    $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $b64Ext;
+                                    $vFileName = uploaded_image_filename(($v['name'] ?? 'variant') . '.' . $b64Ext, $varDir, $b64Ext);
                                     if (@file_put_contents($varDir . $vFileName, $b64Decoded)) {
                                         $vImg = 'assets/images/products/' . $vFileName;
                                     }
@@ -248,7 +248,7 @@ class ProductController extends AdminController
                     if (!is_dir($bannerDir)) {
                         @mkdir($bannerDir, 0777, true);
                     }
-                    $bannerFileName = 'deal_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $cleanExt;
+                    $bannerFileName = uploaded_image_filename($_FILES['bundle_banner_img']['name'], $bannerDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $bannerDir . $bannerFileName)) {
                         $bundleBannerImg = 'assets/images/banners/' . $bannerFileName;
                     }
@@ -413,7 +413,7 @@ class ProductController extends AdminController
                     if (!empty($origName) && isset($errors[$i]) && $errors[$i] === UPLOAD_ERR_OK && !empty($tmpNames[$i])) {
                         $cleanExt = null;
                         if (is_valid_image_upload($tmpNames[$i], $origName, $cleanExt)) {
-                            $fileName = 'prod_' . time() . '_' . bin2hex(random_bytes(4)) . '_' . ($i + 1) . '.' . $cleanExt;
+                            $fileName = uploaded_image_filename($origName, $targetDir, $cleanExt);
                             if (@move_uploaded_file($tmpNames[$i], $targetDir . $fileName)) {
                                 $uploadedImages[] = 'assets/images/products/' . $fileName;
                             }
@@ -427,7 +427,7 @@ class ProductController extends AdminController
                 $fileTmp = $_FILES['product_image']['tmp_name'];
                 $cleanExt = null;
                 if (is_valid_image_upload($fileTmp, $_FILES['product_image']['name'], $cleanExt)) {
-                    $fileName = 'prod_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $cleanExt;
+                    $fileName = uploaded_image_filename($_FILES['product_image']['name'], $targetDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                         $uploadedImages[] = 'assets/images/products/' . $fileName;
                     }
@@ -478,7 +478,7 @@ class ProductController extends AdminController
                                 $vTmp = $_FILES['variant_images']['tmp_name'][$idx];
                                 $vCleanExt = null;
                                 if (is_valid_image_upload($vTmp, $_FILES['variant_images']['name'][$idx], $vCleanExt)) {
-                                    $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $vCleanExt;
+                                    $vFileName = uploaded_image_filename($_FILES['variant_images']['name'][$idx], $varDir, $vCleanExt);
                                     if (@move_uploaded_file($vTmp, $varDir . $vFileName)) {
                                         $vImg = 'assets/images/products/' . $vFileName;
                                     }
@@ -489,7 +489,7 @@ class ProductController extends AdminController
                                 if (in_array($b64Ext, ['jpg', 'png', 'webp', 'avif', 'gif'])) {
                                     $b64Decoded = base64_decode($b64Matches[2]);
                                     if ($b64Decoded !== false) {
-                                        $vFileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '_' . ($idx + 1) . '.' . $b64Ext;
+                                        $vFileName = uploaded_image_filename(($v['name'] ?? 'variant') . '.' . $b64Ext, $varDir, $b64Ext);
                                         if (@file_put_contents($varDir . $vFileName, $b64Decoded)) {
                                             $vImg = 'assets/images/products/' . $vFileName;
                                         }
@@ -583,7 +583,7 @@ class ProductController extends AdminController
                     if (!is_dir($bannerDir)) {
                         @mkdir($bannerDir, 0777, true);
                     }
-                    $bannerFileName = 'deal_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $cleanExt;
+                    $bannerFileName = uploaded_image_filename($_FILES['bundle_banner_img']['name'], $bannerDir, $cleanExt);
                     if (@move_uploaded_file($fileTmp, $bannerDir . $bannerFileName)) {
                         $bundleBannerImg = 'assets/images/banners/' . $bannerFileName;
                     }
@@ -801,7 +801,7 @@ class ProductController extends AdminController
             exit;
         }
 
-        $fileName = 'var_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $cleanExt;
+        $fileName = uploaded_image_filename($_FILES['image']['name'], $varDir, $cleanExt);
         if (!@move_uploaded_file($tmpName, $varDir . $fileName)) {
             echo json_encode(['success' => false, 'error' => 'Failed to save image to filesystem.']);
             exit;

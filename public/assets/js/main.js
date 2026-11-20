@@ -176,7 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
           link.href = product.url || '#';
           const img = document.createElement('img');
           img.className = 'header-search-suggest-thumb';
-          img.alt = '';
+          img.alt = (function (url, fallback) {
+            var file = decodeURIComponent(String(url || '').split('/').pop().split('?')[0]).replace(/\.[a-z0-9]+$/i, '');
+            if (!file || /^(prod|brand|brand_hdr|brand_promo|col|blog|var|banner|deal)_\d+/i.test(file)) {
+              return fallback || '';
+            }
+            return file.trim();
+          })(product.image, product.title || '');
           img.src = product.image || '';
           const title = document.createElement('span');
           title.className = 'header-search-suggest-title';

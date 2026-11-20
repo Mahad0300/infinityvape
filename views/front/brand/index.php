@@ -175,7 +175,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 <div class="brand-card-logo-wrap">
                   <img 
                     src="<?= htmlspecialchars($bLogo) ?>" 
-                    alt="<?= htmlspecialchars($bName) ?>" 
+                    alt="<?= htmlspecialchars(image_alt_from_path($bLogo, $bName)) ?>" 
                     class="brand-card-logo-img" 
                     loading="lazy"
                     onerror="this.src='<?= asset('assets/images/logo.svg') ?>';"

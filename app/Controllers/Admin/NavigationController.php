@@ -216,7 +216,7 @@ class NavigationController extends AdminController
                 @mkdir($targetDir, 0777, true);
             }
 
-            $fileName = 'banner_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
+            $fileName = uploaded_image_filename($_FILES['banner_image']['name'], $targetDir, $ext);
             if (move_uploaded_file($fileTmp, $targetDir . $fileName)) {
                 echo json_encode([
                     'success' => true,

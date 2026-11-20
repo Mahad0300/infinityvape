@@ -87,7 +87,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
               <article class="tag-post-card">
                 <a href="<?= htmlspecialchars($tUrl) ?>" class="tag-post-thumb-link" aria-label="<?= htmlspecialchars($tPost['title']) ?>">
-                  <img src="<?= htmlspecialchars($tImg) ?>" alt="<?= htmlspecialchars($tPost['title']) ?>" class="tag-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
+                  <img src="<?= htmlspecialchars($tImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($tImg, $tPost['title'])) ?>" class="tag-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
                 </a>
                 <div class="tag-post-body">
                   <h2 class="tag-post-title">
@@ -224,7 +224,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
               <li class="recent-post-item">
                 <a href="<?= htmlspecialchars($rpUrl) ?>" class="recent-post-thumb-link" aria-label="<?= htmlspecialchars($rp['title']) ?>">
-                  <img src="<?= htmlspecialchars($rpImg) ?>" alt="<?= htmlspecialchars($rp['title']) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
+                  <img src="<?= htmlspecialchars($rpImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($rpImg, $rp['title'])) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
                 </a>
                 <div class="recent-post-info">
                   <h4 class="recent-post-title">
@@ -255,7 +255,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
               <li class="popular-post-item">
                 <a href="<?= htmlspecialchars($popUrl) ?>" class="popular-post-thumb-link" aria-label="<?= htmlspecialchars($pop['title']) ?>">
-                  <img src="<?= htmlspecialchars($popImg) ?>" alt="<?= htmlspecialchars($pop['title']) ?>" class="popular-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-3.jpg') ?>';">
+                  <img src="<?= htmlspecialchars($popImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($popImg, $pop['title'])) ?>" class="popular-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-3.jpg') ?>';">
                 </a>
                 <div class="popular-post-info">
                   <h4 class="popular-post-title">

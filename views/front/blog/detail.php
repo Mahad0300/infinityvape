@@ -154,7 +154,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div class="blog-article-featured-media">
           <img 
             src="<?= htmlspecialchars($postImg) ?>" 
-            alt="<?= htmlspecialchars($postTitle) ?>" 
+            alt="<?= htmlspecialchars(image_alt_from_path($postImg, $postTitle)) ?>" 
             class="blog-article-hero-img"
             loading="eager"
             onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';"
@@ -286,7 +286,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
               <li class="recent-post-item">
                 <a href="<?= htmlspecialchars($rpUrl) ?>" class="recent-post-thumb-link" aria-label="<?= htmlspecialchars($rp['title']) ?>">
-                  <img src="<?= htmlspecialchars($rpImg) ?>" alt="<?= htmlspecialchars($rp['title']) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
+                  <img src="<?= htmlspecialchars($rpImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($rpImg, $rp['title'])) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
                 </a>
                 <div class="recent-post-info">
                   <h4 class="recent-post-title">
@@ -324,7 +324,7 @@ include dirname(__DIR__) . '/includes/header.php';
           <ul class="recent-posts-list">
             <li class="recent-post-item">
               <a href="<?= htmlspecialchars($fdUrl) ?>" class="recent-post-thumb-link" aria-label="<?= htmlspecialchars($featDetail['title']) ?>">
-                <img src="<?= htmlspecialchars($fdImg) ?>" alt="<?= htmlspecialchars($featDetail['title']) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
+                <img src="<?= htmlspecialchars($fdImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($fdImg, $featDetail['title'])) ?>" class="recent-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
               </a>
               <div class="recent-post-info">
                 <h4 class="recent-post-title">
@@ -354,7 +354,7 @@ include dirname(__DIR__) . '/includes/header.php';
               ?>
               <li class="popular-post-item">
                 <a href="<?= htmlspecialchars($popUrl) ?>" class="popular-post-thumb-link" aria-label="<?= htmlspecialchars($pop['title']) ?>">
-                  <img src="<?= htmlspecialchars($popImg) ?>" alt="<?= htmlspecialchars($pop['title']) ?>" class="popular-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-3.jpg') ?>';">
+                  <img src="<?= htmlspecialchars($popImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($popImg, $pop['title'])) ?>" class="popular-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-3.jpg') ?>';">
                 </a>
                 <div class="popular-post-info">
                   <h4 class="popular-post-title">

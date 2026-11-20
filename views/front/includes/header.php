@@ -337,7 +337,7 @@ $formatNavUrl = function($link) {
                       <div class="megamenu-promo-col">
                         <a href="<?= htmlspecialchars($formatNavUrl($promo['link_value'] ?? '#')) ?>" class="megamenu-promo-link" style="position: relative; display: block; overflow: hidden; border-radius: var(--radius-md);">
                           <?php if (!empty($promo['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars($promo['title']) ?>" class="megamenu-promo-img">
+                            <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars(image_alt_from_path($promo['image_url'], $promo['title'])) ?>" class="megamenu-promo-img">
                           <?php endif; ?>
                           <?php if (!empty($promo['subtitle'])): ?>
                             <div class="megamenu-promo-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 16px; background: linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.55) 60%, transparent 100%); color: #fff;">
@@ -469,7 +469,7 @@ $formatNavUrl = function($link) {
                     <div class="mobile-promo-banner-wrap" style="margin: 12px 0 6px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
                       <a href="<?= htmlspecialchars($formatNavUrl($promo['link_value'] ?? '#')) ?>" style="display: block; text-decoration: none;">
                         <?php if (!empty($promo['image_url'])): ?>
-                          <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars($promo['title']) ?>" style="width: 100%; height: 110px; object-fit: cover; display: block;">
+                          <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars(image_alt_from_path($promo['image_url'], $promo['title'])) ?>" style="width: 100%; height: 110px; object-fit: cover; display: block;">
                         <?php endif; ?>
                         <div style="padding: 10px 12px; background: #f8fafc;">
                           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
