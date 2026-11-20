@@ -17,9 +17,7 @@ $totalCount       = count($products);
 
 // Format collection title & description
 $collName = !empty($collection['name']) ? $collection['name'] : 'Shop All Vapes';
-$collDesc = !empty($collection['short_description']) 
-    ? $collection['short_description'] 
-    : 'Browse our full lineup of authentic disposable vapes, premium e-liquids, nicotine pouches, and kits.';
+$collDesc = trim((string)($collection['short_description'] ?? ''));
 
 $page_title       = $page_title ?? (!empty($collection['meta_title']) ? $collection['meta_title'] : ($collName . ' - Shop All Top Brands & Puffs | Infinity Vape Shop'));
 $meta_description = $meta_description ?? (!empty($collection['meta_desc']) ? $collection['meta_desc'] : $collDesc);
@@ -67,9 +65,11 @@ include dirname(__DIR__) . '/includes/header.php';
   <div class="container">
     <div class="category-header-content">
       <h1 class="category-title"><?= htmlspecialchars($collName) ?></h1>
+      <?php if ($collDesc !== ''): ?>
       <p class="category-description">
         <?= htmlspecialchars($collDesc) ?>
       </p>
+      <?php endif; ?>
 
       <!-- Quick Navigation / Filter Pills Row (Dynamic Admin Selected Collections) -->
       <?php if (!empty($headerCollections)): ?>

@@ -148,7 +148,10 @@ include dirname(__DIR__) . '/includes/header.php';
           >
             <!-- Letter Header -->
             <div class="brand-letter-header">
-              <h2 class="brand-letter-char"><?= $letter ?></h2>
+              <h2 class="brand-letter-char">
+                <span class="brand-letter-intro">Explore our collection of popular brands starting with</span>
+                <?= $letter ?>
+              </h2>
               <span class="brand-letter-count"><?= count($groupBrands) ?> <?= count($groupBrands) === 1 ? 'Brand' : 'Brands' ?></span>
             </div>
 
@@ -443,6 +446,16 @@ include dirname(__DIR__) . '/includes/header.php';
   margin-bottom: 0;
 }
 
+.brand-letter-intro {
+  margin-right: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #64748b;
+  vertical-align: middle;
+}
+
 .brand-letter-header {
   display: flex;
   align-items: baseline;
@@ -454,11 +467,13 @@ include dirname(__DIR__) . '/includes/header.php';
 }
 
 .brand-letter-char {
+  flex: 1;
+  min-width: 0;
+  margin: 0 16px 0 0;
   font-size: 2.25rem;
   font-weight: 800;
   color: #0b2545;
-  margin: 0;
-  line-height: 1;
+  line-height: 1.2;
   letter-spacing: -0.03em;
 }
 
