@@ -16,9 +16,9 @@ class HomeController extends Controller
         $categories = Collection::getMainCategories(4);
         $newArrivals = Product::newArrivals(10);
         $bestSellers = Product::bestSellers(10);
-        $disposableVapes = Product::disposables(16);
-        $vapeJuices = Product::vapeJuices(4);
-        $nicotinePouches = Product::nicotinePouches(4);
+        $disposableVapes = Product::disposables(18);
+        $vapeJuices = Product::vapeJuices(6);
+        $nicotinePouches = Product::nicotinePouches(6);
         $latestBlogs = BlogPost::latest(4);
         $heroSlides = ThemeSection::getHeroSlides();
         $twinBanners = ThemeSection::getTwinBanners();

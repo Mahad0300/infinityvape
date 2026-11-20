@@ -529,7 +529,7 @@ class Product extends Model
     /**
      * Get Disposable Vapes for storefront
      */
-    public static function disposables($limit = 16)
+    public static function disposables($limit = 18)
     {
         return self::byCollection(['disposable-vapes', 'disposable-vape', 'disposable'], $limit);
     }
@@ -537,7 +537,7 @@ class Product extends Model
     /**
      * Get Vape Juices for storefront
      */
-    public static function vapeJuices($limit = 4)
+    public static function vapeJuices($limit = 6)
     {
         return self::byCollection(['e-liquids', 'eliquids'], $limit);
     }
@@ -545,7 +545,7 @@ class Product extends Model
     /**
      * Get Nicotine Pouches for storefront
      */
-    public static function nicotinePouches($limit = 4)
+    public static function nicotinePouches($limit = 6)
     {
         return self::byCollection(['nicotine-pouches', 'nicotine-pouche'], $limit);
     }
@@ -1522,18 +1522,7 @@ class Product extends Model
             try {
                 $stmt = $db->prepare("SELECT bp.title, bp.slug FROM product_related_posts prp JOIN blog_posts bp ON prp.post_id = bp.id WHERE prp.product_id = ? ORDER BY prp.sort_order ASC");
                 $stmt->execute([(int)$productId]);
-                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                if (!empty($rows)) {
-                    $prodCompare = !empty($product['compare_price']) ? (float)$product['compare_price'] : null;
-                    foreach ($rows as &$r) {
-                        $r['full_image_url'] = !empty($r['image_url']) ? asset($r['image_url']) : '';
-                        if (!isset($r['compare_price']) || $r['compare_price'] === null) {
-                            $r['compare_price'] = $prodCompare;
-                        }
-                    }
-                    unset($r);
-                    return $rows;
-                }
+                return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             } catch (\Exception $e) {}
         }
 

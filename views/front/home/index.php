@@ -513,7 +513,7 @@ if (!empty($activeTwins)):
       </div>
     </div>
 
-        <!-- 4 Columns Grid (16 Cards) -->
+        <!-- 6 Columns Grid (18 Cards) -->
     <div class="disposables-grid">
       <?php $disposableVapes = $disposableVapes ?? []; ?>
       <?php if (!empty($disposableVapes)): ?>
@@ -578,7 +578,7 @@ if (!empty($activeTwins)):
 </section>
 
 <!-- ==========================================
-     SHOP VAPE JUICES (1 ROW - 4 CARDS)
+     SHOP VAPE JUICES (1 ROW - 6 CARDS)
      ========================================== -->
 <section class="disposables-grid-section vape-juices-section">
   <div class="container">
@@ -599,7 +599,7 @@ if (!empty($activeTwins)):
       </div>
     </div>
 
-    <!-- 4 Columns Grid (4 Cards) -->
+    <!-- 6 Columns Grid (6 Cards) -->
     <div class="disposables-grid">
       <?php $vapeJuices = $vapeJuices ?? []; ?>
       <?php if (!empty($vapeJuices)): ?>
@@ -663,7 +663,7 @@ if (!empty($activeTwins)):
 </section>
 
 <!-- ==========================================
-     SHOP NICOTINE POUCHES (1 ROW - 4 CARDS)
+     SHOP NICOTINE POUCHES (1 ROW - 6 CARDS)
      ========================================== -->
 <section class="disposables-grid-section pouches-section">
   <div class="container">
@@ -684,7 +684,7 @@ if (!empty($activeTwins)):
       </div>
     </div>
 
-    <!-- 4 Columns Grid (4 Cards) -->
+    <!-- 6 Columns Grid (6 Cards) -->
     <div class="disposables-grid">
       <?php $nicotinePouches = $nicotinePouches ?? []; ?>
       <?php if (!empty($nicotinePouches)): ?>
