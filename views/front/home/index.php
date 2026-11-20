@@ -269,7 +269,7 @@ if (!empty($activeSlides)):
                         $bLogo = url($bLogo);
                       }
                     ?>
-                    <a href="<?= url('category?b=' . urlencode($bSlug)) ?>" class="brand-item-card"<?= $copy === 1 ? ' tabindex="-1"' : '' ?>>
+                    <a href="<?= \App\Models\Brand::getUrl($b) ?>" class="brand-item-card"<?= $copy === 1 ? ' tabindex="-1"' : '' ?>>
                       <div class="brand-logo-wrap">
                         <img src="<?= htmlspecialchars($bLogo) ?>" alt="<?= htmlspecialchars(image_alt_from_path($bLogo, $bName)) ?>" class="brand-logo-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
                       </div>

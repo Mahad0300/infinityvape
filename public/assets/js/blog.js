@@ -1,6 +1,6 @@
 /**
  * BLOG PAGE JAVASCRIPT (blog.js)
- * Handles search filter, category filtering, clear filter, and pagination.
+ * Sidebar search filters the Categories list only. Post titles stay unchanged.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,91 +9,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('blogSearchInput');
   const searchForm = document.getElementById('blogSearchForm');
   const categoryItems = document.querySelectorAll('.blog-categories-list .category-list-item');
-  const activeFilterBar = document.getElementById('activeFilterBar');
-  const currentFilterLabel = document.getElementById('currentFilterLabel');
-  const btnClearFilter = document.getElementById('btnClearFilter');
-  const blogPosts = document.querySelectorAll('.blog-post-item');
-  const articlesCount = document.getElementById('blogArticlesCount');
 
-  let currentCategory = 'all';
   let searchQuery = '';
 
-  function filterPosts() {
-    let visibleCount = 0;
+  function filterCategories() {
     const q = searchQuery.trim().toLowerCase();
 
-    blogPosts.forEach((post) => {
-      const categories = (post.dataset.category || '').toLowerCase().split(/[,\s]+/);
-      const title = (post.dataset.title || post.textContent || '').toLowerCase();
-
-      const matchesCat = (currentCategory === 'all') || categories.includes(currentCategory);
-      const matchesSearch = !q || title.includes(q);
-
-      if (matchesCat && matchesSearch) {
-        post.style.display = '';
-        visibleCount++;
-      } else {
-        post.style.display = 'none';
-      }
+    categoryItems.forEach((item) => {
+      const nameEl = item.querySelector('.category-name');
+      const name = (nameEl ? nameEl.textContent : '').trim().toLowerCase();
+      const alwaysVisible = name === 'all articles';
+      item.style.display = (!q || alwaysVisible || name.includes(q)) ? '' : 'none';
     });
-
-    // Update filter status bar
-    if (activeFilterBar && currentFilterLabel) {
-      if (currentCategory !== 'all' || q) {
-        activeFilterBar.style.display = 'flex';
-        let labelText = '';
-        if (currentCategory !== 'all') {
-          const activeItem = document.querySelector(`.category-list-item[data-cat="${currentCategory}"] .category-name`);
-          labelText += activeItem ? activeItem.textContent : currentCategory;
-        }
-        if (q) {
-          labelText += (labelText ? ' & ' : '') + `Search: "${q}"`;
-        }
-        currentFilterLabel.textContent = labelText;
-      } else {
-        activeFilterBar.style.display = 'none';
-      }
-    }
-
-    if (articlesCount) {
-      articlesCount.textContent = `${visibleCount} guide(s) found`;
-    }
   }
 
-  // 1. Search Bar Interactions
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
-      filterPosts();
+      filterCategories();
     });
   }
 
   if (searchForm) {
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      filterPosts();
-    });
-  }
-
-  // 2. Category links navigate directly to their dedicated category pages (/{category-slug}).
-  // In-page search and clear filter are handled below.
-
-  // 3. Clear Filter Button
-  if (btnClearFilter) {
-    btnClearFilter.addEventListener('click', () => {
-      currentCategory = 'all';
-      searchQuery = '';
-      if (searchInput) searchInput.value = '';
-
-      categoryItems.forEach((c) => {
-        if (c.dataset.cat === 'all') {
-          c.classList.add('active');
-        } else {
-          c.classList.remove('active');
-        }
-      });
-
-      filterPosts();
+      filterCategories();
     });
   }
 

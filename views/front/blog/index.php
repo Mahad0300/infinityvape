@@ -338,7 +338,7 @@ include dirname(__DIR__) . '/includes/header.php';
                 type="text" 
                 id="blogSearchInput" 
                 class="blog-search-input" 
-                placeholder="Search posts here..." 
+                placeholder="Search categories..." 
                 autocomplete="off"
                 aria-label="Search posts"
               >
@@ -440,8 +440,6 @@ include dirname(__DIR__) . '/includes/header.php';
             <?php endif; ?>
           </ul>
         </div>
-
-
 
       </aside>
 

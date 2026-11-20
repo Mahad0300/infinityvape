@@ -227,14 +227,13 @@ include dirname(__DIR__) . '/includes/header.php';
         
         <!-- WIDGET 1: SEARCH BAR -->
         <div class="blog-widget blog-search-widget">
-          <form class="blog-search-form" id="blogSearchForm" action="<?= url('blog') ?>" method="GET">
+          <form class="blog-search-form" id="blogSearchForm" action="javascript:void(0);">
             <div class="search-input-wrapper">
               <input 
                 type="text" 
-                name="search"
                 id="blogSearchInput" 
                 class="blog-search-input" 
-                placeholder="Search posts here..." 
+                placeholder="Search categories..." 
                 autocomplete="off"
                 aria-label="Search posts"
               >
