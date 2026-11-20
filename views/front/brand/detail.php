@@ -24,7 +24,7 @@ $totalCount = count($products);
 $brandName = !empty($brand['name']) ? $brand['name'] : 'Brand';
 $brandDesc = !empty($brand['short_description'])
   ? $brand['short_description']
-  : (!empty($brand['description']) ? $brand['description'] : 'Explore official and verified products from ' . $brandName . ' at New Vape.');
+  : (!empty($brand['description']) ? $brand['description'] : 'Explore official and verified products from ' . $brandName . ' at Infinity Vape Shop.');
 
 $brandLogo = !empty($brand['logo_url']) ? asset($brand['logo_url']) : '';
 $promoBanner = !empty($brand['promo_banner_image']) ? asset($brand['promo_banner_image']) : '';
