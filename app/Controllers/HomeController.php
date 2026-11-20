@@ -12,7 +12,7 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $brands = Brand::active(12);
+        $brands = Brand::active();
         $categories = Collection::getMainCategories(4);
         $newArrivals = Product::newArrivals(10);
         $bestSellers = Product::bestSellers(10);

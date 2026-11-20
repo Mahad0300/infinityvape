@@ -235,32 +235,57 @@ if (!empty($activeSlides)):
         <p class="section-subtitle">We carry the top brands you know and love</p>
       </div>
 
-      <!-- Brands 4x3 Grid -->
-      <div class="brands-grid">
-        <?php $brands = $brands ?? []; ?>
-        <?php if (!empty($brands)): ?>
-          <?php foreach ($brands as $b): ?>
-            <?php
-            $bSlug = $b['slug'] ?? '';
-            $bName = $b['name'] ?? '';
-            $bDesc = $b['description'] ?? 'Official Verified Vendor';
-            $bLogo = !empty($b['logo_url']) ? $b['logo_url'] : 'assets/images/no-image.svg';
-            if (!preg_match('~^(https?://|//|#)~i', $bLogo)) {
-              $bLogo = url($bLogo);
+      <?php
+        $brands = $brands ?? [];
+        $brandRows = [[], [], []];
+        foreach ($brands as $brandIndex => $brandRowItem) {
+          $brandRows[$brandIndex % 3][] = $brandRowItem;
+        }
+      ?>
+      <?php if (!empty($brands)): ?>
+      <div class="brand-marquee-list">
+        <?php foreach ($brandRows as $rowIndex => $rowBrands): ?>
+          <?php
+            if (empty($rowBrands)) {
+              continue;
             }
-            ?>
-            <a href="<?= url('category?b=' . urlencode($bSlug)) ?>" class="brand-item-card">
-              <div class="brand-logo-wrap">
-                <img src="<?= htmlspecialchars($bLogo) ?>" alt="<?= htmlspecialchars($bName) ?>" class="brand-logo-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
-              </div>
-              <div class="brand-item-info">
-                <h3 class="brand-item-name"><?= htmlspecialchars($bName) ?></h3>
-                <p class="brand-item-desc"><?= htmlspecialchars($bDesc) ?></p>
-              </div>
-            </a>
-          <?php endforeach; ?>
-        <?php endif; ?>
+            $loopBrands = $rowBrands;
+            while (count($loopBrands) < 8) {
+              $loopBrands = array_merge($loopBrands, $rowBrands);
+            }
+            $marqueeDuration = max(100, count($loopBrands) * 8);
+          ?>
+          <div class="brand-marquee<?= $rowIndex === 1 ? ' is-reverse' : '' ?>">
+            <div class="brand-marquee-track" style="animation-duration: <?= $marqueeDuration ?>s;">
+              <?php for ($copy = 0; $copy < 2; $copy++): ?>
+                <div class="brand-marquee-group"<?= $copy === 1 ? ' aria-hidden="true"' : '' ?>>
+                  <?php foreach ($loopBrands as $b): ?>
+                    <?php
+                      $bSlug = $b['slug'] ?? '';
+                      $bName = $b['name'] ?? '';
+                      $bDesc = $b['description'] ?? 'Official Verified Vendor';
+                      $bLogo = !empty($b['logo_url']) ? $b['logo_url'] : 'assets/images/no-image.svg';
+                      if (!preg_match('~^(https?://|//|#)~i', $bLogo)) {
+                        $bLogo = url($bLogo);
+                      }
+                    ?>
+                    <a href="<?= url('category?b=' . urlencode($bSlug)) ?>" class="brand-item-card"<?= $copy === 1 ? ' tabindex="-1"' : '' ?>>
+                      <div class="brand-logo-wrap">
+                        <img src="<?= htmlspecialchars($bLogo) ?>" alt="<?= htmlspecialchars($bName) ?>" class="brand-logo-img" onerror="this.onerror=null;this.src='<?= url('assets/images/no-image.svg') ?>';">
+                      </div>
+                      <div class="brand-item-info">
+                        <h3 class="brand-item-name"><?= htmlspecialchars($bName) ?></h3>
+                        <p class="brand-item-desc"><?= htmlspecialchars($bDesc) ?></p>
+                      </div>
+                    </a>
+                  <?php endforeach; ?>
+                </div>
+              <?php endfor; ?>
+            </div>
+          </div>
+        <?php endforeach; ?>
       </div>
+      <?php endif; ?>
 
     </div>
   </div>
