@@ -170,7 +170,8 @@ class BlogController extends Controller
         $totalPostsCount = BlogPost::countActive();
 
         $this->render('front.blog.detail', [
-            'page_title'      => (!empty($post['meta_title']) ? $post['meta_title'] : $post['title']) . ' | Infinity Vape Shop Blog',
+            'page_title'      => !empty($post['meta_title']) ? $post['meta_title'] : ($post['title'] . ' | Infinity Vape Shop Blog'),
+            'meta_description'=> !empty($post['meta_desc']) ? $post['meta_desc'] : ($post['excerpt'] ?? ''),
             'page_js'         => 'blog',
             'post'            => $post,
             'relatedPosts'    => $relatedPosts,

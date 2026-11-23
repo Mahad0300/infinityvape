@@ -69,7 +69,16 @@ if (!$activeCategory) {
 $breadcrumbCatName = $activeCategory['name'] ?? $postCatName;
 $breadcrumbCatSlug = $activeCategory['slug'] ?? $postCatSlug;
 
-$page_title = (!empty($post['meta_title']) ? $post['meta_title'] : $postTitle) . ' | Infinity Vape Shop Blog';
+if (!empty($post['meta_title'])) {
+  $page_title = $post['meta_title'];
+} else {
+  $page_title = $postTitle . ' | Infinity Vape Shop Blog';
+}
+if (!empty($post['meta_desc'])) {
+  $meta_description = $post['meta_desc'];
+} elseif (!empty($post['excerpt'])) {
+  $meta_description = $post['excerpt'];
+}
 $page_js = 'blog';
 
 include dirname(__DIR__) . '/includes/header.php';

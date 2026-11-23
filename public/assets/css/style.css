@@ -7905,6 +7905,24 @@ a.blog-tag-pill.active {
   line-height: 1.6;
 }
 
+.blog-article-prose p a,
+.blog-article-prose li a,
+.blog-article-prose h2 a,
+.blog-article-prose h3 a,
+.blog-article-prose h4 a {
+  color: #fa5a1e !important;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.blog-article-prose p a:hover,
+.blog-article-prose li a:hover,
+.blog-article-prose h2 a:hover,
+.blog-article-prose h3 a:hover,
+.blog-article-prose h4 a:hover {
+  color: #db4915 !important;
+}
+
 /* Key Takeaways Callout Box */
 .article-callout-box {
   background-color: #f8fafc;
