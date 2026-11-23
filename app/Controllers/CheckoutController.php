@@ -41,6 +41,88 @@ class CheckoutController extends Controller
     }
 
     /**
+     * Load a coupon from the database and reject it when it is inactive,
+     * outside its dates, under the minimum, or out of uses.
+     */
+    protected function findValidCoupon($codeOrId, float $subtotal, bool $byId = false): array
+    {
+        $db = Database::getInstance()->getConnection();
+        if ($byId) {
+            $stmt = $db->prepare("SELECT * FROM coupons WHERE id = :id LIMIT 1");
+            $stmt->execute([':id' => (int)$codeOrId]);
+        } else {
+            $stmt = $db->prepare("SELECT * FROM coupons WHERE UPPER(code) = :code LIMIT 1");
+            $stmt->execute([':code' => strtoupper(trim((string)$codeOrId))]);
+        }
+
+        $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$coupon || (int)($coupon['is_active'] ?? 0) !== 1) {
+            return ['ok' => false, 'message' => 'Invalid or expired coupon code.'];
+        }
+
+        $now = time();
+        $start = $this->couponTimestamp($coupon['start_date'] ?? null);
+        if ($start !== null && $start > $now) {
+            return ['ok' => false, 'message' => 'This coupon is not active yet.'];
+        }
+        $end = $this->couponTimestamp($coupon['end_date'] ?? null);
+        if ($end !== null && $end < $now) {
+            return ['ok' => false, 'message' => 'This coupon has expired.'];
+        }
+
+        $minOrder = (float)($coupon['min_order_amount'] ?? 0);
+        if ($minOrder > 0 && $subtotal < $minOrder) {
+            return [
+                'ok' => false,
+                'message' => 'This code requires a minimum subtotal of $' . number_format($minOrder, 2) . '.'
+            ];
+        }
+
+        if (!empty($coupon['max_uses']) && (int)$coupon['uses_count'] >= (int)$coupon['max_uses']) {
+            return ['ok' => false, 'message' => 'This coupon has reached its maximum usage limit.'];
+        }
+
+        $discount = 0.00;
+        if ($coupon['type'] === 'percentage') {
+            $discount = round(($subtotal * ((float)$coupon['value'] / 100)), 2);
+        } elseif ($coupon['type'] === 'fixed_amount') {
+            $discount = min($subtotal, (float)$coupon['value']);
+        } elseif ($coupon['type'] === 'free_shipping') {
+            $discount = (float)($coupon['value'] ?: 5.99);
+        }
+
+        return [
+            'ok' => true,
+            'coupon' => $coupon,
+            'discount' => $discount,
+            'min_order_amount' => $minOrder,
+        ];
+    }
+
+    protected function couponTimestamp($value): ?int
+    {
+        if ($value === null || $value === '' || $value === '0000-00-00 00:00:00') {
+            return null;
+        }
+        $ts = strtotime((string)$value);
+        return $ts ? $ts : null;
+    }
+
+    protected function rememberCoupon(array $coupon, float $discount, float $minOrder): array
+    {
+        $saved = [
+            'id'               => $coupon['id'],
+            'code'             => $coupon['code'],
+            'type'             => $coupon['type'],
+            'value'            => (float)$coupon['value'],
+            'discount_amount'  => $discount,
+            'min_order_amount' => $minOrder,
+        ];
+        $_SESSION['checkout_coupon'] = $saved;
+        return $saved;
+    }
+
+    /**
      * GET /checkout
      * Main checkout page rendering with live cart and settings
      */
@@ -64,16 +146,21 @@ class CheckoutController extends Controller
         // Check if free shipping qualifies
         $initialShipping = ($totals['subtotal'] >= $freeShippingThreshold) ? 0.00 : $standardShipping;
 
-        // Apply active coupon if stored in session
-        $coupon = $_SESSION['checkout_coupon'] ?? null;
+        // Re-check the saved coupon against the database before showing the total
+        $coupon = null;
         $discountAmount = 0.00;
-        if ($coupon && $totals['subtotal'] >= ($coupon['min_order_amount'] ?? 0)) {
-            if ($coupon['type'] === 'percentage') {
-                $discountAmount = round(($totals['subtotal'] * ($coupon['value'] / 100)), 2);
-            } elseif ($coupon['type'] === 'fixed_amount') {
-                $discountAmount = min($totals['subtotal'], (float)$coupon['value']);
-            } elseif ($coupon['type'] === 'free_shipping') {
-                $initialShipping = 0.00;
+        $savedCoupon = $_SESSION['checkout_coupon'] ?? null;
+        if ($savedCoupon && !empty($savedCoupon['id'])) {
+            $checked = $this->findValidCoupon($savedCoupon['id'], (float)$totals['subtotal'], true);
+            if (!empty($checked['ok'])) {
+                $coupon = $this->rememberCoupon($checked['coupon'], $checked['discount'], $checked['min_order_amount']);
+                if ($coupon['type'] === 'percentage' || $coupon['type'] === 'fixed_amount') {
+                    $discountAmount = $checked['discount'];
+                } elseif ($coupon['type'] === 'free_shipping') {
+                    $initialShipping = 0.00;
+                }
+            } else {
+                unset($_SESSION['checkout_coupon']);
             }
         }
 
@@ -128,47 +215,14 @@ class CheckoutController extends Controller
             return $this->json(['success' => false, 'message' => 'Your cart is empty.'], 400);
         }
 
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("SELECT * FROM coupons WHERE UPPER(code) = :code AND is_active = 1 LIMIT 1");
-        $stmt->execute([':code' => $code]);
-        $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$coupon) {
-            return $this->json(['success' => false, 'message' => 'Invalid or expired coupon code.'], 400);
+        $checked = $this->findValidCoupon($code, $subtotal, false);
+        if (empty($checked['ok'])) {
+            return $this->json(['success' => false, 'message' => $checked['message']], 400);
         }
 
-        // Validate minimum order requirement
-        $minOrder = (float)($coupon['min_order_amount'] ?? 0);
-        if ($minOrder > 0 && $subtotal < $minOrder) {
-            return $this->json([
-                'success' => false,
-                'message' => "This code requires a minimum subtotal of $" . number_format($minOrder, 2) . "."
-            ], 400);
-        }
-
-        // Validate max uses
-        if (!empty($coupon['max_uses']) && (int)$coupon['uses_count'] >= (int)$coupon['max_uses']) {
-            return $this->json(['success' => false, 'message' => 'This coupon has reached its maximum usage limit.'], 400);
-        }
-
-        // Calculate discount
-        $discount = 0.00;
-        if ($coupon['type'] === 'percentage') {
-            $discount = round(($subtotal * ((float)$coupon['value'] / 100)), 2);
-        } elseif ($coupon['type'] === 'fixed_amount') {
-            $discount = min($subtotal, (float)$coupon['value']);
-        } elseif ($coupon['type'] === 'free_shipping') {
-            $discount = (float)($coupon['value'] ?: 5.99);
-        }
-
-        $_SESSION['checkout_coupon'] = [
-            'id'               => $coupon['id'],
-            'code'             => $coupon['code'],
-            'type'             => $coupon['type'],
-            'value'            => (float)$coupon['value'],
-            'discount_amount'  => $discount,
-            'min_order_amount' => $minOrder
-        ];
+        $coupon = $checked['coupon'];
+        $discount = $checked['discount'];
+        $this->rememberCoupon($coupon, $discount, $checked['min_order_amount']);
 
         return $this->json([
             'success'            => true,
@@ -314,16 +368,24 @@ class CheckoutController extends Controller
             $shippingMethodName = 'Express Priority Delivery';
         }
 
-        // Apply Coupon if valid
+        // Apply the coupon from a fresh database row, not the old session copy
         $discountAmount = 0.00;
         $couponId = null;
-        $coupon = $_SESSION['checkout_coupon'] ?? null;
-        if ($coupon) {
+        $savedCoupon = $_SESSION['checkout_coupon'] ?? null;
+        if ($savedCoupon && !empty($savedCoupon['id'])) {
+            $checked = $this->findValidCoupon($savedCoupon['id'], $subtotal, true);
+            if (empty($checked['ok'])) {
+                unset($_SESSION['checkout_coupon']);
+                return $this->json([
+                    'success' => false,
+                    'message' => $checked['message'] . ' Remove the code and place the order again.'
+                ], 400);
+            }
+            $coupon = $checked['coupon'];
             $couponId = (int)$coupon['id'];
-            if ($coupon['type'] === 'percentage') {
-                $discountAmount = round(($subtotal * ($coupon['value'] / 100)), 2);
-            } elseif ($coupon['type'] === 'fixed_amount') {
-                $discountAmount = min($subtotal, (float)$coupon['value']);
+            $this->rememberCoupon($coupon, $checked['discount'], $checked['min_order_amount']);
+            if ($coupon['type'] === 'percentage' || $coupon['type'] === 'fixed_amount') {
+                $discountAmount = $checked['discount'];
             } elseif ($coupon['type'] === 'free_shipping') {
                 $shippingCost = 0.00;
             }
@@ -359,8 +421,8 @@ class CheckoutController extends Controller
                 $userId = \App\Core\CustomerAuth::id();
             }
 
-            // Payment & Shipping Status
-            $paymentStatus = $testCheckoutEnabled ? 'paid' : 'pending';
+            // No card is charged in test checkout, so payment stays pending until a real payment is recorded.
+            $paymentStatus = 'pending';
             $shippingStatus = 'confirmed';
             $fulfillmentStatus = 'unfulfilled';
             $deliveryStatus = 'pending';
@@ -482,8 +544,26 @@ class CheckoutController extends Controller
                 }
             }
 
-            // Update Coupon Usage Count if applicable
+            // Update Coupon Usage Count if the code is still available
             if ($couponId) {
+                $lock = $db->prepare("SELECT is_active, max_uses, uses_count, start_date, end_date FROM coupons WHERE id = :cid FOR UPDATE");
+                $lock->execute([':cid' => $couponId]);
+                $freshCoupon = $lock->fetch(PDO::FETCH_ASSOC);
+                $freshStart = $freshCoupon ? $this->couponTimestamp($freshCoupon['start_date'] ?? null) : null;
+                $freshEnd = $freshCoupon ? $this->couponTimestamp($freshCoupon['end_date'] ?? null) : null;
+                $couponStillOk = $freshCoupon
+                    && (int)$freshCoupon['is_active'] === 1
+                    && ($freshStart === null || $freshStart <= time())
+                    && ($freshEnd === null || $freshEnd >= time())
+                    && (empty($freshCoupon['max_uses']) || (int)$freshCoupon['uses_count'] < (int)$freshCoupon['max_uses']);
+                if (!$couponStillOk) {
+                    $db->rollBack();
+                    unset($_SESSION['checkout_coupon']);
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'This coupon is no longer available. Remove the code and place the order again.'
+                    ], 400);
+                }
                 $db->prepare("UPDATE coupons SET uses_count = uses_count + 1 WHERE id = :cid")->execute([':cid' => $couponId]);
             }
 

@@ -233,7 +233,10 @@ $loggedUser = $currentUser ?? null;
             </div>
           </div>
 
-          <!-- STEP 3: Shipping Method -->
+          <!-- STEP 3: Shipping Method (hidden while test checkout is on; default rate stays in the total) -->
+          <?php if ($testCheckoutEnabled): ?>
+            <input type="radio" name="shippingMethod" value="<?= $isFreeShipping ? '0.00' : number_format($standardShipping, 2, '.', '') ?>" data-name="Standard Ground Shipping" checked hidden>
+          <?php else: ?>
           <div class="checkout-section-card">
             <div class="checkout-section-header">
               <div class="section-step-num">3</div>
@@ -278,9 +281,11 @@ $loggedUser = $currentUser ?? null;
               </div>
             </div>
           </div>
+          <?php endif; ?>
 
-          <!-- STEP 4: Payment Method -->
+          <!-- Payment Method stays hidden while test checkout is on -->
           <div class="checkout-section-card">
+            <?php if (!$testCheckoutEnabled): ?>
             <div class="checkout-section-header">
               <div class="section-step-num">4</div>
               <h2 class="section-step-title">Payment Method</h2>
@@ -381,6 +386,9 @@ $loggedUser = $currentUser ?? null;
                 </div>
 
               </div>
+            <?php else: ?>
+            <div class="checkout-section-body">
+            <?php endif; ?>
 
               <!-- Age Verification & Legal Agreement -->
               <div class="checkout-age-agreement" style="margin-top: 24px;">
