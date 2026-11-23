@@ -46,7 +46,7 @@ class CollectionController extends AdminController
             $seoTitle = trim($_POST['seo_title'] ?? '');
             $seoDescription = trim($_POST['seo_description'] ?? '');
             $parentId = !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
-            $isActive = isset($_POST['is_active']) ? 1 : (isset($_POST['status']) && $_POST['status'] === 'active' ? 1 : 1);
+            $isActive = isset($_POST['is_active']) ? (int)$_POST['is_active'] : (isset($_POST['status']) && $_POST['status'] === 'active' ? 1 : 0);
 
             // Process Image Upload
             $uploadedImage = null;

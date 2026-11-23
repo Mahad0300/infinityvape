@@ -125,7 +125,7 @@ include dirname(__DIR__) . '/includes/header.php';
                     </a>
 
                     <!-- View on Live Storefront -->
-                    <a href="<?= url('category?c=' . urlencode($col['slug'])) ?>" target="_blank" class="btn-icon-only" title="View on Storefront">
+                    <a href="<?= \App\Models\Collection::getUrl($col) ?>" target="_blank" class="btn-icon-only" title="View on Storefront">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                         <polyline points="15 3 21 3 21 9"></polyline>

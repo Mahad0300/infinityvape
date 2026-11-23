@@ -44,6 +44,12 @@ class CollectionController extends Controller
             return;
         }
 
+        if (!$isAll && $collection && (int)($collection['is_active'] ?? 0) !== 1) {
+            http_response_code(404);
+            $this->render('errors.404', ['uri' => 'Collection Not Found: ' . htmlspecialchars($slug)]);
+            return;
+        }
+
         // 301 Permanent Redirect: Redirect legacy URLs or non-canonical single-segment URLs to clean hierarchical SEO URL
         $rawUri = $_SERVER['REQUEST_URI'] ?? '';
         if (!$isAll && $collection) {

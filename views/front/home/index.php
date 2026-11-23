@@ -198,7 +198,7 @@ if (!empty($activeSlides)):
       <?php if (!empty($categories)): ?>
         <?php
         foreach ($categories as $cat):
-          $catUrl = url('collection/' . urlencode($cat['slug']));
+          $catUrl = url(urlencode($cat['slug']));
           $imgUrl = !empty($cat['header_image_url']) ? $cat['header_image_url'] : 'assets/images/no-image.svg';
           if (!preg_match('~^(https?://|//|#)~i', $imgUrl)) {
             $imgUrl = url($imgUrl);
@@ -304,7 +304,7 @@ if (!empty($activeSlides)):
         <p class="products-section-subtitle">Our newest products, shipped same day.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('collection/new-arrivals') ?>" class="view-all-link">
+        <a href="<?= url('new-arrivals') ?>" class="view-all-link">
           View All New Arrivals
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -389,7 +389,7 @@ if (!empty($activeSlides)):
         <p class="products-section-subtitle">Most popular vapes and e-liquids chosen by our customers.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('collection/best-selling') ?>" class="view-all-link">
+        <a href="<?= url('best-selling') ?>" class="view-all-link">
           View All Best Sellers
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -529,7 +529,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">Pre-filled disposable vape devices with high puff counts.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('collection/disposable-vapes') ?>" class="view-all-link">
+        <a href="<?= url('disposable-vapes') ?>" class="view-all-link">
           Shop All Disposables
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -615,7 +615,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">E-liquids in nicotine salt, freebase and zero-nic options.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('collection/e-liquids') ?>" class="view-all-link">
+        <a href="<?= url('e-liquids') ?>" class="view-all-link">
           Shop All E-Liquids
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -700,7 +700,7 @@ if (!empty($activeTwins)):
         <p class="products-section-subtitle">Tobacco-free nicotine pouches from ZYN, VELO and more.</p>
       </div>
       <div class="products-header-right">
-        <a href="<?= url('collection/nicotine-pouches') ?>" class="view-all-link">
+        <a href="<?= url('nicotine-pouches') ?>" class="view-all-link">
           Shop All Pouches
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6"></polyline>
