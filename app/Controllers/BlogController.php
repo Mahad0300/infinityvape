@@ -11,6 +11,36 @@ class BlogController extends Controller
      */
     public function index()
     {
+        $categories = BlogPost::getCategories();
+        $recentPosts = BlogPost::latest(2);
+        $popularPosts = BlogPost::latest(3);
+        $archiveMonths = BlogPost::getArchiveMonths();
+        $totalPostsCount = BlogPost::countActive();
+
+        $archiveRaw = trim((string)($_GET['archive'] ?? ''));
+        if ($archiveRaw !== '') {
+            $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+            $archiveResult = BlogPost::byMonth($archiveRaw, $page, 12);
+            $label = !empty($archiveResult['label']) ? $archiveResult['label'] : 'Archive';
+
+            $this->render('front.blog.index', [
+                'page_title'       => $label . ' | Infinity Vape Shop Blog',
+                'page_js'          => 'blog',
+                'archiveActive'    => true,
+                'archiveLabel'     => $label,
+                'archiveYm'        => $archiveResult['ym'] ?? '',
+                'archivePosts'     => $archiveResult['data'] ?? [],
+                'archivePage'      => (int)($archiveResult['current_page'] ?? 1),
+                'archiveLastPage'  => (int)($archiveResult['last_page'] ?? 1),
+                'categories'       => $categories,
+                'recentPosts'      => $recentPosts,
+                'popularPosts'     => $popularPosts,
+                'archiveMonths'    => $archiveMonths,
+                'totalPostsCount'  => $totalPostsCount,
+            ]);
+            return;
+        }
+
         // 1. Featured Guides (Lead + 3 stack items)
         $featuredGuides = BlogPost::getByCategorySlugs(['vaping-guides', 'industry-news'], 4);
 
@@ -25,14 +55,6 @@ class BlogController extends Controller
 
         // 5. Latest Posts (6 compact items)
         $latestPosts = BlogPost::latest(6);
-
-        // Sidebar data
-        $categories = BlogPost::getCategories();
-        $recentPosts = BlogPost::latest(2);
-        $popularPosts = BlogPost::latest(3);
-        $archiveMonths = BlogPost::getArchiveMonths();
-
-        $totalPostsCount = BlogPost::countActive();
 
         $this->render('front.blog.index', [
             'page_title'       => 'Infinity Vape Shop Blog | Vaping Guides, Reviews & Industry News',
@@ -144,6 +166,7 @@ class BlogController extends Controller
         $categories = BlogPost::getCategories();
         $recentPosts = BlogPost::latest(2);
         $popularPosts = BlogPost::latest(3);
+        $archiveMonths = BlogPost::getArchiveMonths();
         $totalPostsCount = BlogPost::countActive();
 
         $this->render('front.blog.detail', [
@@ -154,6 +177,7 @@ class BlogController extends Controller
             'categories'      => $categories,
             'recentPosts'     => $recentPosts,
             'popularPosts'    => $popularPosts,
+            'archiveMonths'   => $archiveMonths,
             'totalPostsCount' => $totalPostsCount
         ]);
     }

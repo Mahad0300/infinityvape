@@ -4,6 +4,7 @@ $relatedPosts = $relatedPosts ?? [];
 $categories = $categories ?? [];
 $recentPosts = $recentPosts ?? [];
 $popularPosts = $popularPosts ?? [];
+$archiveMonths = $archiveMonths ?? [];
 $allTags = $allTags ?? [];
 
 $postTitle = !empty($post['title']) ? $post['title'] : 'Blog Article';
@@ -367,7 +368,20 @@ include dirname(__DIR__) . '/includes/header.php';
         </div>
         <?php endif; ?>
 
-
+        <div class="blog-widget blog-card-widget blog-archive-widget">
+          <h3 class="blog-widget-title">Archive</h3>
+          <ul class="archive-list">
+            <?php if (!empty($archiveMonths)): ?>
+              <?php foreach ($archiveMonths as $arch): ?>
+                <li class="archive-item">
+                  <a href="<?= url('blog?archive=' . urlencode($arch['ym'])) ?>" class="archive-link"><?= htmlspecialchars($arch['label']) ?> (<?= (int) $arch['count'] ?>)</a>
+                </li>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <li class="archive-item"><a href="javascript:void(0);" class="archive-link"><?= date('F Y') ?></a></li>
+            <?php endif; ?>
+          </ul>
+        </div>
 
       </aside>
 

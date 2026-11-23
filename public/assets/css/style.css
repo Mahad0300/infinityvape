@@ -7364,9 +7364,14 @@ ol {
   display: inline-block;
 }
 
-.archive-link:hover {
+.archive-link:hover,
+.archive-link.active {
   color: var(--color-primary-navy);
   transform: translateX(3px);
+}
+
+.archive-link.active {
+  font-weight: 700;
 }
 
 /* Widget 6: Tags Cloud */

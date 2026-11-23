@@ -266,6 +266,70 @@ class BlogPost extends Model
     }
 
     /**
+     * Active posts published in one calendar month (YYYY-MM).
+     */
+    public static function byMonth($ym, $page = 1, $perPage = 12)
+    {
+        $empty = [
+            'ym' => null,
+            'label' => null,
+            'data' => [],
+            'total' => 0,
+            'per_page' => max(1, (int)$perPage),
+            'current_page' => 1,
+            'last_page' => 1,
+        ];
+
+        if (!preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', (string)$ym, $match)) {
+            return $empty;
+        }
+
+        $db = self::getDB();
+        if (!$db) return $empty;
+
+        try {
+            $page = max(1, (int)$page);
+            $perPage = max(1, (int)$perPage);
+            $offset = ($page - 1) * $perPage;
+            $start = $match[1] . '-' . $match[2] . '-01 00:00:00';
+            $end = date('Y-m-d H:i:s', strtotime($start . ' +1 month'));
+            $label = date('F Y', strtotime($start));
+
+            $countStmt = $db->prepare("SELECT COUNT(*) FROM blog_posts WHERE is_active = 1 AND published_at >= ? AND published_at < ?");
+            $countStmt->execute([$start, $end]);
+            $total = (int)$countStmt->fetchColumn();
+
+            $sql = "
+                SELECT b.*,
+                    GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
+                    GROUP_CONCAT(DISTINCT c.slug SEPARATOR ', ') as category_slug
+                FROM blog_posts b
+                LEFT JOIN blog_categories c ON (FIND_IN_SET(c.id, b.category_id) > 0 OR b.category_id = c.id)
+                WHERE b.is_active = 1 AND b.published_at >= ? AND b.published_at < ?
+                GROUP BY b.id
+                ORDER BY b.published_at DESC, b.id DESC
+                LIMIT $perPage OFFSET $offset";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$start, $end]);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                'ym' => $match[1] . '-' . $match[2],
+                'label' => $label,
+                'data' => $data,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => (int)ceil($total / $perPage) ?: 1,
+            ];
+        } catch (\Exception $e) {
+            error_log("BlogPost::byMonth() error: " . $e->getMessage());
+            return $empty;
+        }
+    }
+
+    /**
      * Get all unique tags from active blog posts
      */
     public static function getAllTags()

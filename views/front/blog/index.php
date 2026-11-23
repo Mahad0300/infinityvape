@@ -14,6 +14,12 @@ $popularPosts    = $popularPosts ?? [];
 $archiveMonths   = $archiveMonths ?? [];
 $allTags         = $allTags ?? [];
 $totalPostsCount = $totalPostsCount ?? 0;
+$archiveActive   = !empty($archiveActive);
+$archiveLabel    = $archiveLabel ?? 'Archive';
+$archiveYm       = $archiveYm ?? '';
+$archivePosts    = $archivePosts ?? [];
+$archivePage     = (int) ($archivePage ?? 1);
+$archiveLastPage = (int) ($archiveLastPage ?? 1);
 
 if (!function_exists('get_blog_card_url')) {
     function get_blog_card_url($post) {
@@ -49,9 +55,23 @@ include dirname(__DIR__) . '/includes/header.php';
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </li>
+      <?php if ($archiveActive): ?>
+      <li class="breadcrumb-item">
+        <a href="<?= url('blog') ?>">Blog</a>
+      </li>
+      <li class="breadcrumb-separator" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </li>
+      <li class="breadcrumb-item active" aria-current="page">
+        <?= htmlspecialchars($archiveLabel) ?>
+      </li>
+      <?php else: ?>
       <li class="breadcrumb-item active" aria-current="page">
         Blog
       </li>
+      <?php endif; ?>
     </ol>
   </div>
 </nav>
@@ -62,10 +82,17 @@ include dirname(__DIR__) . '/includes/header.php';
 <header class="blog-header-section">
   <div class="container">
     <div class="blog-header-content">
+      <?php if ($archiveActive): ?>
+      <h1 class="blog-main-title"><?= htmlspecialchars($archiveLabel) ?></h1>
+      <p class="blog-main-subtitle">
+        <?= $archiveYm !== '' ? 'Articles published in ' . htmlspecialchars($archiveLabel) . '.' : 'This archive month is not available.' ?>
+      </p>
+      <?php else: ?>
       <h1 class="blog-main-title">Infinity Vape Shop Blog</h1>
       <p class="blog-main-subtitle">
         Your go-to resource for vaping guides, honest product reviews, flavor recommendations, and the latest industry news. Whether you are new to vaping or a seasoned enthusiast, we have got you covered.
       </p>
+      <?php endif; ?>
     </div>
   </div>
 </header>
@@ -81,7 +108,70 @@ include dirname(__DIR__) . '/includes/header.php';
            LEFT COLUMN: MAIN CONTENT
            ======================================== -->
       <main class="blog-main-col">
-        
+        <?php if ($archiveActive): ?>
+        <div class="tag-posts-list" id="tagPostsList">
+          <?php if (!empty($archivePosts)): ?>
+            <?php foreach ($archivePosts as $tPost):
+              $tSlug = !empty($tPost['slug']) ? $tPost['slug'] : ($tPost['id'] ?? '');
+              $tUrl = url(urlencode($tSlug));
+              $tImg = !empty($tPost['featured_image_url']) ? $tPost['featured_image_url'] : 'assets/images/blog-1.jpg';
+              if (!preg_match('~^(https?://|//|#)~i', $tImg)) {
+                $tImg = url($tImg);
+              }
+              $tCatName = trim(explode(',', (string)($tPost['category_name'] ?? ''))[0]);
+              $tCatSlug = trim(explode(',', (string)($tPost['category_slug'] ?? ''))[0]);
+            ?>
+              <article class="tag-post-card">
+                <a href="<?= htmlspecialchars($tUrl) ?>" class="tag-post-thumb-link" aria-label="<?= htmlspecialchars($tPost['title'] ?? '') ?>">
+                  <img src="<?= htmlspecialchars($tImg) ?>" alt="<?= htmlspecialchars(image_alt_from_path($tImg, $tPost['title'] ?? '')) ?>" class="tag-post-thumb-img" loading="lazy" onerror="this.onerror=null;this.src='<?= url('assets/images/blog-1.jpg') ?>';">
+                </a>
+                <div class="tag-post-body">
+                  <h2 class="tag-post-title">
+                    <a href="<?= htmlspecialchars($tUrl) ?>"><?= htmlspecialchars($tPost['title'] ?? '') ?></a>
+                  </h2>
+                  <div class="tag-post-meta">
+                    <span class="meta-author"><?= htmlspecialchars(!empty($tPost['author_name']) ? $tPost['author_name'] : 'Infinity Vape Shop') ?></span>
+                    <span class="meta-separator">|</span>
+                    <span class="meta-date"><?= htmlspecialchars(function_exists('blog_time_display') ? blog_time_display($tPost['published_at'] ?? '') : date('M d, Y', strtotime($tPost['published_at'] ?? 'now'))) ?></span>
+                  </div>
+                  <p class="tag-post-excerpt">
+                    <?= htmlspecialchars(mb_strimwidth($tPost['excerpt'] ?? '', 0, 180, '...')) ?>
+                  </p>
+                  <div class="tag-post-badges" style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+                    <?php if ($tCatName !== '' && $tCatSlug !== ''): ?>
+                      <a href="<?= url($tCatSlug) ?>" class="tag-badge-pill"><?= htmlspecialchars($tCatName) ?></a>
+                    <?php else: ?>
+                      <span></span>
+                    <?php endif; ?>
+                    <a href="<?= htmlspecialchars($tUrl) ?>" class="btn-read-more">
+                      Read Article
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div style="padding: 60px 0; text-align: center; color: #64748b; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 6px;">No Articles Found</h3>
+              <p><?= $archiveYm !== '' ? 'There are no articles published in <strong>' . htmlspecialchars($archiveLabel) . '</strong>.' : 'There are no articles for this archive.' ?></p>
+              <a href="<?= url('blog') ?>" class="tag-badge-pill" style="margin-top: 15px; display: inline-block;">Back to Blog Home</a>
+            </div>
+          <?php endif; ?>
+        </div>
+        <?php if ($archiveYm !== '' && $archiveLastPage > 1): ?>
+        <nav class="tag-pagination-nav" aria-label="Archive Pagination" style="margin-top: 30px;">
+          <ul class="tag-pagination-list">
+            <?php for ($p = 1; $p <= $archiveLastPage; $p++): ?>
+              <li class="page-item">
+                <a href="<?= url('blog?archive=' . urlencode($archiveYm) . '&page=' . $p) ?>" class="page-link page-num-btn <?= $archivePage === $p ? 'active' : '' ?>"><?= $p ?></a>
+              </li>
+            <?php endfor; ?>
+          </ul>
+        </nav>
+        <?php endif; ?>
+        <?php else: ?>
+
         <!-- SECTION 1: LATEST VAPING GUIDES -->
         <?php 
           $leadGuide = !empty($featuredGuides) ? $featuredGuides[0] : null;
@@ -323,6 +413,8 @@ include dirname(__DIR__) . '/includes/header.php';
         </section>
         <?php endif; ?>
 
+        <?php endif; ?>
+
       </main>
 
       <!-- ========================================
@@ -356,7 +448,7 @@ include dirname(__DIR__) . '/includes/header.php';
         <div class="blog-widget blog-card-widget blog-categories-widget">
           <h3 class="blog-widget-title">Categories</h3>
           <ul class="blog-categories-list" id="blogCategoriesList">
-            <li class="category-list-item active">
+            <li class="category-list-item <?= $archiveActive ? '' : 'active' ?>">
               <a href="<?= url('blog') ?>" class="category-link">
                 <span class="category-name">All Articles</span>
                 <span class="category-count">(<?= (int)$totalPostsCount ?>)</span>
@@ -430,9 +522,11 @@ include dirname(__DIR__) . '/includes/header.php';
           <h3 class="blog-widget-title">Archive</h3>
           <ul class="archive-list">
             <?php if (!empty($archiveMonths)): ?>
-              <?php foreach ($archiveMonths as $arch): ?>
+              <?php foreach ($archiveMonths as $arch):
+                $isActiveArch = $archiveYm !== '' && $archiveYm === ($arch['ym'] ?? '');
+              ?>
                 <li class="archive-item">
-                  <a href="<?= url('blog?archive=' . urlencode($arch['ym'])) ?>" class="archive-link"><?= htmlspecialchars($arch['label']) ?> (<?= (int)$arch['count'] ?>)</a>
+                  <a href="<?= url('blog?archive=' . urlencode($arch['ym'])) ?>" class="archive-link<?= $isActiveArch ? ' active' : '' ?>"><?= htmlspecialchars($arch['label']) ?> (<?= (int)$arch['count'] ?>)</a>
                 </li>
               <?php endforeach; ?>
             <?php else: ?>
