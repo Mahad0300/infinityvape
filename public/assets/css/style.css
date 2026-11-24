@@ -3145,6 +3145,9 @@ ol {
   .newsletter-input,
   .newsletter-btn {
     width: 100%;
+    flex: none;
+    height: 44px;
+    min-height: 44px;
   }
 
   .footer-columns-grid {
@@ -3879,8 +3882,9 @@ ol {
 
 .product-tabs-nav {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 32px;
+  gap: 40px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -6459,20 +6463,14 @@ ol {
   border-radius: 12px;
   overflow: hidden;
   background-color: #f1f5f9;
-  aspect-ratio: 16 / 10;
+  height: auto;
 }
 
 .featured-lead-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
-  transition: transform 0.35s ease, filter 0.35s ease;
-}
-
-.featured-media-link:hover .featured-lead-img {
-  transform: scale(1.025);
-  filter: brightness(0.97);
 }
 
 .featured-lead-content {
@@ -6544,23 +6542,18 @@ ol {
   display: block;
   width: 140px;
   min-width: 140px;
-  height: 92px;
+  height: auto;
   border-radius: 10px;
   overflow: hidden;
   background-color: #f1f5f9;
   flex-shrink: 0;
+  line-height: 0;
 }
 
 .side-post-thumb-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
-  transition: transform 0.3s ease;
-}
-
-.side-post-thumb-link:hover .side-post-thumb-img {
-  transform: scale(1.05);
 }
 
 .side-post-content {
@@ -6593,7 +6586,7 @@ ol {
 }
 
 /* --------------------------------------------------------------------------
-   5. TOP PRODUCT REVIEWS SECTION (3-Column Full-Bleed Overlay Cards)
+   5. TOP PRODUCT REVIEWS SECTION (2 Square Overlay Cards)
    ----------------------------------------------------------------------- */
 .blog-top-reviews-section {
   margin-top: 36px;
@@ -6601,17 +6594,19 @@ ol {
 
 .top-reviews-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  align-items: stretch;
 }
 
 .top-review-card {
   position: relative;
+  display: block;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background-color: #0f172a;
+  background-color: #f3eef8;
 }
 
 .top-review-card:hover {
@@ -6623,59 +6618,68 @@ ol {
   display: block;
   position: relative;
   width: 100%;
-  aspect-ratio: 3.2 / 4;
+  height: auto;
   text-decoration: none;
   overflow: hidden;
+  background-color: transparent;
 }
 
 .top-review-bg-img {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: static;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
-  transition: transform 0.5s ease, filter 0.3s ease;
+  flex-shrink: 0;
 }
 
-.top-review-card-link:hover .top-review-bg-img {
-  transform: scale(1.06);
-}
-
-/* Dark Gradient Overlay to ensure crisp readability for white text */
 .top-review-overlay {
+  display: block;
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
-      rgba(0, 0, 0, 0) 25%,
-      rgba(0, 0, 0, 0.45) 55%,
-      rgba(0, 0, 0, 0.88) 85%,
-      rgba(0, 0, 0, 0.96) 100%);
+      rgba(15, 23, 42, 0.08) 0%,
+      rgba(15, 23, 42, 0.78) 42%,
+      rgba(15, 23, 42, 0.94) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
   z-index: 1;
   pointer-events: none;
 }
 
 .top-review-content {
   position: absolute;
-  bottom: 0;
   left: 0;
   right: 0;
-  padding: 22px 18px 18px;
-  z-index: 2;
+  bottom: 0;
+  padding: 14px 14px 12px;
   display: flex;
   flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.top-review-card:hover .top-review-overlay,
+.top-review-card:hover .top-review-content,
+.top-review-card-link:focus-visible .top-review-overlay,
+.top-review-card-link:focus-visible .top-review-content {
+  opacity: 1;
 }
 
 .top-review-title {
   font-family: var(--font-family-main);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.3;
   color: #ffffff;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   transition: color 0.2s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .top-review-card-link:hover .top-review-title {
@@ -6689,7 +6693,7 @@ ol {
   gap: 6px;
   font-size: 0.725rem;
   color: #e2e8f0;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .top-review-meta .meta-author {
@@ -6744,21 +6748,14 @@ ol {
   border-radius: 16px;
   overflow: hidden;
   background-color: #f1f5f9;
-  aspect-ratio: 2.2 / 1;
-  max-height: 380px;
+  height: auto;
 }
 
 .flavor-lead-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
-  transition: transform 0.4s ease, filter 0.3s ease;
-}
-
-.flavor-lead-media-link:hover .flavor-lead-img {
-  transform: scale(1.025);
-  filter: brightness(0.97);
 }
 
 .flavor-lead-content {
@@ -6880,7 +6877,7 @@ ol {
 .article-card-thumb-link {
   display: block;
   position: relative;
-  aspect-ratio: 16 / 10;
+  height: auto;
   background-color: #f1f5f9;
   border-radius: 14px;
   overflow: hidden;
@@ -6888,15 +6885,9 @@ ol {
 
 .article-card-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
-  transition: transform 0.35s ease, filter 0.3s ease;
-}
-
-.article-card-thumb-link:hover .article-card-img {
-  transform: scale(1.03);
-  filter: brightness(0.97);
 }
 
 .article-card-body {
@@ -7038,28 +7029,26 @@ ol {
   display: block;
   width: 120px;
   min-width: 120px;
-  height: 76px;
+  height: auto;
   border-radius: 8px;
   overflow: hidden;
   background-color: #f1f5f9;
   flex-shrink: 0;
+  line-height: 0;
 }
 
 .latest-post-thumb-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
-  transition: transform 0.3s ease;
-}
-
-.latest-post-thumb-link:hover .latest-post-thumb-img {
-  transform: scale(1.05);
 }
 
 .latest-post-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .latest-post-title {
@@ -7067,7 +7056,7 @@ ol {
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.35;
-  margin: 0 0 4px;
+  margin: 0;
   color: #0f172a;
 }
 
@@ -7089,8 +7078,11 @@ ol {
   font-size: 0.75rem;
   color: #64748b;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .latest-post-meta .meta-author {
@@ -7279,27 +7271,21 @@ ol {
 .popular-post-thumb-link,
 .recent-post-thumb-link {
   display: block;
-  width: 68px;
-  min-width: 68px;
-  height: 48px;
+  width: 120px;
+  min-width: 120px;
+  height: auto;
   border-radius: 8px;
   overflow: hidden;
   background-color: #f1f5f9;
   flex-shrink: 0;
+  line-height: 0;
 }
 
 .popular-post-thumb-img,
 .recent-post-thumb-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
-  transition: transform 0.25s ease;
-}
-
-.popular-post-thumb-link:hover .popular-post-thumb-img,
-.recent-post-thumb-link:hover .recent-post-thumb-img {
-  transform: scale(1.06);
 }
 
 .popular-post-info,
@@ -7425,7 +7411,7 @@ a.blog-tag-pill.active {
   .side-post-thumb-link {
     width: 115px;
     min-width: 115px;
-    height: 76px;
+    height: auto;
   }
 }
 
@@ -7453,7 +7439,7 @@ a.blog-tag-pill.active {
   .side-post-thumb-link {
     width: 140px;
     min-width: 140px;
-    height: 92px;
+    height: auto;
   }
 
   .blog-sidebar-col {
@@ -7483,7 +7469,7 @@ a.blog-tag-pill.active {
   }
 
   .flavor-lead-media-link {
-    aspect-ratio: 16 / 9;
+    height: auto;
   }
 
   .blog-articles-grid {
@@ -7501,7 +7487,7 @@ a.blog-tag-pill.active {
   .side-post-thumb-link {
     width: 105px;
     min-width: 105px;
-    height: 74px;
+    height: auto;
     border-radius: 8px;
   }
 
@@ -7552,24 +7538,19 @@ a.blog-tag-pill.active {
 .tag-post-thumb-link {
   width: 275px;
   min-width: 275px;
-  aspect-ratio: 16 / 10;
+  height: auto;
   border-radius: 12px;
   overflow: hidden;
   background-color: #f1f5f9;
   flex-shrink: 0;
   display: block;
+  line-height: 0;
 }
 
 .tag-post-thumb-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
-  transition: transform 0.3s ease;
-}
-
-.tag-post-card:hover .tag-post-thumb-img {
-  transform: scale(1.04);
 }
 
 .tag-post-body {
@@ -7684,7 +7665,7 @@ a.blog-tag-pill.active {
   .tag-post-thumb-link {
     width: 100%;
     min-width: 100%;
-    aspect-ratio: 16 / 9;
+    height: auto;
   }
 
   .tag-page-title {

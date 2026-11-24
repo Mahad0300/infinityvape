@@ -9,7 +9,7 @@ $nav_active = isset($current_admin_page) ? $current_admin_page : 'dashboard';
 <aside class="admin-sidebar" id="adminSidebar">
   <!-- Sidebar Brand Header -->
   <div class="sidebar-brand">
-    <a href="<?= url('admin') ?>" class="sidebar-logo" title="Infinity Vape Shop Admin">
+   <a href="<?= url('admin') ?>" class="sidebar-logo" title="Infinity Vape Shop Admin">
       <img src="<?= asset('infinityvapeshoplogo.jpg') ?>" alt="Infinity Vape Shop Logo" onerror="this.onerror=null;this.src='<?= asset('assets/images/infinityvapeshoplogo.jpg') ?>';">
     </a>
     <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close Sidebar">

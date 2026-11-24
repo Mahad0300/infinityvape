@@ -97,12 +97,12 @@ include dirname(__DIR__) . '/includes/header.php';
           <?php if (!empty($brands)): ?>
             <?php foreach ($brands as $brand): ?>
               <?php
-              $isActive = !empty($brand['is_active']);
-              $statusLabel = $isActive ? 'Active' : 'Inactive';
-              $badgeClass = $isActive ? 'badge-active' : 'badge-draft';
-              $productCount = (int) ($brand['products_count'] ?? 0);
-              $initial = strtoupper(substr($brand['name'] ?? 'B', 0, 1));
-              $logoUrl = !empty($brand['logo_url']) ? asset($brand['logo_url']) : '';
+                $isActive = !empty($brand['is_active']);
+                $statusLabel = $isActive ? 'Active' : 'Inactive';
+                $badgeClass = $isActive ? 'badge-active' : 'badge-draft';
+                $productCount = (int)($brand['products_count'] ?? 0);
+                $initial = strtoupper(substr($brand['name'] ?? 'B', 0, 1));
+                $logoUrl = !empty($brand['logo_url']) ? asset($brand['logo_url']) : '';
               ?>
               <tr>
                 <td>
@@ -138,7 +138,7 @@ include dirname(__DIR__) . '/includes/header.php';
                   </span>
                 </td>
                 <td>
-                  <span class="text-dark" style="font-size: 13px; font-weight: 500;"><?= (int) ($brand['sort_order'] ?? 0) ?></span>
+                  <span class="text-dark" style="font-size: 13px; font-weight: 500;"><?= (int)($brand['sort_order'] ?? 0) ?></span>
                 </td>
                 <td>
                   <span class="badge-status <?= $badgeClass ?>"><?= $statusLabel ?></span>

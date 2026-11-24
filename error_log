@@ -1,0 +1,6 @@
+[12-Nov-2026 20:57:55 UTC] BlogPost::getCategories() error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'themglao_inifity_vape.blog_posts' doesn't exist
+[12-Nov-2026 20:57:59 UTC] BlogPost::getCategories() error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'themglao_inifity_vape.blog_posts' doesn't exist
+[12-Nov-2026 20:58:06 UTC] BlogPost::getCategories() error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'themglao_inifity_vape.blog_posts' doesn't exist
+[12-Nov-2026 20:58:10 UTC] BlogPost::getCategories() error: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'themglao_inifity_vape.blog_posts' doesn't exist
+[16-Nov-2026 18:23:17 UTC] BlogPost::paginate() error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'b.tags' in 'WHERE'
+[16-Nov-2026 18:39:25 UTC] BlogPost::paginate() error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'b.tags' in 'WHERE'

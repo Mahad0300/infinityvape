@@ -1813,5 +1813,3 @@ document.addEventListener('DOMContentLoaded', () => {
     calculateFbtTotal();
   }
 });
-
-
