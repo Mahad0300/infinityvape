@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('headerSearchInput');
   const searchToggle = document.getElementById('headerSearchToggle');
   const headerMain = document.querySelector('.site-header-main');
-  const mobileHeaderQuery = window.matchMedia('(max-width: 991px)');
+  const mobileHeaderQuery = window.matchMedia('(max-width: 1144px)');
 
   function setMobileSearchOpen(open) {
     if (!headerMain || !searchToggle) return;
@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
       if (!headerMain.classList.contains('is-search-open')) return;
       if (headerMain.contains(e.target)) return;
+      if (e.target.closest('.site-nav-bar')) return;
       setMobileSearchOpen(false);
     });
 
@@ -273,5 +274,124 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target.closest('#headerSearchForm') || e.target.closest('#headerSearchSuggest')) return;
       hideSuggestions();
     });
+  }
+
+  // Hide the header while scrolling down, and slide it back on a small scroll up.
+  const headerShell = document.getElementById('siteHeaderShell');
+  const headerSpacer = document.getElementById('siteHeaderSpacer');
+  if (headerShell && headerSpacer) {
+    let lastScrollY = window.scrollY;
+    let scrollAccum = 0;
+    let revealQueued = false;
+    const hideAfter = 8;
+    const showAfter = 4;
+
+    function headerNaturalTop() {
+      if (!headerShell.classList.contains('is-fixed')) {
+        const top = headerShell.getBoundingClientRect().top + window.scrollY;
+        headerShell.dataset.naturalTop = String(top);
+        return top;
+      }
+      return Number(headerShell.dataset.naturalTop || 0);
+    }
+
+    function headerShouldStay() {
+      const active = document.activeElement;
+      if (active && headerShell.contains(active) && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return true;
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (finePointer && headerShell.matches(':hover')) return true;
+      if (document.body.classList.contains('cart-drawer-open')) return true;
+      const drawer = document.getElementById('mobileNavDrawer');
+      return !!(drawer && drawer.classList.contains('active'));
+    }
+
+    function releaseHeader() {
+      headerShell.classList.remove('is-fixed', 'is-header-hidden');
+      headerSpacer.style.height = '0px';
+      revealQueued = false;
+    }
+
+    function pinHeader(hidden) {
+      const height = headerShell.offsetHeight;
+      headerSpacer.style.height = height + 'px';
+      headerShell.classList.add('is-fixed');
+      headerShell.classList.toggle('is-header-hidden', hidden);
+    }
+
+    function revealHeader() {
+      if (!headerShell.classList.contains('is-fixed')) {
+        pinHeader(true);
+        revealQueued = true;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (revealQueued) headerShell.classList.remove('is-header-hidden');
+            revealQueued = false;
+          });
+        });
+        return;
+      }
+      headerShell.classList.remove('is-header-hidden');
+    }
+
+    function onHeaderScroll() {
+      const y = Math.max(window.scrollY, 0);
+      const delta = y - lastScrollY;
+      lastScrollY = y;
+      if (delta === 0) return;
+
+      const naturalTop = headerNaturalTop();
+      const shellHeight = headerShell.offsetHeight;
+
+      if (y <= naturalTop + 2) {
+        scrollAccum = 0;
+        releaseHeader();
+        return;
+      }
+
+      if (headerShouldStay()) {
+        scrollAccum = 0;
+        if (y >= naturalTop + shellHeight && !headerShell.classList.contains('is-fixed')) {
+          pinHeader(false);
+        } else if (headerShell.classList.contains('is-header-hidden')) {
+          headerShell.classList.remove('is-header-hidden');
+        }
+        return;
+      }
+
+      if (Math.sign(delta) !== Math.sign(scrollAccum)) scrollAccum = 0;
+      scrollAccum += delta;
+
+      const headerIsOffscreen = y >= naturalTop + shellHeight - 1;
+      if (!headerShell.classList.contains('is-fixed')) {
+        if (headerIsOffscreen && scrollAccum <= -showAfter) {
+          scrollAccum = 0;
+          revealHeader();
+        }
+        return;
+      }
+
+      if (scrollAccum >= hideAfter) {
+        scrollAccum = 0;
+        headerShell.classList.add('is-header-hidden');
+      } else if (scrollAccum <= -showAfter) {
+        scrollAccum = 0;
+        revealHeader();
+      }
+    }
+
+    window.addEventListener('scroll', onHeaderScroll, { passive: true });
+    window.addEventListener('resize', () => {
+      if (headerShell.classList.contains('is-fixed')) {
+        headerSpacer.style.height = headerShell.offsetHeight + 'px';
+      }
+    });
+    if (typeof ResizeObserver === 'function') {
+      const headerResize = new ResizeObserver(() => {
+        if (headerShell.classList.contains('is-fixed')) {
+          headerSpacer.style.height = headerShell.offsetHeight + 'px';
+        }
+      });
+      headerResize.observe(headerShell);
+    }
   }
 });

@@ -110,6 +110,107 @@ $formatNavUrl = function($link) {
     }
     return function_exists('url') ? url($link) : $link;
 };
+
+$renderDesktopNavItem = function ($item) use ($formatNavUrl) {
+    $hasChildren = !empty($item['children']);
+    $columns = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] === 'mega_menu_column')) : [];
+    $promos = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] === 'promo_banner')) : [];
+    $otherLinks = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] !== 'mega_menu_column' && $c['link_type'] !== 'promo_banner')) : [];
+    $isMegaMenu = !empty($columns) || !empty($promos);
+    $isDropdown = $hasChildren && !$isMegaMenu;
+    ?>
+    <?php if ($isMegaMenu):
+        $colCount = count($columns);
+        $gridClass = 'megamenu-grid';
+        if ($colCount === 2 && empty($promos)) {
+            $gridClass = 'megamenu-grid megamenu-grid-2';
+        } elseif ($colCount >= 4) {
+            $gridClass = strtolower(trim($item['title'])) === 'brands' ? 'megamenu-grid megamenu-grid-brands' : 'megamenu-grid megamenu-grid-4';
+        } elseif (strtolower(trim($item['title'])) === 'e-liquids') {
+            $gridClass = 'megamenu-grid megamenu-grid-eliquid';
+        }
+    ?>
+        <li class="nav-menu-item has-megamenu">
+          <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
+            <?= htmlspecialchars($item['title']) ?>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </a>
+          <div class="megamenu-panel">
+            <div class="megamenu-inner">
+              <div class="<?= $gridClass ?>">
+                <?php foreach ($columns as $col): ?>
+                  <div class="megamenu-col">
+                    <h4 class="megamenu-title"><?= htmlspecialchars($col['title']) ?></h4>
+                    <?php if (!empty($col['children'])): ?>
+                      <ul class="megamenu-links">
+                        <?php foreach ($col['children'] as $link):
+                          $isHl = (!empty($link['subtitle']) && stripos($link['subtitle'], 'highlight') !== false) ||
+                                  (stripos($link['title'], 'shop all') !== false) ||
+                                  (stripos($link['title'], 'view all') !== false);
+                        ?>
+                          <li>
+                            <a href="<?= htmlspecialchars($formatNavUrl($link['link_value'] ?? '#')) ?>" class="<?= $isHl ? 'megamenu-highlight-link' : '' ?>">
+                              <?= htmlspecialchars($link['title']) ?>
+                            </a>
+                          </li>
+                        <?php endforeach; ?>
+                      </ul>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+
+                <?php foreach ($promos as $promo): ?>
+                  <div class="megamenu-promo-col">
+                    <a href="<?= htmlspecialchars($formatNavUrl($promo['link_value'] ?? '#')) ?>" class="megamenu-promo-link" style="position: relative; display: block; overflow: hidden; border-radius: var(--radius-md);">
+                      <?php if (!empty($promo['image_url'])): ?>
+                        <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars(image_alt_from_path($promo['image_url'], $promo['title'])) ?>" class="megamenu-promo-img">
+                      <?php endif; ?>
+                      <?php if (!empty($promo['subtitle'])): ?>
+                        <div class="megamenu-promo-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 16px; background: linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.55) 60%, transparent 100%); color: #fff;">
+                          <span style="display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: #5c56e8; color: #fff; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px;">Featured Offer</span>
+                          <div style="font-weight: 700; font-size: 14px; color: #fff; line-height: 1.25;"><?= htmlspecialchars($promo['title']) ?></div>
+                          <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 3px; font-weight: 400;"><?= htmlspecialchars($promo['subtitle']) ?></div>
+                        </div>
+                      <?php endif; ?>
+                    </a>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+        </li>
+    <?php elseif ($isDropdown): ?>
+        <li class="nav-menu-item has-dropdown">
+          <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
+            <?= htmlspecialchars($item['title']) ?>
+            <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </a>
+          <ul class="nav-dropdown">
+            <?php foreach ($otherLinks as $child):
+              $isHl = (!empty($child['subtitle']) && stripos($child['subtitle'], 'highlight') !== false) ||
+                      (stripos($child['title'], 'shop all') !== false);
+            ?>
+              <li>
+                <a href="<?= htmlspecialchars($formatNavUrl($child['link_value'] ?? '#')) ?>" class="nav-dropdown-link <?= $isHl ? 'dropdown-highlight-link' : '' ?>">
+                  <?= htmlspecialchars($child['title']) ?>
+                </a>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </li>
+    <?php else: ?>
+        <li class="nav-menu-item">
+          <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
+            <?= htmlspecialchars($item['title']) ?>
+          </a>
+        </li>
+    <?php endif; ?>
+    <?php
+};
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -189,6 +290,7 @@ $formatNavUrl = function($link) {
   <!-- ==========================================
        MAIN HEADER (LOGO, SEARCH, USER ACTIONS)
        ========================================== -->
+  <div class="site-header-shell" id="siteHeaderShell">
   <header class="site-header-main">
     <div class="container">
       <div class="header-main-inner">
@@ -206,6 +308,12 @@ $formatNavUrl = function($link) {
         <a href="<?= url() ?>" class="site-logo-link" aria-label="Homepage">
           <img src="infinityvapeshoplogo.jpg" alt="Infinity Vape Shop" class="site-logo-img">
         </a>
+
+        <nav class="header-inline-nav" aria-label="Main Navigation">
+          <ul class="nav-menu-list">
+            <?php foreach ($mainMenuTree as $navItem) { $renderDesktopNavItem($navItem); } ?>
+          </ul>
+        </nav>
 
         <!-- Search Bar -->
         <div class="header-search-wrapper">
@@ -260,7 +368,7 @@ $formatNavUrl = function($link) {
             <span class="header-cart-badge" style="display: none;" data-count="0"></span>
           </a>
 
-          <!-- Mobile-only search icon. Desktop keeps the full search box. -->
+          <!-- Search icon. On desktop it opens the bar between the logo and these icons. -->
           <button type="button" class="header-action-btn header-search-toggle" id="headerSearchToggle" aria-label="Open search" aria-expanded="false" aria-controls="headerSearchForm">
             <svg class="header-search-toggle-icon header-search-toggle-icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
@@ -283,108 +391,12 @@ $formatNavUrl = function($link) {
   <nav class="site-nav-bar" aria-label="Main Navigation">
     <div class="container nav-container">
       <ul class="nav-menu-list">
-        <?php foreach ($mainMenuTree as $item): 
-          $hasChildren = !empty($item['children']);
-          $columns = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] === 'mega_menu_column')) : [];
-          $promos = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] === 'promo_banner')) : [];
-          $otherLinks = $hasChildren ? array_values(array_filter($item['children'], fn($c) => $c['link_type'] !== 'mega_menu_column' && $c['link_type'] !== 'promo_banner')) : [];
-          $isMegaMenu = !empty($columns) || !empty($promos);
-          $isDropdown = $hasChildren && !$isMegaMenu;
-        ?>
-          <?php if ($isMegaMenu): 
-            $colCount = count($columns);
-            $gridClass = 'megamenu-grid';
-            if ($colCount === 2 && empty($promos)) {
-              $gridClass = 'megamenu-grid megamenu-grid-2';
-            } elseif ($colCount >= 4) {
-              $gridClass = strtolower(trim($item['title'])) === 'brands' ? 'megamenu-grid megamenu-grid-brands' : 'megamenu-grid megamenu-grid-4';
-            } elseif (strtolower(trim($item['title'])) === 'e-liquids') {
-              $gridClass = 'megamenu-grid megamenu-grid-eliquid';
-            }
-          ?>
-            <li class="nav-menu-item has-megamenu">
-              <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
-                <?= htmlspecialchars($item['title']) ?>
-                <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </a>
-              <div class="megamenu-panel">
-                <div class="megamenu-inner">
-                  <div class="<?= $gridClass ?>">
-                    <?php foreach ($columns as $col): ?>
-                      <div class="megamenu-col">
-                        <h4 class="megamenu-title"><?= htmlspecialchars($col['title']) ?></h4>
-                        <?php if (!empty($col['children'])): ?>
-                          <ul class="megamenu-links">
-                            <?php foreach ($col['children'] as $link): 
-                              $isHl = (!empty($link['subtitle']) && stripos($link['subtitle'], 'highlight') !== false) || 
-                                      (stripos($link['title'], 'shop all') !== false) || 
-                                      (stripos($link['title'], 'view all') !== false);
-                            ?>
-                              <li>
-                                <a href="<?= htmlspecialchars($formatNavUrl($link['link_value'] ?? '#')) ?>" class="<?= $isHl ? 'megamenu-highlight-link' : '' ?>">
-                                  <?= htmlspecialchars($link['title']) ?>
-                                </a>
-                              </li>
-                            <?php endforeach; ?>
-                          </ul>
-                        <?php endif; ?>
-                      </div>
-                    <?php endforeach; ?>
-
-                    <?php foreach ($promos as $promo): ?>
-                      <div class="megamenu-promo-col">
-                        <a href="<?= htmlspecialchars($formatNavUrl($promo['link_value'] ?? '#')) ?>" class="megamenu-promo-link" style="position: relative; display: block; overflow: hidden; border-radius: var(--radius-md);">
-                          <?php if (!empty($promo['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($formatNavUrl($promo['image_url'])) ?>" alt="<?= htmlspecialchars(image_alt_from_path($promo['image_url'], $promo['title'])) ?>" class="megamenu-promo-img">
-                          <?php endif; ?>
-                          <?php if (!empty($promo['subtitle'])): ?>
-                            <div class="megamenu-promo-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 16px; background: linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.55) 60%, transparent 100%); color: #fff;">
-                              <span style="display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; background: #5c56e8; color: #fff; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px;">Featured Offer</span>
-                              <div style="font-weight: 700; font-size: 14px; color: #fff; line-height: 1.25;"><?= htmlspecialchars($promo['title']) ?></div>
-                              <div style="font-size: 11.5px; color: #cbd5e1; margin-top: 3px; font-weight: 400;"><?= htmlspecialchars($promo['subtitle']) ?></div>
-                            </div>
-                          <?php endif; ?>
-                        </a>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
-              </div>
-            </li>
-          <?php elseif ($isDropdown): ?>
-            <li class="nav-menu-item has-dropdown">
-              <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
-                <?= htmlspecialchars($item['title']) ?>
-                <svg class="nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </a>
-              <ul class="nav-dropdown">
-                <?php foreach ($otherLinks as $child): 
-                  $isHl = (!empty($child['subtitle']) && stripos($child['subtitle'], 'highlight') !== false) || 
-                          (stripos($child['title'], 'shop all') !== false);
-                ?>
-                  <li>
-                    <a href="<?= htmlspecialchars($formatNavUrl($child['link_value'] ?? '#')) ?>" class="nav-dropdown-link <?= $isHl ? 'dropdown-highlight-link' : '' ?>">
-                      <?= htmlspecialchars($child['title']) ?>
-                    </a>
-                  </li>
-                <?php endforeach; ?>
-              </ul>
-            </li>
-          <?php else: ?>
-            <li class="nav-menu-item">
-              <a href="<?= htmlspecialchars($formatNavUrl($item['link_value'] ?? '#')) ?>" class="nav-menu-link">
-                <?= htmlspecialchars($item['title']) ?>
-              </a>
-            </li>
-          <?php endif; ?>
-        <?php endforeach; ?>
+        <?php foreach ($mainMenuTree as $navItem) { $renderDesktopNavItem($navItem); } ?>
       </ul>
     </div>
   </nav>
+  </div>
+  <div class="site-header-spacer" id="siteHeaderSpacer" aria-hidden="true"></div>
 
   <!-- ==========================================
        MOBILE NAVIGATION DRAWER & BACKDROP
