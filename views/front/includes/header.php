@@ -247,10 +247,10 @@ $renderDesktopNavItem = function ($item) use ($formatNavUrl) {
   <?php echo $page_schema; ?>
   <?php endif; ?>
   
-  <!-- Google Fonts (Outfit & Inter) -->
+  <!-- Google Fonts (Montserrat) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Global Single CSS (All styles organized in style.css) -->
   <link rel="stylesheet" href="assets/css/style.css?v=<?= file_exists(dirname(dirname(dirname(__DIR__))) . '/public/assets/css/style.css') ? filemtime(dirname(dirname(dirname(__DIR__))) . '/public/assets/css/style.css') : '1.0.2' ?>">

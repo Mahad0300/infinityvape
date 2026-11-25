@@ -11,7 +11,7 @@ $page_title = '404 - Page Not Found | Infinity Vape Shop';
   <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css?v=<?= file_exists(dirname(dirname(__DIR__)) . '/public/assets/css/style.css') ? filemtime(dirname(dirname(__DIR__)) . '/public/assets/css/style.css') : '1.0.2' ?>">
 </head>
 <body>

@@ -11,7 +11,7 @@ $page_title = '500 - Server Error | Infinity Vape Shop';
   <base href="<?php echo function_exists('base_url') ? base_url('/') . '/' : ''; ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
   <style>
     .error-page-wrap {
@@ -27,7 +27,7 @@ $page_title = '500 - Server Error | Infinity Vape Shop';
       margin: 0 auto;
     }
     .error-code {
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Montserrat', sans-serif;
       font-size: 110px;
       font-weight: 900;
       line-height: 1;
@@ -36,7 +36,7 @@ $page_title = '500 - Server Error | Infinity Vape Shop';
       margin-bottom: 12px;
     }
     .error-title {
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Montserrat', sans-serif;
       font-size: 28px;
       font-weight: 700;
       color: #1e293b;
